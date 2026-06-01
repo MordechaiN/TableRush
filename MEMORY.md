@@ -1,85 +1,140 @@
 # TableRush — MEMORY
 
+_A new Claude session must understand the entire project by reading this file._
+
+---
+
 ## Project Vision
-Fast-paced restaurant management game. Player serves customers: seat → take order → cook → deliver → collect payment → clean. Short 3-min sessions, score/combo system, increasing difficulty.
+Fast-paced restaurant management game. Player serves customers through a complete lifecycle: seat → take order → cook → deliver → collect payment → clean table. Short 3-minute sessions designed for score-chasing and replayability.
+
+## Design Philosophy
+- Sessions: 3 minutes (score-chase design)
+- Addiction loop: combo multiplier, near-failure tension, constant feedback
+- "Just one more round" feeling
+- Easy to learn, hard to master
+- No external assets — 100% procedural textures
+
+## Credits
+- Game Concept & Product Owner: Mordechai Neeman
+- Implementation: Claude Code
+
+---
 
 ## Architecture
-- **Engine:** Phaser 3 with Vite + TypeScript
-- **Entry:** `src/main.ts` → initializes Phaser game
-- **Scenes:** BootScene → MainMenuScene → GameScene (PauseScene overlay) → GameOverScene
-- **Entities:** Customer, Table, Player (Phaser Container subclasses)
-- **Config:** `src/config/GameConfig.ts` — all tunable constants
-- **Textures:** Procedurally generated in BootScene (no external assets)
-- **Storage:** localStorage for high score, settings
+- **Engine:** Phaser 3.87 + Vite 5 + TypeScript (strict)
+- **Entry:** `src/main.ts` → Phaser.Game with scene list
+- **Textures:** All generated in BootScene using `scene.make.graphics()` → `generateTexture()`
+- **Storage:** `localStorage` for high score + settings
 
 ## Scene Flow
 ```
 BootScene (generate textures)
-  → MainMenuScene (Play / Settings / Credits)
-    → GameScene (3-min gameplay)
-      ↔ PauseScene (overlay, ESC)
-    → GameOverScene (score display, retry)
-    → SettingsScene
+  → MainMenuScene (Play / Settings / Credits / High Score)
+    → GameScene (3-min gameplay loop)
+      ↔ PauseScene (ESC overlay)
+    → GameOverScene (score tally, new record, retry)
+    → SettingsScene (SFX/Music toggles, reset score)
     → CreditsScene
 ```
 
+## Key Files
+```
+src/main.ts                  — Phaser config + scene registration
+src/config/GameConfig.ts     — ALL tunable constants (colors, difficulty, menu items)
+src/scenes/BootScene.ts      — Procedural texture generation
+src/scenes/GameScene.ts      — Core gameplay (500 lines)
+src/entities/Customer.ts     — Customer state machine + patience bar
+src/entities/Table.ts        — Table state + glow animations
+src/entities/Player.ts       — Player container + walkTo() movement
+```
+
 ## Gameplay Systems
-1. **Customer lifecycle:** entering → seated → ordering → waiting_food → eating → paying → leaving
-2. **Player:** clicks tables to interact; moves to table, performs action
-3. **Order menu:** tap table when customer is seated → popup shows 5 menu items
-4. **Food delivery:** player walks to kitchen, waits cook time, walks back
-5. **Payment:** collect payment + tip based on remaining patience
-6. **Patience bar:** depletes while customer waits; reaching 0 = angry leave + combo reset
-7. **Combo system:** consecutive successful payments → multiplier up to 5x
-8. **Difficulty ramp:** spawn interval and patience duration both decrease each spawn
 
-## Tables
-- 5 tables with fixed positions in `TABLE_POSITIONS`
-- States: empty | occupied | dirty | served
-- Dirty tables must be cleaned before new customers can sit
+### Customer Lifecycle (state machine)
+`entering → seated → ordering → waiting_food → eating → paying → leaving`
+- Angry path: any waiting state + patience=0 → `angry` → leaves, combo resets
 
-## Menu Items
-- Burger $12 (3s cook), Pizza $15 (4s), Salad $10 (2s), Pasta $13 (3.5s), Sushi $18 (2.5s)
+### Player Interaction (tap-to-act)
+- Tap table with **seated** customer → order menu popup (5 items)
+- Tap table with **waiting_food** customer (player carrying food) → deliver
+- Tap table with **paying** customer → collect payment
+- Tap **dirty** table → clean
+
+### Order Flow
+1. Player taps seated customer → menu popup
+2. Item selected → player `walkTo(kitchen)` → `cookTime` delay → player `walkTo(table)`
+3. Player arrives at table with food → table glows, player must tap again to deliver
+4. Customer eats (3–5s random) → state = paying
+5. Player taps → payment collected, tip based on patience fraction
+
+### Score
+- Delivery: `itemPrice * 10 * multiplier`
+- Payment: `(itemPrice + tip) * 10 * multiplier + 50`
+- Combo multiplier: increments 0.1 per consecutive payment, max 5x
+- Angry customer resets combo to 1x
+
+### Difficulty (GameConfig.ts)
+```
+INITIAL_SPAWN_INTERVAL: 6000ms  → ramps down to MIN: 2500ms
+INITIAL_PATIENCE:      25000ms  → ramps down to MIN: 10000ms
+SPAWN_RAMP_RATE: 0.97 per spawn
+PATIENCE_RAMP_RATE: 0.98 per spawn
+```
+
+### Tables
+- 5 fixed positions in `TABLE_POSITIONS`
+- States: `empty | occupied | dirty`
+- Dirty tables block new customers until cleaned
+
+### Menu Items (5)
+| Name | Price | Cook Time |
+|------|-------|-----------|
+| Burger | $12 | 3s |
+| Pizza | $15 | 4s |
+| Salad | $10 | 2s |
+| Pasta | $13 | 3.5s |
+| Sushi | $18 | 2.5s |
+
+---
 
 ## Repository Structure
 ```
 /
 ├── index.html
-├── package.json
-├── tsconfig.json
-├── vite.config.ts
+├── package.json / tsconfig.json / vite.config.ts
 ├── .gitignore
-├── .github/workflows/ci.yml
+├── .github/workflows/ci.yml   — CI build + GitHub Pages deploy on main push
 ├── src/
 │   ├── main.ts
 │   ├── config/GameConfig.ts
-│   ├── scenes/BootScene.ts
-│   ├── scenes/MainMenuScene.ts
-│   ├── scenes/GameScene.ts
-│   ├── scenes/PauseScene.ts
-│   ├── scenes/GameOverScene.ts
-│   ├── scenes/CreditsScene.ts
-│   ├── scenes/SettingsScene.ts
-│   ├── entities/Customer.ts
-│   ├── entities/Table.ts
-│   └── entities/Player.ts
-├── docs/
-├── assets/
-└── docs/ (MEMORY, STATUS, CHANGELOG, ROADMAP, KNOWN_ISSUES)
+│   ├── entities/Customer.ts / Table.ts / Player.ts
+│   └── scenes/BootScene.ts / MainMenuScene.ts / GameScene.ts /
+│             PauseScene.ts / GameOverScene.ts / CreditsScene.ts / SettingsScene.ts
+├── MEMORY.md / PROJECT_STATUS.md / CHANGELOG.md
+├── KNOWN_ISSUES.md / ROADMAP.md / TEST_REPORT.md
+└── README.md
 ```
 
-## Important Decisions
-- No external assets — all textures procedurally generated in BootScene
-- Single-tap interaction model (tap table = context-sensitive action)
-- Player moves to table before acting (visual feedback)
-- Order panel appears at bottom when taking order
-- 3-minute timed game loop (not endless to force high-score chase)
+---
+
+## Git Governance
+- **Branch:** `main` (direct commits, no PRs)
+- **Workflow:** `git add . && git commit && git push`
+- **CI:** GitHub Actions on push to main → build validation + GitHub Pages deploy
 
 ## Deployment
-- GitHub Pages via `peaceiris/actions-gh-pages@v3` on main push
-- `vite.config.ts` uses `base: './'` for relative paths
-- Local: `npm run dev` on port 3000
+- Local: `npm run dev` → http://localhost:3000
+- Production: `npm run build` → `dist/`
+- GitHub Pages: auto-deployed from main via `peaceiris/actions-gh-pages@v3`
+- `vite.config.ts` uses `base: './'` for relative asset paths
+
+---
 
 ## Current Priorities
-- MVP complete: all core mechanics implemented
-- Next: verify build passes, test gameplay loop
+1. MVP complete and pushed to main ✅
+2. All core mechanics verified ✅
+3. Next: gameplay polish — audio, better animations, visual feedback
+
+## Known Issues
+- No audio (Settings UI is placeholder only)
+- Phaser bundle > 500KB (expected, not a bug)

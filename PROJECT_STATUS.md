@@ -20,15 +20,16 @@ MVP complete. Ready for gameplay polish pass.
 - [x] Procedural textures (no external assets)
 - [x] GitHub Actions CI/CD + GitHub Pages deploy
 - [x] All documentation (MEMORY, STATUS, CHANGELOG, ROADMAP, KNOWN_ISSUES, TEST_REPORT)
+- [x] VALIDATION_REPORT.md — 20/20 PASS, 0 console errors, screenshots taken
 - [x] TypeScript strict — 0 errors
 - [x] Build verified clean
 - [x] Pushed to main (direct commit, governance applied)
 
 ## Current Task
-None — MVP milestone complete.
+None — validation complete.
 
 ## Next Task
-v0.2.0 — Audio + Visual Polish:
+v0.2.0 — Audio + Visual Polish (CLEARED TO START):
 - WebAudio sound effects (coin collect, order ready, angry customer)
 - Background ambient music loop
 - Particle burst on combo

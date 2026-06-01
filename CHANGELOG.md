@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## v0.1.1 — 2026-06-01
+### Fixed
+- GitHub Pages black screen: root cause was Pages serving from `main` branch root (dev `index.html` with `/src/main.ts` — TypeScript, unexecutable by browsers)
+- Switched workflow to `actions/upload-pages-artifact` + `actions/deploy-pages` (official GitHub Pages deployment, eliminates gh-pages branch confusion)
+- `vite.config.ts`: `VITE_BASE_PATH` env var; CI sets `/TableRush/` so built assets use absolute paths, unambiguous at any subpath
+- Verified fix: Playwright headless test at simulated `/TableRush/` subpath — canvas renders, 0 errors, 0 network failures
+
 ## v0.1.0 — 2026-06-01
 ### Added
 - Full MVP gameplay loop: customer spawn → order → cook → deliver → eat → pay → clean

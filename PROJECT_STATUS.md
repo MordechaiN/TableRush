@@ -1,7 +1,7 @@
 # PROJECT STATUS
 
 **Last Updated:** 2026-06-01
-**Current Version:** 0.1.0
+**Current Version:** 0.1.1
 
 ---
 
@@ -26,10 +26,21 @@ MVP complete. Ready for gameplay polish pass.
 - [x] Pushed to main (direct commit, governance applied)
 
 ## Current Task
-None — validation complete.
+None — GitHub Pages deployment fix complete.
+
+## Completed Tasks (additional)
+- [x] GitHub Pages deployment audit
+- [x] Root cause identified: main branch dev HTML served instead of built assets
+- [x] Workflow switched to actions/deploy-pages (modern, single-build)
+- [x] vite.config.ts: VITE_BASE_PATH env var for absolute asset paths
+- [x] Fix verified locally via Playwright at /TableRush/ subpath
+
+## REQUIRED ONE-TIME USER ACTION
+Go to: GitHub repo → Settings → Pages → Source → **GitHub Actions**
+(Without this change, deployment will fail — the new workflow uses Actions-based deployment, not the gh-pages branch)
 
 ## Next Task
-v0.2.0 — Audio + Visual Polish (CLEARED TO START):
+v0.2.0 — Audio + Visual Polish (CLEARED TO START after Pages confirmed working):
 - WebAudio sound effects (coin collect, order ready, angry customer)
 - Background ambient music loop
 - Particle burst on combo

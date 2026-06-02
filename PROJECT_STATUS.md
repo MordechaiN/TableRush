@@ -6,15 +6,20 @@
 ---
 
 ## Current Focus
-v0.7.0 Phase 1 VALIDATED. Priority visualization needs redesign. See PHASE1_VALIDATION.md.
+VISUAL REBOOT. VISUAL_REBOOT_PLAN.md written. Awaiting owner approval.
 
-## Phase 1 Validation Results
-- ✓ Priority hierarchy code: correct (urgent > paying > carrying > kitchen > requesting > dirty)
-- ✓ Order flow: ❓ stays during walk, food emoji pop-in on arrival
-- ✗ Pulse rings not visually detectable (4px line, 0.035–0.5 alpha on beige tablecloth)
-- ✗ Kitchen glow not visually detectable (4px line on dark kitchen)
-- ✗ Tutorial text timing bug (pre-existing): step fires on customer arrive, not player action
-- **Action required: redesign priority visual before Phase 2**
+## Visual Reboot Status
+- [x] VISUAL_REBOOT_PLAN.md — complete, awaiting approval
+- [ ] P0: Action arrow indicator (replaces invisible pulse rings)
+- [ ] P1: Customer redesign (48×72px, bold outlines, name banners)
+- [ ] P2: Waiter redesign (larger, emotion visible)
+- [ ] P3: HUD redesign (combo always visible)
+- [ ] P4: Table redesign (clean cloth, numbered)
+- [ ] P5: Kitchen redesign (readable tickets, bold ready zone)
+- [ ] P6: Speech bubbles (state-specific shapes)
+- [ ] P7: Main menu (restaurant background)
+- [ ] P8: Game Over (emotional headers)
+- [ ] P9: Tutorial (fix text timing)
 
 ## Completed Tasks
 - [x] Project scaffold (Vite + TypeScript + Phaser 3)

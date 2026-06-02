@@ -20,18 +20,32 @@ Fast-paced restaurant management game. Premium casual — think Overcooked/Good 
 
 ---
 
-## Current State: v0.7.0 PHASE 1 VALIDATED — REDESIGN REQUIRED
+## Current State: VISUAL REBOOT IN PROGRESS — AWAITING APPROVAL
 
 **v0.6.0 (art direction reboot) is fully implemented.**
-**v0.7.0 Phase 1 (gameplay clarity) implemented and validated. Priority visualization insufficient — needs redesign before Phase 2.**
+**v0.7.0 Phase 1 implemented but visual expression insufficient (validated).**
+**VISUAL_REBOOT_PLAN.md written. Awaiting owner approval before any implementation.**
 
-### Phase 1 Validation Summary
-- Priority hierarchy logic: ✓ CORRECT in code
-- urgencyMultiplier dimming: ✓ WORKS in code, **NOT VISIBLE in play** — pulse rings too thin (4px), alpha too low (0.035–0.5 range on beige tablecloth)
-- Order flow fix (❓ stays during walk): ✓ WORKING
-- Kitchen glow primary/secondary: ✓ LOGIC CORRECT, **NOT VISIBLE** (4px border on dark kitchen)
-- Tutorial text timing: ✗ PRE-EXISTING BUG — "Order taken!" fires on customer ARRIVE, not player action
-- **Recommendation:** Before Phase 2, replace thin pulse ring with a bold, always-readable primary action indicator (min 0.5 alpha at dimmest point)
+### Visual Reboot Direction
+Chosen direction: **Stylized Cartoon** (Direction C)
+- Bold 2.5px black outlines on all characters and UI
+- Action indicator: colored ▼ arrow above tables (replaces invisible pulse ring)
+- Arrow pulses by scale (0.9–1.1), never by alpha — always visible
+- Customer sprites enlarged to 48×72px, heads larger, face features readable
+- Combo always visible in HUD (shows ×1 grayed when inactive)
+- Same warm palette, bolder execution
+
+### Visual Reboot Priority Order
+0. Action arrow indicator (fixes Phase 1 validation failure)
+1. Customer redesign (larger, bold outlines, name banners)
+2. Waiter redesign (larger, emotion system visible)
+3. HUD redesign (combo always on, bold score/timer)
+4. Table redesign (clean tablecloth, numbered)
+5. Kitchen redesign (readable ticket system, bold ready zone)
+6. Speech bubbles (state-specific shapes, larger)
+7. Main menu (restaurant background, waiter present)
+8. Game Over (emotional headers, drawn stars)
+9. Tutorial (fix text timing bug)
 
 ---
 

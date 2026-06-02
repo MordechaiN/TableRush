@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## VISUAL REBOOT PLAN — 2026-06-02
+### Design Document Created (no implementation — awaiting approval)
+- **VISUAL_REBOOT_PLAN.md**: Full visual identity audit and rebuild plan
+  - Section 1: Complete inventory of all 14 visual systems (menu, HUD, kitchen, tables, customers, waiter, food, bubbles, game over, settings, credits, environment)
+  - Section 2: Problem analysis — why each element feels cheap, how it hurts retention
+  - Section 3: Three art directions (A: Modern Mobile, B: Cozy Restaurant, C: Stylized Cartoon)
+  - Section 4: Direction C (Stylized Cartoon) chosen — bold outlines, scale-based state indicators, readable at small sizes, Overcooked precedent
+  - Section 5: 10-item implementation roadmap ordered by player impact. P0 fixes Phase 1 validation failure (invisible pulse rings → colored ▼ arrow above tables, always ≥70% alpha, pulses by scale not alpha)
+
+---
+
 ## v0.7.0 — IMPLEMENTATION PHASE 1 (2026-06-02)
 ### Gameplay Clarity — Single Dominant Action Priority System
 - **`updateActionPriority()` in GameScene**: runs every 150ms, evaluates all pending tasks, determines one primary action. Hierarchy: urgent (patience < 25%) > paying > carrying food to table > kitchen ready pickup > requesting > dirty table

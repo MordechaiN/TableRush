@@ -52,12 +52,17 @@ v0.7.0 design phase — five redesign documents written. Awaiting owner approval
 - [x] v0.6.0 — Kitchen: pot+pan silhouettes on burners
 - [x] v0.6.0 — Menu board (chalkboard) above kitchen counter
 - [x] v0.6.0 — Food plate background when carrying (food_plate texture + plateImage in Player)
-- [ ] v0.7.0 — AWAITING APPROVAL: gameplay clarity, balance, progression, retention redesign
-  - GAMEPLAY_REDESIGN.md: priority system, order reveal, anger arc, tutorial
-  - VISUAL_REDESIGN.md: ambient motion, customer personality, food presentation
-  - BALANCE_REDESIGN.md: patience values (110–140s T1), spawn caps, score formula
-  - PROGRESSION_REDESIGN.md: table unlocks per level, XP ticker, shop
-  - RETENTION_REDESIGN.md: near-miss gaps, last-session display, streaks, achievements
+- [x] v0.7.0 Phase 1 — Single dominant action priority system
+  - `updateActionPriority()` in GameScene: 150ms rate-limited, hierarchy: urgent > paying > carrying > kitchen_ready > requesting > dirty
+  - `setUrgencyLevel(isPrimary)` on Table: dims secondary pulses to 35% alpha
+  - `setKitchenGlowPrimary(isPrimary)` in GameScene: full 0.1–0.7 alpha when primary, dim 0.04–0.25 when secondary
+  - `setPriority('urgent')` auto-applied when customer patience < 25%
+  - `takeOrder()`: removed premature `hideBubble()` — ❓ stays visible during walk
+  - `showOrderFlash()` on Customer: warm tint flash on order assignment
+- [ ] v0.7.0 Phase 2 — Customer behavior (balance values, anger escalation, personalities)
+- [ ] v0.7.0 Phase 3 — Restaurant fantasy (names, reactions, tips)
+- [ ] v0.7.0 Phase 4 — Reward systems (combo redesign, perfect service)
+- [ ] v0.7.0 Phase 5 — Progression (XP, levels, unlocks)
 
 ## Known Blockers
 - GitHub Pages requires one-time user action: Settings → Pages → Source → GitHub Actions

@@ -64,6 +64,8 @@ export class GameScene extends Phaser.Scene {
   private ticketRail!: Phaser.GameObjects.Container;
 
   private steamTimer: Phaser.Time.TimerEvent | null = null;
+  private priorityLastUpdate = 0;
+  private kitchenGlowPrimary = false;
 
   private tutorialStep = 0;
   private tutorialActive = false;
@@ -441,7 +443,6 @@ export class GameScene extends Phaser.Scene {
   private takeOrder(table: Table, customer: Customer) {
     this.playerBusy = true;
     customer.state = 'ordering';
-    customer.hideBubble();
     table.clearPulse();
 
     this.player.walkTo(table.x, table.y + 40, () => {
@@ -455,6 +456,7 @@ export class GameScene extends Phaser.Scene {
       customer.order = order;
       customer.state = 'waiting_food';
       customer.showOrderBubble(order);
+      customer.showOrderFlash();
 
       this.playerBusy = false;
 
@@ -720,22 +722,99 @@ export class GameScene extends Phaser.Scene {
 
   private updateKitchenGlow() {
     const hasReady = this.kitchenOrders.some(o => o.ready);
-    if (hasReady && !this.kitchenGlowTween) {
-      this.kitchenGlow.setAlpha(0.6);
-      this.kitchenGlowTween = this.tweens.add({
-        targets: this.kitchenGlow, alpha: { from: 0.1, to: 0.7 },
-        duration: 500, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
-      });
-    } else if (!hasReady && this.kitchenGlowTween) {
+    if (!hasReady && this.kitchenGlowTween) {
       this.kitchenGlowTween.stop();
       this.kitchenGlowTween = null;
       this.kitchenGlow.setAlpha(0);
+      this.kitchenGlowPrimary = false;
     }
+    // Glow startup is handled by setKitchenGlowPrimary via updateActionPriority
+  }
+
+  private setKitchenGlowPrimary(isPrimary: boolean) {
+    if (this.kitchenGlowPrimary === isPrimary) return;
+    this.kitchenGlowPrimary = isPrimary;
+
+    const hasReady = this.kitchenOrders.some(o => o.ready);
+    if (!hasReady) return;
+
+    if (this.kitchenGlowTween) { this.kitchenGlowTween.stop(); this.kitchenGlowTween = null; }
+
+    const maxAlpha = isPrimary ? 0.7 : 0.25;
+    const minAlpha = isPrimary ? 0.1 : 0.04;
+
+    this.kitchenGlowTween = this.tweens.add({
+      targets: this.kitchenGlow,
+      alpha: { from: maxAlpha, to: minAlpha },
+      duration: 500, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
+    });
+  }
+
+  private updateActionPriority() {
+    if (this.time.now - this.priorityLastUpdate < 150) return;
+    this.priorityLastUpdate = this.time.now;
+
+    let primaryTableId = -1;
+    let primaryKitchen = false;
+
+    // 1. Urgent: patience < 25% on active customers
+    const urgentCheckStates = ['requesting', 'ordering', 'waiting_food', 'paying'];
+    for (const table of this.tables) {
+      const customer = this.getCustomerAtTable(table.id);
+      if (customer &&
+          urgentCheckStates.includes(customer.state) &&
+          customer.getPatienceFraction() < 0.25) {
+        table.setPriority('urgent');
+        if (primaryTableId === -1) primaryTableId = table.id;
+      }
+    }
+
+    // 2. Paying customers
+    if (primaryTableId === -1) {
+      for (const table of this.tables) {
+        const customer = this.getCustomerAtTable(table.id);
+        if (customer?.state === 'paying') { primaryTableId = table.id; break; }
+      }
+    }
+
+    // 3. Carrying food: destination table is primary
+    if (primaryTableId === -1 && this.carryingOrderId !== -1) {
+      const order = this.kitchenOrders.find(o => o.id === this.carryingOrderId);
+      if (order) primaryTableId = order.tableId;
+    }
+
+    // 4. Kitchen has ready order to pick up
+    if (primaryTableId === -1 && this.carryingOrderId === -1 && this.kitchenOrders.some(o => o.ready)) {
+      primaryKitchen = true;
+    }
+
+    // 5. Requesting customers
+    if (primaryTableId === -1 && !primaryKitchen) {
+      for (const table of this.tables) {
+        const customer = this.getCustomerAtTable(table.id);
+        if (customer?.state === 'requesting') { primaryTableId = table.id; break; }
+      }
+    }
+
+    // 6. Dirty tables
+    if (primaryTableId === -1 && !primaryKitchen) {
+      for (const table of this.tables) {
+        if (table.state === 'dirty') { primaryTableId = table.id; break; }
+      }
+    }
+
+    // Apply urgency levels
+    for (const table of this.tables) {
+      table.setUrgencyLevel(table.id === primaryTableId);
+    }
+    this.setKitchenGlowPrimary(primaryKitchen);
   }
 
   // ─── Angry Customers ──────────────────────────────────────────────────────
 
   update() {
+    this.updateActionPriority();
+
     for (const [id, customer] of this.customers) {
       const nonAngryStates = ['leaving', 'eating', 'paying'];
       if (customer.isAngry() && !nonAngryStates.includes(customer.state)) {

@@ -20,10 +20,10 @@ Fast-paced restaurant management game. Premium casual — think Overcooked/Good 
 
 ---
 
-## Current State: v0.6.0 IMPLEMENTED — v0.7.0 REDESIGN IN PROGRESS
+## Current State: v0.7.0 PHASE 1 IN PROGRESS
 
 **v0.6.0 (art direction reboot) is fully implemented.**
-**v0.7.0 redesign documents written. AWAITING owner approval before any implementation.**
+**v0.7.0 Phase 1 (gameplay clarity) — single dominant action priority system implemented.**
 
 ---
 

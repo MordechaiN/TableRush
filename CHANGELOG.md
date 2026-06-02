@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## v0.7.0 — IMPLEMENTATION PHASE 1 (2026-06-02)
+### Gameplay Clarity — Single Dominant Action Priority System
+- **`updateActionPriority()` in GameScene**: runs every 150ms, evaluates all pending tasks, determines one primary action. Hierarchy: urgent (patience < 25%) > paying > carrying food to table > kitchen ready pickup > requesting > dirty table
+- **`setUrgencyLevel(isPrimary)` on Table**: primary table gets full-alpha pulse (1.0×); all secondary tables dim to 35% alpha. Makes the correct next action visually obvious at a glance
+- **`setPriority('urgent')` auto-upgrade**: when any customer's patience drops below 25%, their table pulse upgrades to fast red 'urgent' via `updateActionPriority()` — no longer requires manual triggering
+- **`setKitchenGlowPrimary(isPrimary)` in GameScene**: kitchen glow uses 0.1–0.7 alpha range when primary, dims to 0.04–0.25 range when secondary. `updateKitchenGlow()` simplified to only handle glow teardown
+- **`takeOrder()` UX fix**: removed premature `customer.hideBubble()` — the ❓ bubble now stays visible while the player walks over, matching the visual expectation. Bubble transitions to food emoji on arrival
+- **`showOrderFlash()` on Customer**: warm tint + alpha flash on order assignment, acknowledges the interaction moment clearly
+
+---
+
 ## v0.7.0 — DESIGN PHASE (2026-06-02)
 ### Design Documents Created (no implementation — awaiting approval)
 - **RESTAURANT_FANTASY.md**: Core fantasy defined — "You are the best waiter in the room." Emotional highs (flow state, last-second save, lightning tip, combo crescendo), emotional lows (impossible choice, chain break), desired per-moment player emotions, visual cues that support vs hurt the fantasy, and the specific gap between "systems and timers" and a "living restaurant"

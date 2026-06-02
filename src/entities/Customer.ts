@@ -135,6 +135,17 @@ export class Customer extends Phaser.GameObjects.Container {
     this.buildBubble(`💳 $${price}`, 0xFFD700);
   }
 
+  showOrderFlash() {
+    this.bodySprite.setTint(0xFFCC88);
+    this.scene.tweens.add({
+      targets: this.bodySprite, alpha: { from: 0.65, to: 1 },
+      duration: 120, ease: 'Quad.easeOut',
+      onComplete: () => {
+        this.scene.time.delayedCall(160, () => this.bodySprite.clearTint());
+      },
+    });
+  }
+
   showAngryBubble() {
     this.buildBubble('😠', 0xF44336);
     this.scene.tweens.add({

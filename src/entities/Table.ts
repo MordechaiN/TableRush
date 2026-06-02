@@ -18,6 +18,7 @@ export class Table extends Phaser.GameObjects.Container {
   private glowTween: Phaser.Tweens.Tween | null = null;
   private cleanTween: Phaser.Tweens.Tween | null = null;
   private currentPriority: TablePriority = 'none';
+  private urgencyMultiplier = 1.0; // 1.0 = primary, 0.35 = secondary
 
   constructor(scene: Phaser.Scene, x: number, y: number, id: number) {
     super(scene, x, y);
@@ -89,18 +90,30 @@ export class Table extends Phaser.GameObjects.Container {
     };
 
     const cfg = configs[priority];
+    const m = this.urgencyMultiplier;
     this.pulseRing.clear();
-    this.pulseRing.lineStyle(4, cfg.color, cfg.alpha);
+    this.pulseRing.lineStyle(4, cfg.color, cfg.alpha * m);
     this.pulseRing.strokeRoundedRect(-55, -38, 110, 76, 10);
 
     this.glowTween = this.scene.tweens.add({
       targets: this.pulseRing,
-      alpha: { from: cfg.alpha, to: 0.1 },
+      alpha: { from: cfg.alpha * m, to: 0.1 * m },
       duration: cfg.duration,
       yoyo: true,
       repeat: -1,
       ease: 'Sine.easeInOut',
     });
+  }
+
+  setUrgencyLevel(isPrimary: boolean) {
+    const newMultiplier = isPrimary ? 1.0 : 0.35;
+    if (this.urgencyMultiplier === newMultiplier) return;
+    this.urgencyMultiplier = newMultiplier;
+    if (this.currentPriority !== 'none') {
+      const p = this.currentPriority;
+      this.currentPriority = 'none';
+      this.setPriority(p);
+    }
   }
 
   clearPulse() {

@@ -16,9 +16,10 @@ export class Table extends Phaser.GameObjects.Container {
   private cleanBarTrack!: Phaser.GameObjects.Graphics;
   private cleanBarFill!: Phaser.GameObjects.Graphics;
   private arrowTween: Phaser.Tweens.Tween | null = null;
+  private urgentAlphaTween: Phaser.Tweens.Tween | null = null;
   private cleanTween: Phaser.Tweens.Tween | null = null;
   private currentPriority: TablePriority = 'none';
-  private arrowBaseScale = 1.0; // 1.0 = primary, 0.5 = secondary
+  private arrowBaseScale = 1.0; // 1.0 = primary, 0.35 = secondary
 
   // World position of arrow anchor (above and outside customer sprite area)
   private arrowWorldX: number;
@@ -41,7 +42,7 @@ export class Table extends Phaser.GameObjects.Container {
     this.tableBody = scene.add.image(0, 0, 'table');
     this.add(this.tableBody);
 
-    this.dirtIcon = scene.add.text(38, -26, '🧹', { fontSize: '16px' }).setOrigin(0.5).setVisible(false);
+    this.dirtIcon = scene.add.text(38, -26, '🧹', { fontSize: '20px' }).setOrigin(0.5).setVisible(false);
     this.add(this.dirtIcon);
 
     this.cleanBarTrack = scene.add.graphics();
@@ -96,30 +97,48 @@ export class Table extends Phaser.GameObjects.Container {
     }
 
     const configs: Record<Exclude<TablePriority, 'none'>, { color: number; duration: number }> = {
-      urgent:       { color: 0xE74C3C, duration: 280 },
+      urgent:       { color: 0xE74C3C, duration: 140 },
       paying:       { color: 0xFFD700, duration: 580 },
       kitchen_ready:{ color: 0xFF6B35, duration: 480 },
       requesting:   { color: 0x3498DB, duration: 680 },
-      dirty:        { color: 0x888888, duration: 900 },
+      dirty:        { color: 0xC4823A, duration: 900 },
     };
 
     const cfg = configs[priority];
-    this.drawArrow(cfg.color);
+    this.drawArrow(cfg.color, priority === 'urgent');
     this.actionArrow.setAlpha(0.95);
     this.actionArrow.setScale(this.arrowBaseScale);
     this.actionArrow.setVisible(true);
 
     const s = this.arrowBaseScale;
-    this.arrowTween = this.scene.tweens.add({
-      targets: this.actionArrow,
-      scale: { from: s * 0.88, to: s * 1.14 },
-      duration: cfg.duration,
-      yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
-    });
+
+    if (priority === 'urgent') {
+      // Urgent: faster scale swing + rapid alpha strobe — conveys panic
+      const urgentScale = s * 1.25;
+      this.arrowTween = this.scene.tweens.add({
+        targets: this.actionArrow,
+        scale: { from: s * 0.92, to: urgentScale },
+        duration: cfg.duration,
+        yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
+      });
+      this.urgentAlphaTween = this.scene.tweens.add({
+        targets: this.actionArrow,
+        alpha: { from: 0.98, to: 0.48 },
+        duration: 180,
+        yoyo: true, repeat: -1, ease: 'Quad.easeInOut',
+      });
+    } else {
+      this.arrowTween = this.scene.tweens.add({
+        targets: this.actionArrow,
+        scale: { from: s * 0.88, to: s * 1.14 },
+        duration: cfg.duration,
+        yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
+      });
+    }
   }
 
   setUrgencyLevel(isPrimary: boolean) {
-    const newBaseScale = isPrimary ? 1.0 : 0.5;
+    const newBaseScale = isPrimary ? 1.0 : 0.35;
     if (this.arrowBaseScale === newBaseScale) return;
     this.arrowBaseScale = newBaseScale;
     if (this.currentPriority !== 'none') {
@@ -132,23 +151,27 @@ export class Table extends Phaser.GameObjects.Container {
   clearPulse() {
     this.currentPriority = 'none';
     if (this.arrowTween) { this.arrowTween.stop(); this.arrowTween = null; }
+    if (this.urgentAlphaTween) { this.urgentAlphaTween.stop(); this.urgentAlphaTween = null; }
+    this.actionArrow.setAlpha(0.95);
     this.actionArrow.setVisible(false);
   }
 
-  private drawArrow(color: number) {
+  private drawArrow(color: number, isUrgent = false) {
     this.actionArrow.clear();
+    const w = isUrgent ? 18 : 15;
+    const h = isUrgent ? 14 : 12;
     // Drop shadow
     this.actionArrow.fillStyle(0x000000, 0.28);
-    this.actionArrow.fillTriangle(-14, -8, 14, -8, 0, 14);
+    this.actionArrow.fillTriangle(-(w - 1), -8, (w - 1), -8, 0, h + 2);
     // Main fill
     this.actionArrow.fillStyle(color, 1.0);
-    this.actionArrow.fillTriangle(-15, -10, 15, -10, 0, 12);
-    // Highlight (upper portion, lighter)
-    this.actionArrow.fillStyle(0xFFFFFF, 0.38);
-    this.actionArrow.fillTriangle(-9, -10, 9, -10, 0, -1);
+    this.actionArrow.fillTriangle(-w, -10, w, -10, 0, h);
+    // Highlight (upper portion)
+    this.actionArrow.fillStyle(0xFFFFFF, isUrgent ? 0.48 : 0.38);
+    this.actionArrow.fillTriangle(-Math.round(w * 0.6), -10, Math.round(w * 0.6), -10, 0, -1);
     // Bold black outline
     this.actionArrow.lineStyle(2.5, 0x1A1A1A, 1.0);
-    this.actionArrow.strokeTriangle(-15, -10, 15, -10, 0, 12);
+    this.actionArrow.strokeTriangle(-w, -10, w, -10, 0, h);
   }
 
   startCleaningProgress(duration: number, onComplete: () => void) {

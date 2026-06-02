@@ -165,23 +165,33 @@ export class BootScene extends Phaser.Scene {
         g.fillTriangle(24, 30, 21, 46, 27, 46);
         g.fillRect(22, 46, 5, 5);
       } else if (isElegant) {
-        // Pearl necklace arc + pendant
-        g.lineStyle(2, 0xFFD700);
+        // Thick gold necklace arc + large pendant — must read at a glance
+        g.lineStyle(3.5, 0xFFD700, 1.0);
         g.beginPath();
-        g.arc(24, 34, 7, 0.3, Math.PI - 0.3, false);
+        g.arc(24, 32, 9, 0.25, Math.PI - 0.25, false);
         g.strokePath();
+        // Large pendant
         g.fillStyle(0xFFD700);
-        g.fillCircle(24, 41, 3);
+        g.fillCircle(24, 42, 5.5);
+        g.fillStyle(0xFFFFFF, 0.45);
+        g.fillCircle(22, 40, 1.8);  // pendant highlight
+        g.lineStyle(1.5, 0xCC9900);
+        g.strokeCircle(24, 42, 5.5);
+      } else if (!isTrendy && !isRomantic && !isElder && !isTeen) {
+        // Casual: horizontal shirt stripes — "I'm dressed casually" silhouette
+        g.fillStyle(0xFFFFFF, 0.28);
+        g.fillRect(bodyX + 2, 32, bodyW - 4, 4);
+        g.fillRect(bodyX + 2, 41, bodyW - 4, 4);
       }
 
-      // Elegant: tall collar wings (before head so head covers center)
+      // Elegant: cream collar wings (contrasting with outfit, clearly formal)
       if (isElegant) {
-        g.fillStyle(variant.outfit);
-        g.fillRoundedRect(15, 22, 7, 10, 2);
-        g.fillRoundedRect(26, 22, 7, 10, 2);
-        g.lineStyle(1.5, 0x1A1A1A, 0.5);
-        g.strokeRoundedRect(15, 22, 7, 10, 2);
-        g.strokeRoundedRect(26, 22, 7, 10, 2);
+        g.fillStyle(0xFFF8F0);  // cream, not outfit color
+        g.fillRoundedRect(13, 21, 9, 13, 2);
+        g.fillRoundedRect(26, 21, 9, 13, 2);
+        g.lineStyle(2, 0xE8D0A0, 0.9);
+        g.strokeRoundedRect(13, 21, 9, 13, 2);
+        g.strokeRoundedRect(26, 21, 9, 13, 2);
       }
 
       // Head
@@ -240,7 +250,19 @@ export class BootScene extends Phaser.Scene {
       }
 
       // Face accessories (on top of hair)
-      if (isElder) {
+      if (isElegant) {
+        // Gold drop earrings — visible below ear on both sides
+        g.fillStyle(0xFFD700);
+        g.fillCircle(8, 20, 4.5);
+        g.fillCircle(40, 20, 4.5);
+        g.lineStyle(1.5, 0xCC9900);
+        g.strokeCircle(8, 20, 4.5);
+        g.strokeCircle(40, 20, 4.5);
+        // Earring highlight
+        g.fillStyle(0xFFFFFF, 0.45);
+        g.fillCircle(7, 19, 1.5);
+        g.fillCircle(39, 19, 1.5);
+      } else if (isElder) {
         // Glasses with temples beyond head edges
         g.lineStyle(2, 0x555555);
         g.strokeCircle(17, 12, 5.5);

@@ -20,22 +20,31 @@ Fast-paced restaurant management game. Premium casual — think Overcooked/Good 
 
 ---
 
-## Current State: VISUAL REBOOT IN PROGRESS — P0 + P1 COMPLETE, QUALITY GATE DONE
+## Current State: VISUAL REBOOT IN PROGRESS — P0 + P1 + P0.5 COMPLETE
 
-**v0.8.0 implemented: P0 (action arrows) + P1 (customer redesign).**
-**Quality Gate complete: P0_P1_REVIEW.md written. Awaiting owner approval for P2.**
+**v0.8.1 implemented: P0.5 hotfixes — all quality gate issues resolved.**
+**Quality Gate + Hotfixes complete. Awaiting owner approval for P2 (Waiter).**
 **VISUAL_REBOOT_PLAN.md approved — implementation underway.**
 **ADDICTION_AND_RETENTION_PLAN.md approved — post-visual-reboot.**
 **GAME_IDENTITY.md approved — strategic reference.**
 
-### Quality Gate Findings (P0_P1_REVIEW.md)
-- REQUESTING / KITCHEN_READY / PAYING: all pass < 1 second recognition
-- URGENT: marginal — red color works, urgency feeling weak (needs strobe/exaggeration in P2)
-- DIRTY: marginal — broom icon carries weight, gray arrow too small at secondary scale
-- Priority hierarchy: works at 1–3 tables; crowded at 4–5 (consider 3:1 scale ratio)
-- 5/7 customer variants identifiable at glance (Trendy + Romantic excellent; Elegant + Casual weak)
-- Mobile validation FAILED — screenshots captured Credits screen, not gameplay; must re-run
-- Recommended roadmap: P2 (Waiter) + combo ×1.0 grayed supplement, then P3 (full HUD)
+### P0.5 Hotfix Changes (v0.8.1)
+- **Urgent state**: Alpha strobe (0.98→0.48, 180ms), faster tween (140ms), larger triangle (±18 vs ±15)
+- **Dirty arrow**: Color 0x888888 → 0xC4823A (warm brown), broom 16px → 20px
+- **Secondary scale**: 0.5 → 0.35 (ratio now 2.9:1 vs 2:1 before)
+- **Elegant**: Gold earrings (r=4.5 circles at ear sides), cream collar wings, thick necklace (3.5px), large pendant (r=5.5)
+- **Casual**: Horizontal white stripes on body (classic casual t-shirt silhouette)
+- **Mobile fix**: Using `window.game.scene.start('GameScene')` directly in validation — confirmed gameplay at 390×844
+- **HUD documented**: Combo invisible at ×1.0 (text=""); fix deferred to P3
+
+### P0.5 Quality Gate Status
+- URGENT: ✅ FIXED — strobe + larger + faster = viscerally alarming
+- DIRTY: ✅ IMPROVED — brown-amber arrow, larger broom
+- 5-table density: ✅ FIXED — primary 0.91 vs secondary 0.34 (2.7:1 ratio)
+- Elegant silhouette: ✅ IMPROVED — earrings + cream collar + thick necklace
+- Casual silhouette: ✅ IMPROVED — horizontal stripes
+- Mobile gameplay: ✅ CONFIRMED — 390×844 works correctly
+- Combo invisible: DOCUMENTED (P3 scope)
 
 ### P0/P1 Key Changes (v0.8.0)
 - Action arrow (▼): scene-level Graphics depth 15, always ≥0.95 alpha, scale pulse only. Replaces invisible pulse ring.

@@ -1,5 +1,34 @@
 # CHANGELOG
 
+## v0.8.1 — P0.5 Hotfix Phase (2026-06-02)
+### Task 1 — Urgent State
+- Arrow drawn 20% wider (±18 vs ±15) when urgent, taller tip (14 vs 12px)
+- Scale tween: duration 140ms (was 280ms), range 0.92→1.25 (was 0.88→1.14)
+- Alpha strobe added: 0.98→0.48 at 180ms yoyo, repeat -1 — visceral panic signal
+- `urgentAlphaTween` field + cleanup in `clearPulse()`
+
+### Task 2 — Dirty Table
+- Arrow color: 0x888888 (gray) → 0xC4823A (warm brown-amber)
+- Broom icon: 16px → 20px
+
+### Task 3 — High Density Readability
+- Secondary arrow base scale: 0.5 → 0.35 (~2.9:1 ratio vs old 2:1)
+- Measured: primary 0.91 vs secondary 0.34 at 5 active tables
+
+### Task 4 — Customer Silhouettes
+- **Elegant**: Gold drop earrings (r=4.5, below ears on both sides), cream collar wings (was outfit-color), necklace arc thicker (3.5px, was 2px), pendant r=5.5 (was r=3)
+- **Casual**: Two horizontal white stripe bands on body (0.28 alpha) — casual t-shirt silhouette
+
+### Task 5 — Mobile Validation
+- Fix: use `window.game.scene.start('GameScene')` directly instead of button-click
+- Confirmed: 390×844 renders gameplay correctly. Timer, score, arrows, names all readable.
+- Mobile urgent arrow validated: alpha strobe confirmed running at 390×844.
+
+### Task 6 — HUD Evaluation (documented only)
+- Confirmed: score + timer always visible
+- Confirmed: combo text is EMPTY STRING at ×1.0 — invisible to player for first 2+ customers
+- Not fixed: deferred to P3 (HUD redesign)
+
 ## v0.8.0 — Quality Gate Review (2026-06-02)
 ### P0_P1_REVIEW.md — Post-implementation quality gate
 - Validated all 5 table states: REQUESTING/KITCHEN_READY/PAYING pass, URGENT/DIRTY marginal

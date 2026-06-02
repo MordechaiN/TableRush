@@ -1,12 +1,12 @@
 # PROJECT STATUS
 
 **Last Updated:** 2026-06-02
-**Current Version:** v0.8.0
+**Current Version:** v0.8.1
 
 ---
 
 ## Current Focus
-VISUAL REBOOT — P0 and P1 complete. Quality Gate review complete (P0_P1_REVIEW.md). Awaiting owner approval to proceed to P2.
+VISUAL REBOOT — P0 + P1 + P0.5 hotfixes complete. P0_P1_REVIEW.md + P0_5_HOTFIX_REPORT.md done. Awaiting owner approval to proceed to P2 (Waiter redesign).
 
 ## Design Documents Status (all approved)
 - [x] VISUAL_REBOOT_PLAN.md — approved, in progress
@@ -17,6 +17,7 @@ VISUAL REBOOT — P0 and P1 complete. Quality Gate review complete (P0_P1_REVIEW
 - [x] P0: Action arrow indicator — depth-15 scene arrow, scale pulse, 5 colors, primary/secondary scale
 - [x] P1: Customer redesign — 48×72px, r=14 head, 2.5px outlines, r=3 eyes+highlight, 44×8 patience bar, name banners
 - [x] Quality Gate: P0_P1_REVIEW.md complete — 6/10 pass, 2 marginal, mobile unconfirmed
+- [x] P0.5 Hotfix: Urgent strobe, dirty amber, secondary 0.35, Elegant earrings+collar, Casual stripes, mobile confirmed
 - [ ] P2: Waiter redesign (larger, emotion visible) ← NEXT (pending approval)
 - [ ] P3: HUD redesign (combo always visible)
 - [ ] P4: Table redesign (clean cloth, numbered)

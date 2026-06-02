@@ -1,5 +1,45 @@
 # TEST REPORT
 
+## v0.8.1 — P0.5 Hotfix — 2026-06-02
+
+### Build & Type Check
+| Check | Result | Notes |
+|-------|--------|-------|
+| `tsc` (TypeScript strict) | ✅ PASS | 0 errors |
+| `vite build` | ✅ PASS | 61.83 kB game bundle |
+
+### P0.5 Fixes Verified
+| Fix | Result | Evidence |
+|-----|--------|----------|
+| Urgent alpha strobe (0.98→0.48) | ✅ PASS | `alpha: 0.58` captured mid-strobe in validation |
+| Urgent tween 140ms | ✅ PASS | Code reviewed |
+| Urgent arrow ±18 (was ±15) | ✅ PASS | Code reviewed |
+| Dirty color 0xC4823A | ✅ PASS | Visible in dirty_forced.png |
+| Broom icon 20px | ✅ PASS | Code reviewed |
+| Secondary base scale 0.35 | ✅ PASS | Measured 0.34 at 5 tables |
+| Primary/secondary ratio 2.7:1 | ✅ PASS | 0.91/0.34 = 2.68 |
+| Elegant earrings (r=4.5) | ✅ PASS | Visible in elegant_new.png |
+| Elegant cream collar wings | ✅ PASS | Visible in casual_next.png |
+| Elegant thick necklace (3.5px) | ✅ PASS | Code reviewed |
+| Casual horizontal stripes | ✅ PASS | Visible in casual_next.png |
+| Mobile 390×844 gameplay confirmed | ✅ PASS | mob_start/three/urgent.png |
+| Combo text at ×1.0 = "" | ✅ CONFIRMED ISSUE | HUD eval JSON |
+
+### Mobile Validation (390×844)
+| Check | Result |
+|-------|--------|
+| Scene: GameScene active | ✅ PASS |
+| Timer visible | ✅ PASS |
+| Score visible | ✅ PASS |
+| Kitchen labels visible | ✅ PASS |
+| Arrow on first customer | ✅ PASS |
+| Name banner readable | ✅ PASS |
+| Patience bar visible | ✅ PASS |
+| Urgent arrow dominant | ✅ PASS |
+| Primary/secondary ratio correct | ✅ PASS |
+
+---
+
 ## v0.8.0 Quality Gate — 2026-06-02
 
 ### Build & Type Check

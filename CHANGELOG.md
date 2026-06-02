@@ -1,5 +1,21 @@
 # CHANGELOG
 
+## GAME IDENTITY — 2026-06-02
+### Design Document Created (no implementation — awaiting approval)
+- **GAME_IDENTITY.md**: Full identity discovery document
+  - Section 1: Competitive positioning — why TableRush vs Diner Dash / Overcooked / PlateUp / Cook Serve Delicious (each serves a different player need; TableRush does not compete directly)
+  - Section 2: Unique fantasy — "Grace under pressure: the most capable person in the room, making it look effortless." Player is a performer, not a survivor or manager
+  - Section 3: Elevator pitch (13 words): "TableRush: Be the best waiter in the room. Three minutes. Every customer watching."
+  - Section 4: Steam descriptions — tagline (~30 words), medium (~120 words), long (~300 words)
+  - Section 5: 20 memorable moments — 1-second save, first TABLE MASTER, impossible save, personal best from nowhere, combo break at ×2.5, full-house management
+  - Section 6: Emotional arc per session — Calm readiness → Engaged concentration/Flow → High-stakes presence → Earned rest
+  - Section 7: 20 realistic player reactions (what real players say out loud)
+  - Section 8: 10 visual signatures — top-down floor with five tables and one moving character, colored ▼ above table, patience pill, warm cream floor, waiter mid-movement, food emoji bubble, kitchen in upper third, combo counter, floating score pop
+  - Section 9: 30-second trailer described frame-by-frame (cold open, first customer, loop, pressure, close call, flow state, close)
+  - Section 10: Final identity — "TableRush is a three-minute performance. The specific, repeatable pleasure of being exceptionally good at something under pressure, in public, in real time."
+
+---
+
 ## ADDICTION & RETENTION PLAN — 2026-06-02
 ### Design Document Created (no implementation — awaiting approval)
 - **ADDICTION_AND_RETENTION_PLAN.md**: Retention and engagement design

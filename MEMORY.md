@@ -20,12 +20,18 @@ Fast-paced restaurant management game. Premium casual — think Overcooked/Good 
 
 ---
 
-## Current State: DESIGN PHASE — TWO PLANS AWAITING APPROVAL
+## Current State: DESIGN PHASE — THREE PLANS AWAITING APPROVAL
 
 **v0.6.0 (art direction reboot) is fully implemented.**
 **v0.7.0 Phase 1 implemented but visual expression insufficient (validated).**
 **VISUAL_REBOOT_PLAN.md written — awaiting approval.**
 **ADDICTION_AND_RETENTION_PLAN.md written — awaiting approval.**
+**GAME_IDENTITY.md written — awaiting approval.**
+
+### Game Identity (from GAME_IDENTITY.md)
+**Unique Fantasy:** "Grace under pressure — being the most capable person in the room, and making it look effortless."
+**Elevator Pitch (13 words):** "TableRush: Be the best waiter in the room. Three minutes. Every customer watching."
+**Final Identity:** "TableRush is a three-minute performance. Not a restaurant sim. Not a time management puzzle. A performance — the specific, repeatable pleasure of being exceptionally good at something under pressure, in public, in real time."
 
 ### North Star (from ADDICTION_AND_RETENTION_PLAN.md)
 > "I am the most capable person in this room — and the room knows it."
@@ -115,6 +121,10 @@ VISUAL_REDESIGN.md      — Ambient motion, customer personality, food presentat
 BALANCE_REDESIGN.md     — Patience values, spawn caps, score formula, tips
 PROGRESSION_REDESIGN.md — XP visibility, table unlocks, shop, daily challenges
 RETENTION_REDESIGN.md   — Near-miss, last-session display, streaks, achievements
+VISUAL_REBOOT_PLAN.md   — Full visual audit; Stylized Cartoon direction chosen; P0–P9 roadmap
+ADDICTION_AND_RETENTION_PLAN.md — Psychology of restaurant addiction; 10 hooks; Top 5 features
+GAME_IDENTITY.md        — Competitive positioning, unique fantasy, elevator pitch, Steam descriptions,
+                          memorable moments, emotional arc, visual signatures, trailer, final identity
 ```
 
 ### Core Fantasy (from RESTAURANT_FANTASY.md)

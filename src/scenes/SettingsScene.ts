@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { COLORS, GAME_WIDTH, GAME_HEIGHT } from '../config/GameConfig';
+import { ProgressionSystem } from '../systems/ProgressionSystem';
 
 export class SettingsScene extends Phaser.Scene {
   private sfxOn = true;
@@ -13,11 +14,11 @@ export class SettingsScene extends Phaser.Scene {
     this.sfxOn = localStorage.getItem('tablerush_sfx') !== 'off';
     this.musicOn = localStorage.getItem('tablerush_music') !== 'off';
 
-    this.add.rectangle(cx, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, COLORS.BG_DARK);
-    this.add.rectangle(cx, 0, GAME_WIDTH, 4, COLORS.ACCENT).setOrigin(0.5, 0);
+    this.add.rectangle(cx, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, COLORS.FLOOR_WARM);
+    this.add.rectangle(cx, 2, GAME_WIDTH, 4, COLORS.UI_ORANGE).setOrigin(0.5, 0);
 
-    this.add.text(cx, 80, 'SETTINGS', {
-      fontSize: '42px', fontFamily: 'Arial Black', color: COLORS.TEXT_ACCENT, fontStyle: 'bold',
+    this.add.text(cx, 80, '⚙️ SETTINGS', {
+      fontSize: '36px', fontFamily: 'Arial Black', color: COLORS.TEXT_DARK, fontStyle: 'bold',
     }).setOrigin(0.5);
 
     this.renderToggle(cx, 260, 'Sound Effects', this.sfxOn, (val) => {
@@ -30,20 +31,20 @@ export class SettingsScene extends Phaser.Scene {
       localStorage.setItem('tablerush_music', val ? 'on' : 'off');
     });
 
-    this.add.text(cx, 480, 'Reset High Score', {
-      fontSize: '18px', fontFamily: 'Arial', color: COLORS.TEXT_DIM,
-    }).setOrigin(0.5).setInteractive({ useHandCursor: true })
-      .on('pointerdown', () => {
-        localStorage.removeItem('tablerush_highscore');
-        this.showToast('High score reset!');
-      });
+    const resetTxt = this.add.text(cx, 480, '🗑️  Reset Progress', {
+      fontSize: '18px', fontFamily: 'Arial', color: COLORS.TEXT_RED,
+    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    resetTxt.on('pointerdown', () => {
+      ProgressionSystem.resetHighScore();
+      this.showToast('Progress reset!');
+    });
 
-    this.makeBtn(cx, GAME_HEIGHT - 40, '← BACK', COLORS.DARK_GRAY, () => this.scene.start('MainMenuScene'));
+    this.makeBtn(cx, GAME_HEIGHT - 50, '← BACK', () => this.scene.start('MainMenuScene'));
   }
 
   private renderToggle(x: number, y: number, label: string, value: boolean, onChange: (v: boolean) => void) {
     this.add.text(x - 60, y, label, {
-      fontSize: '22px', fontFamily: 'Arial', color: COLORS.TEXT_LIGHT,
+      fontSize: '22px', fontFamily: 'Arial', color: COLORS.TEXT_DARK,
     }).setOrigin(1, 0.5);
 
     const bg = this.add.graphics();
@@ -60,27 +61,27 @@ export class SettingsScene extends Phaser.Scene {
 
   private drawToggle(bg: Phaser.GameObjects.Graphics, knob: Phaser.GameObjects.Arc, x: number, y: number, on: boolean) {
     bg.clear();
-    bg.fillStyle(on ? COLORS.GREEN : COLORS.GRAY);
+    bg.fillStyle(on ? COLORS.UI_GREEN : 0xAAAAAA);
     bg.fillRoundedRect(x - 32, y - 16, 64, 32, 16);
     knob.setPosition(on ? x + 16 : x - 16, y);
   }
 
   private showToast(msg: string) {
     const t = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2, msg, {
-      fontSize: '20px', fontFamily: 'Arial Black', color: COLORS.TEXT_LIGHT,
-      backgroundColor: '#2c3e50', padding: { x: 16, y: 8 },
+      fontSize: '20px', fontFamily: 'Arial Black', color: '#FFFFFF',
+      backgroundColor: '#333333', padding: { x: 16, y: 8 },
     }).setOrigin(0.5).setDepth(100);
     this.tweens.add({ targets: t, alpha: 0, delay: 1200, duration: 500, onComplete: () => t.destroy() });
   }
 
-  private makeBtn(x: number, y: number, label: string, color: number, cb: () => void) {
+  private makeBtn(x: number, y: number, label: string, cb: () => void) {
     const g = this.add.graphics();
-    g.fillStyle(color);
-    g.fillRoundedRect(x - 120, y - 20, 240, 40, 10);
+    g.fillStyle(COLORS.UI_ORANGE);
+    g.fillRoundedRect(x - 120, y - 22, 240, 44, 10);
     this.add.text(x, y, label, {
-      fontSize: '18px', fontFamily: 'Arial Black', color: COLORS.TEXT_LIGHT,
+      fontSize: '20px', fontFamily: 'Arial Black', color: '#FFFFFF',
     }).setOrigin(0.5);
-    const zone = this.add.zone(x, y, 240, 40).setInteractive({ useHandCursor: true });
+    const zone = this.add.zone(x, y, 240, 44).setInteractive({ useHandCursor: true });
     zone.on('pointerdown', cb);
   }
 }

@@ -2,41 +2,85 @@ export const GAME_WIDTH = 480;
 export const GAME_HEIGHT = 854;
 
 export const COLORS = {
-  BG_DARK: 0x1a1a2e,
-  BG_MID: 0x16213e,
-  ACCENT: 0xe94560,
-  ACCENT2: 0xf5a623,
-  GREEN: 0x2ecc71,
-  BLUE: 0x3498db,
-  PURPLE: 0x9b59b6,
-  WHITE: 0xffffff,
-  GRAY: 0x7f8c8d,
-  DARK_GRAY: 0x2c3e50,
-  TABLE_FILL: 0x2c3e50,
-  TABLE_STROKE: 0x3498db,
-  FLOOR: 0x1e2d40,
-  TEXT_LIGHT: '#ffffff',
-  TEXT_DIM: '#95a5a6',
-  TEXT_ACCENT: '#e94560',
-  TEXT_GOLD: '#f5a623',
+  // Floor / environment
+  FLOOR_WARM:    0xF5E6C8,
+  FLOOR_ALT:     0xEDD9A3,
+  WALL:          0xFFF8F0,
+  WALL_ACCENT:   0xC17B3A,
+
+  // Table
+  TABLE_BODY:    0x8B4513,
+  TABLE_TOP:     0xA0522D,
+  TABLE_CLOTH:   0xFDFAF6,
+  CHAIR:         0x5C3317,
+
+  // Characters
+  WAITER_JACKET: 0x1A237E,
+  WAITER_SHIRT:  0xFFFFFF,
+  WAITER_SKIN:   0xFDA07A,
+
+  // UI
+  UI_ORANGE:     0xFF6B35,
+  UI_GOLD:       0xFFD700,
+  UI_GREEN:      0x4CAF50,
+  UI_RED:        0xF44336,
+  UI_BLUE:       0x2196F3,
+
+  // Text
+  TEXT_DARK:     '#2C1810',
+  TEXT_LIGHT:    '#FFFFFF',
+  TEXT_GOLD:     '#FFD700',
+  TEXT_ORANGE:   '#FF6B35',
+  TEXT_RED:      '#F44336',
+  TEXT_GREEN:    '#4CAF50',
+
+  // Legacy aliases used in older code paths
+  WHITE:         0xFFFFFF,
+  BG_DARK:       0xFFF8F0,
 };
 
-export const CUSTOMER_COLORS = [0xe74c3c, 0x3498db, 0x2ecc71, 0xf39c12, 0x9b59b6, 0x1abc9c, 0xe67e22];
-
-export const MENU_ITEMS = [
-  { id: 0, name: 'Burger', emoji: '🍔', price: 12, cookTime: 3000, color: 0xf39c12 },
-  { id: 1, name: 'Pizza',  emoji: '🍕', price: 15, cookTime: 4000, color: 0xe74c3c },
-  { id: 2, name: 'Salad',  emoji: '🥗', price: 10, cookTime: 2000, color: 0x2ecc71 },
-  { id: 3, name: 'Pasta',  emoji: '🍝', price: 13, cookTime: 3500, color: 0xf5a623 },
-  { id: 4, name: 'Sushi',  emoji: '🍣', price: 18, cookTime: 2500, color: 0x3498db },
+export const CUSTOMER_VARIANTS = [
+  { outfit: 0xCC2244, hair: 0x2C1810, accessory: 'necklace', name: 'Elegant' },
+  { outfit: 0x1A3A6B, hair: 0x6B3A1F, accessory: 'briefcase', name: 'Business' },
+  { outfit: 0x2D7A2D, hair: 0xF5C842, accessory: 'none', name: 'Casual' },
+  { outfit: 0xE06520, hair: 0x1A1A1A, accessory: 'sunglasses', name: 'Trendy' },
+  { outfit: 0x7B3FA0, hair: 0x1A1A1A, accessory: 'flower', name: 'Romantic' },
+  { outfit: 0x1A7A7A, hair: 0xAAAAAA, accessory: 'glasses', name: 'Elder' },
+  { outfit: 0xC8B400, hair: 0xCC2222, accessory: 'cap', name: 'Teen' },
 ];
 
-export const DIFFICULTY = {
-  INITIAL_SPAWN_INTERVAL: 6000,
-  MIN_SPAWN_INTERVAL: 2500,
-  SPAWN_RAMP_RATE: 0.97,
-  INITIAL_PATIENCE: 25000,
-  MIN_PATIENCE: 10000,
-  PATIENCE_RAMP_RATE: 0.98,
-  SCORE_MULTIPLIER_INCREMENT: 0.1,
-};
+export const MENU_ITEMS = [
+  { id: 0, name: 'Salad',  emoji: '🥗', price: 10, cookTime: 1500 },
+  { id: 1, name: 'Burger', emoji: '🍔', price: 12, cookTime: 2500 },
+  { id: 2, name: 'Pasta',  emoji: '🍝', price: 13, cookTime: 3000 },
+  { id: 3, name: 'Sushi',  emoji: '🍣', price: 18, cookTime: 2000 },
+  { id: 4, name: 'Pizza',  emoji: '🍕', price: 15, cookTime: 4000 },
+];
+
+// Time-based difficulty tiers (0–60s, 60–120s, 120–180s)
+export const DIFFICULTY_TIERS = [
+  { maxTime: 60,  patienceMin: 90000, patienceMax: 120000, spawnStart: 8000, spawnEnd: 7000, penalty: 50 },
+  { maxTime: 120, patienceMin: 60000, patienceMax:  90000, spawnStart: 5500, spawnEnd: 4500, penalty: 100 },
+  { maxTime: 180, patienceMin: 45000, patienceMax:  65000, spawnStart: 4000, spawnEnd: 3500, penalty: 150 },
+];
+
+// Combo milestones
+export const COMBO_MILESTONES = [
+  { min: 0,  multiplier: 1.0, label: '' },
+  { min: 3,  multiplier: 1.5, label: 'GOOD SERVICE' },
+  { min: 5,  multiplier: 2.0, label: 'HOT STREAK 🔥' },
+  { min: 8,  multiplier: 2.5, label: 'UNSTOPPABLE 🔥🔥' },
+  { min: 10, multiplier: 3.0, label: 'TABLE MASTER 💫' },
+];
+
+// Speed multiplier based on patience % remaining at delivery
+export const SPEED_MULTIPLIERS = [
+  { minPct: 0.75, multiplier: 2.0, label: '⚡⚡ LIGHTNING' },
+  { minPct: 0.50, multiplier: 1.5, label: '⚡ FAST' },
+  { minPct: 0.25, multiplier: 1.0, label: '' },
+  { minPct: 0.00, multiplier: 0.75, label: '🐢 SLOW' },
+];
+
+export const GAME_DURATION = 180; // seconds
+export const MAX_TABLES = 5;
+export const CLEAN_TIME = 1500; // ms to clean a table

@@ -1,12 +1,12 @@
 # PROJECT STATUS
 
-**Last Updated:** 2026-06-01
-**Current Version:** 0.1.1
+**Last Updated:** 2026-06-02
+**Current Version:** v0.2.0 (IN PROGRESS)
 
 ---
 
 ## Current Focus
-AWAITING USER APPROVAL on redesign documents before implementing v0.2.0.
+Implementing v0.2.0 — full redesign of gameplay, balance, and visuals.
 
 ## Completed Tasks
 - [x] Project scaffold (Vite + TypeScript + Phaser 3)
@@ -20,25 +20,24 @@ AWAITING USER APPROVAL on redesign documents before implementing v0.2.0.
 - [x] Procedural textures (no external assets)
 - [x] GitHub Actions CI/CD + GitHub Pages deploy (modern actions/deploy-pages)
 - [x] GitHub Pages deployment fixed (base path `/TableRush/` via VITE_BASE_PATH)
-- [x] All documentation (MEMORY, STATUS, CHANGELOG, ROADMAP, KNOWN_ISSUES, TEST_REPORT)
-- [x] VALIDATION_REPORT.md — 20/20 PASS, 0 console errors, screenshots taken
-- [x] GAMEPLAY_REDESIGN.md — created, awaiting approval
-- [x] VISUAL_REDESIGN.md — created, awaiting approval
-- [x] BALANCE_REDESIGN.md — created, awaiting approval
+- [x] VALIDATION_REPORT.md — 20/20 PASS, 0 console errors
+- [x] GAMEPLAY_REDESIGN.md — APPROVED
+- [x] VISUAL_REDESIGN.md — APPROVED
+- [x] BALANCE_REDESIGN.md — APPROVED
+- [x] MEMORY.md updated for v0.2.0 architecture
 
-## Current Task
-Awaiting approval on redesign docs.
-
-## Next Task (after approval)
-v0.2.0 — Full redesign implementation:
-1. New visual system (warm palette, layered procedural art)
-2. New customer lifecycle (auto-order, correct angry behavior)
-3. Balance rebalance (90–120s patience, speed bonuses, star rating)
-4. Priority pulse system (player always knows what to do)
-5. Tutorial (first 30 seconds)
+## In Progress
+- [ ] `src/config/GameConfig.ts` — full rewrite (warm palette, difficulty tiers, combo milestones)
+- [ ] `src/systems/ProgressionSystem.ts` — NEW FILE
+- [ ] `src/scenes/BootScene.ts` — warm art style rewrite
+- [ ] `src/entities/Customer.ts` — new states + mood faces
+- [ ] `src/entities/Table.ts` — new visual + priority pulse
+- [ ] `src/entities/Player.ts` — layered waiter + tray display
+- [ ] `src/scenes/GameScene.ts` — kitchen queue, auto-order, tutorial, speed multiplier
+- [ ] `src/scenes/GameOverScene.ts` — stars, XP bar, level progress
+- [ ] `src/scenes/MainMenuScene.ts` — warm palette + level display
 
 ## Known Blockers
-- Redesign docs require user approval before any code changes
 - GitHub Pages requires one-time settings change: Settings → Pages → Source → GitHub Actions
 
 ## Required User Action

@@ -1,93 +1,94 @@
 import Phaser from 'phaser';
 import { COLORS, GAME_WIDTH, GAME_HEIGHT } from '../config/GameConfig';
+import { ProgressionSystem } from '../systems/ProgressionSystem';
 
 export class MainMenuScene extends Phaser.Scene {
   constructor() { super({ key: 'MainMenuScene' }); }
 
   create() {
     const cx = GAME_WIDTH / 2;
+    const prog = ProgressionSystem.getData();
 
-    // Background
-    this.add.rectangle(cx, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, COLORS.BG_DARK);
+    // Warm background
+    this.add.rectangle(cx, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, COLORS.FLOOR_WARM);
 
-    // Decorative top strip
-    this.add.rectangle(cx, 0, GAME_WIDTH, 4, COLORS.ACCENT).setOrigin(0.5, 0);
+    // Tile pattern (lighter)
+    for (let row = 0; row < 14; row++) {
+      for (let col = 0; col < 7; col++) {
+        if ((row + col) % 2 === 0) {
+          this.add.rectangle(col * 70 + 35, row * 70 + 35, 69, 69, COLORS.FLOOR_ALT, 0.6);
+        }
+      }
+    }
 
-    // Logo area
-    const logoY = 160;
+    // Top wall accent
+    this.add.rectangle(cx, 45, GAME_WIDTH, 90, COLORS.WALL_ACCENT);
+
+    // Logo
+    const logoY = 180;
     this.add.text(cx, logoY, 'TABLE', {
-      fontSize: '72px',
-      fontFamily: 'Arial Black, Arial',
-      color: COLORS.TEXT_LIGHT,
-      fontStyle: 'bold',
+      fontSize: '72px', fontFamily: 'Arial Black',
+      color: COLORS.TEXT_LIGHT, fontStyle: 'bold',
     }).setOrigin(0.5);
 
-    this.add.text(cx, logoY + 72, 'RUSH', {
-      fontSize: '72px',
-      fontFamily: 'Arial Black, Arial',
-      color: COLORS.TEXT_ACCENT,
-      fontStyle: 'bold',
+    this.add.text(cx, logoY + 74, 'RUSH', {
+      fontSize: '72px', fontFamily: 'Arial Black',
+      color: COLORS.TEXT_GOLD, fontStyle: 'bold',
     }).setOrigin(0.5);
 
-    this.add.text(cx, logoY + 138, 'Fast-Paced Restaurant Service', {
-      fontSize: '18px',
-      fontFamily: 'Arial',
-      color: COLORS.TEXT_DIM,
+    this.add.text(cx, logoY + 146, 'Fast-Paced Restaurant Service', {
+      fontSize: '16px', fontFamily: 'Arial', color: COLORS.TEXT_LIGHT,
     }).setOrigin(0.5);
 
-    // Animated decoration
-    const dec1 = this.add.text(cx - 140, logoY + 80, '🍔', { fontSize: '32px' }).setOrigin(0.5);
-    const dec2 = this.add.text(cx + 140, logoY + 80, '🍕', { fontSize: '32px' }).setOrigin(0.5);
-    this.tweens.add({ targets: dec1, y: logoY + 70, duration: 1200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
-    this.tweens.add({ targets: dec2, y: logoY + 90, duration: 1400, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    // Decorative food icons
+    const d1 = this.add.text(cx - 150, logoY + 74, '🍔', { fontSize: '34px' }).setOrigin(0.5);
+    const d2 = this.add.text(cx + 150, logoY + 74, '🍕', { fontSize: '34px' }).setOrigin(0.5);
+    this.tweens.add({ targets: d1, y: logoY + 64, duration: 1200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    this.tweens.add({ targets: d2, y: logoY + 84, duration: 1400, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+
+    // Level / high score display
+    const statsY = 400;
+    const statBg = this.add.graphics();
+    statBg.fillStyle(0x00000020, 0.25);
+    statBg.fillRoundedRect(cx - 170, statsY - 20, 340, 50, 12);
+
+    this.add.text(cx - 80, statsY + 5, `🏆 ${prog.highScore}`, {
+      fontSize: '18px', fontFamily: 'Arial Black', color: COLORS.TEXT_GOLD,
+    }).setOrigin(0.5);
+
+    this.add.text(cx, statsY + 5, '|', { fontSize: '16px', color: '#DDDDDD' }).setOrigin(0.5);
+
+    this.add.text(cx + 80, statsY + 5, `Level ${prog.level}`, {
+      fontSize: '18px', fontFamily: 'Arial Black', color: COLORS.TEXT_LIGHT,
+    }).setOrigin(0.5);
+
+    if (prog.bestStars > 0) {
+      let starsStr = '';
+      for (let i = 0; i < prog.bestStars; i++) starsStr += '⭐';
+      this.add.text(cx, statsY + 32, `Best: ${starsStr}`, {
+        fontSize: '14px', color: COLORS.TEXT_GOLD,
+      }).setOrigin(0.5);
+    }
 
     // Buttons
-    const btnY = 440;
-    const btnSpacing = 80;
-
-    this.makeButton(cx, btnY, 'PLAY', COLORS.ACCENT, () => this.scene.start('GameScene'));
-    this.makeButton(cx, btnY + btnSpacing, 'SETTINGS', COLORS.DARK_GRAY, () => this.scene.start('SettingsScene'));
-    this.makeButton(cx, btnY + btnSpacing * 2, 'CREDITS', COLORS.DARK_GRAY, () => this.scene.start('CreditsScene'));
-
-    // High score display
-    const hs = localStorage.getItem('tablerush_highscore') ?? '0';
-    this.add.text(cx, btnY + btnSpacing * 3 + 30, `Best Score: ${hs}`, {
-      fontSize: '22px',
-      fontFamily: 'Arial',
-      color: COLORS.TEXT_GOLD,
-    }).setOrigin(0.5);
+    const btnY = 490;
+    this.makeBtn(cx, btnY, '▶  PLAY', 'btn_orange', () => this.scene.start('GameScene'));
+    this.makeBtn(cx, btnY + 68, 'SETTINGS', 'btn_green', () => this.scene.start('SettingsScene'));
+    this.makeBtn(cx, btnY + 136, 'CREDITS', 'btn_green', () => this.scene.start('CreditsScene'));
 
     // Version
-    this.add.text(cx, GAME_HEIGHT - 20, 'v0.1.0', {
-      fontSize: '14px',
-      fontFamily: 'Arial',
-      color: COLORS.TEXT_DIM,
+    this.add.text(cx, GAME_HEIGHT - 16, 'v0.2.0', {
+      fontSize: '12px', fontFamily: 'Arial', color: '#AAAAAA',
     }).setOrigin(0.5);
-
-    // Pulse animation on PLAY button hint
-    const hint = this.add.text(cx, btnY - 40, '▼ Tap to Begin ▼', {
-      fontSize: '16px',
-      fontFamily: 'Arial',
-      color: COLORS.TEXT_DIM,
-    }).setOrigin(0.5);
-    this.tweens.add({ targets: hint, alpha: 0.2, duration: 900, yoyo: true, repeat: -1 });
   }
 
-  private makeButton(x: number, y: number, label: string, color: number, cb: () => void) {
-    const btn = this.add.graphics();
-    btn.fillStyle(color);
-    btn.fillRoundedRect(x - 140, y - 26, 280, 52, 12);
-
-    const txt = this.add.text(x, y, label, {
-      fontSize: '24px',
-      fontFamily: 'Arial Black, Arial',
-      color: COLORS.TEXT_LIGHT,
-      fontStyle: 'bold',
-    }).setOrigin(0.5);
-
-    const zone = this.add.zone(x, y, 280, 52).setInteractive({ useHandCursor: true });
-    zone.on('pointerover', () => { btn.clear(); btn.fillStyle(color, 0.7); btn.fillRoundedRect(x - 140, y - 26, 280, 52, 12); txt.setScale(1.05); });
-    zone.on('pointerout', () => { btn.clear(); btn.fillStyle(color); btn.fillRoundedRect(x - 140, y - 26, 280, 52, 12); txt.setScale(1); });
-    zone.on('pointerdown', cb);
+  private makeBtn(x: number, y: number, label: string, tex: string, cb: () => void) {
+    const btn = this.add.image(x, y, tex).setInteractive({ useHandCursor: true });
+    btn.on('pointerdown', cb);
+    btn.on('pointerover', () => btn.setAlpha(0.85));
+    btn.on('pointerout', () => btn.setAlpha(1));
+    this.add.text(x, y, label, {
+      fontSize: '22px', fontFamily: 'Arial Black', color: '#FFFFFF', fontStyle: 'bold',
+    }).setOrigin(0.5).setDepth(1);
   }
 }

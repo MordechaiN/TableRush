@@ -7,11 +7,11 @@ export class CreditsScene extends Phaser.Scene {
   create() {
     const cx = GAME_WIDTH / 2;
 
-    this.add.rectangle(cx, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, COLORS.BG_DARK);
-    this.add.rectangle(cx, 0, GAME_WIDTH, 4, COLORS.ACCENT).setOrigin(0.5, 0);
+    this.add.rectangle(cx, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, COLORS.FLOOR_WARM);
+    this.add.rectangle(cx, 2, GAME_WIDTH, 4, COLORS.UI_ORANGE).setOrigin(0.5, 0);
 
-    this.add.text(cx, 80, 'CREDITS', {
-      fontSize: '42px', fontFamily: 'Arial Black', color: COLORS.TEXT_ACCENT, fontStyle: 'bold',
+    this.add.text(cx, 80, '🎖️ CREDITS', {
+      fontSize: '36px', fontFamily: 'Arial Black', color: COLORS.TEXT_DARK, fontStyle: 'bold',
     }).setOrigin(0.5);
 
     const lines = [
@@ -24,32 +24,32 @@ export class CreditsScene extends Phaser.Scene {
     lines.forEach((line, i) => {
       const y = 200 + i * 100;
       this.add.text(cx, y, line.label, {
-        fontSize: '16px', fontFamily: 'Arial', color: COLORS.TEXT_DIM,
+        fontSize: '16px', fontFamily: 'Arial', color: '#888888',
       }).setOrigin(0.5);
       this.add.text(cx, y + 32, line.value, {
-        fontSize: '24px', fontFamily: 'Arial Black', color: COLORS.TEXT_LIGHT, fontStyle: 'bold',
+        fontSize: '22px', fontFamily: 'Arial Black', color: COLORS.TEXT_DARK, fontStyle: 'bold',
       }).setOrigin(0.5);
     });
 
-    this.add.text(cx, GAME_HEIGHT - 120, 'TableRush v0.1.0', {
-      fontSize: '16px', fontFamily: 'Arial', color: COLORS.TEXT_DIM,
+    this.add.text(cx, GAME_HEIGHT - 100, 'TableRush v0.2.0', {
+      fontSize: '16px', fontFamily: 'Arial', color: '#AAAAAA',
     }).setOrigin(0.5);
 
-    this.add.text(cx, GAME_HEIGHT - 90, '© 2026 Mordechai Neeman', {
-      fontSize: '14px', fontFamily: 'Arial', color: COLORS.TEXT_DIM,
+    this.add.text(cx, GAME_HEIGHT - 75, '© 2026 Mordechai Neeman', {
+      fontSize: '14px', fontFamily: 'Arial', color: '#AAAAAA',
     }).setOrigin(0.5);
 
-    this.makeBtn(cx, GAME_HEIGHT - 40, '← BACK', COLORS.DARK_GRAY, () => this.scene.start('MainMenuScene'));
+    this.makeBtn(cx, GAME_HEIGHT - 40, '← BACK', () => this.scene.start('MainMenuScene'));
   }
 
-  private makeBtn(x: number, y: number, label: string, color: number, cb: () => void) {
+  private makeBtn(x: number, y: number, label: string, cb: () => void) {
     const g = this.add.graphics();
-    g.fillStyle(color);
-    g.fillRoundedRect(x - 120, y - 20, 240, 40, 10);
+    g.fillStyle(COLORS.UI_ORANGE);
+    g.fillRoundedRect(x - 120, y - 22, 240, 44, 10);
     this.add.text(x, y, label, {
-      fontSize: '18px', fontFamily: 'Arial Black', color: COLORS.TEXT_LIGHT,
+      fontSize: '20px', fontFamily: 'Arial Black', color: '#FFFFFF',
     }).setOrigin(0.5);
-    const zone = this.add.zone(x, y, 240, 40).setInteractive({ useHandCursor: true });
+    const zone = this.add.zone(x, y, 240, 44).setInteractive({ useHandCursor: true });
     zone.on('pointerdown', cb);
   }
 }

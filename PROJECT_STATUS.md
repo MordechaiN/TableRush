@@ -1,12 +1,12 @@
 # PROJECT STATUS
 
 **Last Updated:** 2026-06-02
-**Current Version:** v0.5.0
+**Current Version:** v0.6.0
 
 ---
 
 ## Current Focus
-v0.5.0 implemented — restaurant atmosphere pass + walk animation + steam + carry architecture. Awaiting owner review.
+v0.6.0 implemented — art direction reboot. Visual identity established, face bug fixed, all characters improved. Awaiting owner review.
 
 ## Completed Tasks
 - [x] Project scaffold (Vite + TypeScript + Phaser 3)
@@ -41,6 +41,17 @@ v0.5.0 implemented — restaurant atmosphere pass + walk animation + steam + car
 - [x] v0.5.0 — Kitchen zone labels (COOKING / READY)
 - [x] v0.5.0 — Visual texture improvements (player apron, table cloth, kitchen granite)
 - [x] v0.5.0 — CarrySystem.ts architecture (1-item capacity, expandable to 2-3)
+- [x] v0.6.0 — ART_DIRECTION.md / VISUAL_STYLE_GUIDE.md / LAYOUT_GUIDE.md written
+- [x] v0.6.0 — Customer face coordinates fixed (eyeY was −4 on body, now −18 on head)
+- [x] v0.6.0 — Patience bar moved above head (y=−42), pill shape, 36×5px
+- [x] v0.6.0 — Speech bubble improved (shadow, shorter tail, warmer fill, 1.5px border)
+- [x] v0.6.0 — All 7 customer variants: correct skin (#FDBA8C), head+body outlines, ears
+- [x] v0.6.0 — Variant silhouettes: business tie/shoulders, elegant collar+necklace, trendy sunglasses extending, romantic flower, elder glasses+temples, teen cap brim
+- [x] v0.6.0 — Player texture: head+body outlines, ears, apron pocket
+- [x] v0.6.0 — Table: checkered linen cloth pattern
+- [x] v0.6.0 — Kitchen: pot+pan silhouettes on burners
+- [x] v0.6.0 — Menu board (chalkboard) above kitchen counter
+- [x] v0.6.0 — Food plate background when carrying (food_plate texture + plateImage in Player)
 
 ## Known Blockers
 - GitHub Pages requires one-time user action: Settings → Pages → Source → GitHub Actions

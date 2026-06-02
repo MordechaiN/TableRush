@@ -170,6 +170,17 @@ export class GameScene extends Phaser.Scene {
       pool.fillStyle(0xFFFF88, 0.045); pool.fillCircle(lx, 320, 75);
     });
 
+    // ── Menu board (chalkboard on wall above kitchen) ─────────────────────────
+    if (this.textures.exists('menu_board')) {
+      this.add.image(KITCHEN_X, KITCHEN_Y - 54, 'menu_board').setOrigin(0.5).setDepth(2);
+      this.add.text(KITCHEN_X, KITCHEN_Y - 61, "TODAY'S MENU", {
+        fontSize: '8px', fontFamily: 'Arial Black', color: '#FFFFFFBB', fontStyle: 'bold',
+      }).setOrigin(0.5).setDepth(3);
+      this.add.text(KITCHEN_X, KITCHEN_Y - 46, '🥗  🍔  🍝  🍣  🍕', {
+        fontSize: '13px',
+      }).setOrigin(0.5).setDepth(3);
+    }
+
     // ── Kitchen ───────────────────────────────────────────────────────────────
     this.add.image(KITCHEN_X, KITCHEN_Y, 'kitchen').setOrigin(0.5, 0.5).setDepth(2);
 

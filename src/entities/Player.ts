@@ -11,6 +11,7 @@ export class Player extends Phaser.GameObjects.Container {
   private sprite!: Phaser.GameObjects.Image;
   private face!: Phaser.GameObjects.Graphics;
   private trayImage: Phaser.GameObjects.Image | null = null;
+  private plateImage: Phaser.GameObjects.Image | null = null;
   private trayLabel: Phaser.GameObjects.Text | null = null;
   private emotionBadge: Phaser.GameObjects.Text | null = null;
   private walkTween: Phaser.Tweens.Tween | null = null;
@@ -63,12 +64,19 @@ export class Player extends Phaser.GameObjects.Container {
     this.clearCarry();
     this.trayImage = this.scene.add.image(0, -44, 'tray');
     this.add(this.trayImage);
-    this.trayLabel = this.scene.add.text(0, -52, emoji, { fontSize: '18px' }).setOrigin(0.5);
+    // Plate background under the food emoji
+    const plateKey = this.scene.textures.exists('food_plate') ? 'food_plate' : null;
+    if (plateKey) {
+      this.plateImage = this.scene.add.image(0, -55, plateKey);
+      this.add(this.plateImage);
+    }
+    this.trayLabel = this.scene.add.text(0, -53, emoji, { fontSize: '18px' }).setOrigin(0.5);
     this.add(this.trayLabel);
   }
 
   clearCarry() {
     this.trayImage?.destroy(); this.trayImage = null;
+    this.plateImage?.destroy(); this.plateImage = null;
     this.trayLabel?.destroy(); this.trayLabel = null;
   }
 

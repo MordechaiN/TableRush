@@ -1,5 +1,42 @@
 # CHANGELOG
 
+## v0.6.0 — 2026-06-02
+### Art Direction
+- **ART_DIRECTION.md**: Full visual identity doc — Bella Notte Trattoria theme, complete palette (Primary/Environment/Characters/UI), character design rules, state visual language, face placement coordinates
+- **VISUAL_STYLE_GUIDE.md**: Component-level specs — typography, spacing, character proportions, patience bar, bubble, kitchen, UI components, animation timing
+- **LAYOUT_GUIDE.md**: Fixed anchor points — zone map, table positions, kitchen zones, player start, z-order layers, bubble placement, carry tray placement
+
+### Visual Fixes (Breaking Bugs)
+- **Customer face coordinates**: `eyeY` corrected from `-4` (on body!) to `-18` (above head center at y=−16). Faces now appear on the character's head
+- **Angry overlay**: repositioned from body-center to head bounds (y=−26 to y=−6)
+- **Eyebrow positions**: corrected from mid-body to above-eye area (eyeY−5 for angry, eyeY−4 for hungry)
+- **Mouth positions**: all mouth arcs now use `mouthY = −13` (3px below head center) instead of computed offsets from wrong `eyeY`
+
+### UI Layout Improvements
+- **Patience bar**: moved from y=+30 (below feet) to y=−42 (above character head); resized from 60×8px to 36×5px pill shape; darker track (0.18 alpha); cleaner color transitions
+- **Eating bar**: moved from y=+40 to y=+30 (just below sprite feet); resized to 36×4px
+- **Speech bubble**: moved from y=−52 to y=−66 to clear patience bar; shorter tail (tip at y=−46 in container, 4px gap above bar); shadow (+2,+2 offset); warmer fill (0xFFF8F0); thinner border (1.5px)
+
+### Character Art
+- **Player texture**: dark head outline (1.5px #3C2010), dark body outline, ears at (8,14) and (32,14), corrected skin tone (#FDBA8C), apron pocket detail; walk frame same improvements
+- **Customer textures** (all 7 variants): corrected skin (#FDBA8C), ear circles, head outline (1.5px), body outline (1.5px), ART_DIRECTION proportions
+  - Elegant: necklace arc+pendant, tall collar wings flanking neck
+  - Business: wider shoulders (+2px), red tie with knot
+  - Casual: standard clean silhouette
+  - Trendy: sunglasses extend 2px beyond head edges on each side
+  - Romantic: large flower on hair extending past right head edge
+  - Elder: white/gray hair, short legs (legH=8 vs 12), glasses with temples extending beyond head
+  - Teen: cap with brim extending 4px beyond head on each side (x=4 to x=28 on 32px texture)
+
+### Environment Art
+- **Table**: 8×8 checkered linen pattern on tablecloth (alternating #EEE8DF squares at 0.5 alpha over white cloth)
+- **Kitchen**: pot silhouette on left-front burner (rim, body, knob, two handles); pan silhouette on right-back burner (body, rim, long handle); steam hint above pot
+- **Menu board**: new `menu_board` texture (200×58) — dark chalkboard green (#1B3A1B) in wooden frame (#5C3D1E), chalk border, heading line, decorative dots. Placed above kitchen counter on back wall (depth 2) with "TODAY'S MENU" header + food emoji row
+
+### Food Display
+- **New `food_plate` texture**: 26×26 white plate circle (r=13) with inner rim, subtle shadow, used as background for carried food
+- **Carry display**: plate image added between tray and food emoji — food now sits on a proper plate (not floating text)
+
 ## v0.5.0 — 2026-06-02
 ### Added
 - **2-frame walk animation**: waiter alternates `player`/`player_walk` textures every 160ms while walking — first real character movement

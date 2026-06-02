@@ -20,9 +20,9 @@ Fast-paced restaurant management game. Premium casual — think Overcooked/Good 
 
 ---
 
-## Current State: v0.5.0 IMPLEMENTED
+## Current State: v0.6.0 IMPLEMENTED
 
-**v0.5.0 (restaurant atmosphere + walk animation + steam + carry architecture) is fully implemented.**
+**v0.6.0 (art direction reboot — visual identity, face coordinates fixed, character outlines, UI layout overhaul) is fully implemented.**
 **AWAITING owner review.**
 
 ---
@@ -59,17 +59,41 @@ src/config/GameConfig.ts           — ALL constants (palette, difficulty tiers,
 src/systems/ProgressionSystem.ts   — XP/Level/Stars persistence + exportSave/importSave
 src/systems/EconomySystem.ts       — Economy architecture stub (coins/shop/upgrades, not yet active)
 src/systems/CarrySystem.ts         — Carry capacity system (1-item default, expandable)
-src/scenes/BootScene.ts            — Procedural texture generation (warm art style)
+src/scenes/BootScene.ts            — Procedural texture generation (v0.6.0 art direction applied)
 src/scenes/GameScene.ts            — Core gameplay (v0.3.0: physical walk for all steps)
 src/scenes/GameOverScene.ts        — Reward screen (stars, XP bar, stats)
 src/scenes/MainMenuScene.ts        — Main menu (shows level + best score)
 src/entities/Customer.ts           — Customer state machine + mood faces + patience/eating bars
 src/entities/Table.ts              — Table state + priority pulse + cleaning progress bar
-src/entities/Player.ts             — Waiter character + emotion system (5 states) + busy feedback
+src/entities/Player.ts             — Waiter character + emotion system (5 states) + busy feedback + plate carry
 screenshots/                       — Validation screenshots (v_01 through v_15)
-V0_2_REVIEW.md                     — Player experience review + screenshot descriptions
+ART_DIRECTION.md                   — Visual identity doc (palette, character rules, state language)
+VISUAL_STYLE_GUIDE.md              — Component specs (typography, proportions, animation timing)
+LAYOUT_GUIDE.md                    — Fixed anchor points (zones, tables, kitchen, z-order)
 VALIDATION_REPORT.md               — 20/20 test results (v0.2.0)
 ```
+
+## v0.6.0 Critical Knowledge
+
+### Face Coordinate System (FIXED)
+Customer texture 32×52, sprite origin 0.5,0.5 → container (0,0) = texture center (16,26):
+- Head center in container: **(0, −16)**
+- Eyes: **(±4, −18)** — eyeR = 1.5
+- Mouth: **y = −13**
+
+Player texture 40×62, sprite origin 0.5,0.5 → container (0,0) = texture center (20,31):
+- Head center in container: **(0, −17)**
+- Eyes: **(±4, −19)** — eyeR = 1.5 (in Player.ts as `cy − 2` where `cy = −17`)
+- Mouth: **y = −13** (as `cy + 4`)
+
+### Patience Bar Layout (v0.6.0)
+- Track: `fillRoundedRect(-18, -42, 36, 5, 2.5)` — pill at y=−42 above head
+- Fill: same rect, width = `36 * frac`
+- Bubble container: y = −66 (above patience bar, tail tip at y=−46, 4px gap)
+- Eat bar: `fillRoundedRect(-18, 30, 36, 4, 2)` — below feet at y=30
+
+### Carry Display (v0.6.0)
+Player now shows: tray (y=−44) + plate bg `food_plate` (y=−55) + emoji (y=−53)
 
 ## Gameplay Systems (v0.2.0)
 

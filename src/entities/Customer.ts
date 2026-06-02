@@ -37,6 +37,12 @@ export class Customer extends Phaser.GameObjects.Container {
   private eatStartMs = 0;
   private eatDuration = 0;
 
+  // Head center in container space: (0, -16)
+  // eyeY = -18 (2px above head center), mouthY = -13 (3px below)
+  private static readonly HEAD_CY = -16;
+  private static readonly EYE_Y = -18;
+  private static readonly MOUTH_Y = -13;
+
   constructor(scene: Phaser.Scene, x: number, y: number, variantIndex: number, maxPatience: number) {
     super(scene, x, y);
     this.variantIndex = variantIndex % 7;
@@ -49,19 +55,20 @@ export class Customer extends Phaser.GameObjects.Container {
     this.face = scene.add.graphics();
     this.add(this.face);
 
-    // Patience bar track
+    // Patience bar — pill shape, above character head
+    // Track: 36×5px at y=-42 (11px above sprite top at y=-26)
     const patienceTrack = scene.add.graphics();
-    patienceTrack.fillStyle(0x2C1810, 0.35);
-    patienceTrack.fillRoundedRect(-30, 30, 60, 8, 4);
+    patienceTrack.fillStyle(0x000000, 0.18);
+    patienceTrack.fillRoundedRect(-18, -42, 36, 5, 2.5);
     this.add(patienceTrack);
 
     this.patienceBarFill = scene.add.graphics();
     this.add(this.patienceBarFill);
 
-    // Eating progress bar (hidden until eating)
+    // Eating progress bar — below character feet (sprite bottom ~y=26)
     this.eatBarTrack = scene.add.graphics();
-    this.eatBarTrack.fillStyle(0x4CAF50, 0.2);
-    this.eatBarTrack.fillRoundedRect(-30, 40, 60, 6, 3);
+    this.eatBarTrack.fillStyle(0x000000, 0.15);
+    this.eatBarTrack.fillRoundedRect(-18, 30, 36, 4, 2);
     this.eatBarTrack.setVisible(false);
     this.add(this.eatBarTrack);
 
@@ -69,7 +76,8 @@ export class Customer extends Phaser.GameObjects.Container {
     this.eatBarFill.setVisible(false);
     this.add(this.eatBarFill);
 
-    this.bubble = scene.add.container(0, -52);
+    // Bubble anchored above patience bar (bubble body y=-84 to y=-48, tail tip y=-46, bar top y=-42 = 4px gap)
+    this.bubble = scene.add.container(0, -66);
     this.bubble.setVisible(false);
     this.add(this.bubble);
 
@@ -152,14 +160,27 @@ export class Customer extends Phaser.GameObjects.Container {
     this.bubble.removeAll(true);
 
     const bg = this.scene.add.graphics();
-    bg.fillStyle(0xFDFAF6);
-    bg.fillRoundedRect(-28, -18, 56, 36, 8);
-    bg.lineStyle(2, borderColor);
-    bg.strokeRoundedRect(-28, -18, 56, 36, 8);
-    bg.fillStyle(0xFDFAF6);
-    bg.fillTriangle(-6, 18, 6, 18, 0, 26);
 
-    const txt = this.scene.add.text(0, 0, content, {
+    // Shadow (+2,+2 offset behind bubble)
+    bg.fillStyle(0x000000, 0.15);
+    bg.fillRoundedRect(-26, -16, 56, 36, 8);
+
+    // Bubble fill (warm cream)
+    bg.fillStyle(0xFFF8F0);
+    bg.fillRoundedRect(-28, -18, 56, 36, 8);
+
+    // Bubble border
+    bg.lineStyle(1.5, borderColor);
+    bg.strokeRoundedRect(-28, -18, 56, 36, 8);
+
+    // Tail — shorter so it clears the patience bar (tip at y=20 in bubble space = y=-46 in container)
+    bg.fillStyle(0xFFF8F0);
+    bg.fillTriangle(-6, 14, 6, 14, 0, 20);
+    bg.lineStyle(1.5, borderColor);
+    bg.lineBetween(-6, 14, 0, 20);
+    bg.lineBetween(6, 14, 0, 20);
+
+    const txt = this.scene.add.text(0, -1, content, {
       fontSize: content.length > 3 ? '11px' : '20px',
       color: '#2C1810',
     }).setOrigin(0.5);
@@ -186,43 +207,52 @@ export class Customer extends Phaser.GameObjects.Container {
     if (mood === this.lastMood) return;
     this.lastMood = mood;
     this.face.clear();
-    const eyeY = -4;
 
+    const eyeY = Customer.EYE_Y;     // -18: 2px above head center (-16)
+    const mouthY = Customer.MOUTH_Y; // -13: 3px below head center
+    const eyeR = 1.5;
+
+    // Angry: red overlay on head (head spans y=-26 to y=-6)
     if (mood === 'angry') {
-      this.face.fillStyle(0xCC2222, 0.6);
-      this.face.fillRoundedRect(-12, -12, 24, 24, 6);
+      this.face.fillStyle(0xCC2222, 0.45);
+      this.face.fillRoundedRect(-12, -26, 24, 20, 5);
     }
 
-    this.face.fillStyle(mood === 'angry' ? 0xFF3333 : 0x2C1810);
+    // Eyebrows (angry/hungry only)
+    this.face.fillStyle(0x3C2010);
     if (mood === 'angry') {
-      // angled brows
-      this.face.fillStyle(0x2C1810);
-      this.face.fillRect(-8, eyeY - 7, 5, 2);
-      this.face.fillRect(3, eyeY - 6, 5, 2);
+      // Sharp inward brows
+      this.face.fillRect(-9, eyeY - 5, 5, 2);
+      this.face.fillRect(4, eyeY - 4, 5, 2);
+    } else if (mood === 'hungry') {
+      // Mild angled brows
+      this.face.fillRect(-9, eyeY - 4, 5, 1.5);
+      this.face.fillRect(4, eyeY - 3, 5, 1.5);
     }
-    // eyes
-    const eyeSize = mood === 'happy' ? 1.8 : 2.5;
-    this.face.fillStyle(0x2C1810);
-    this.face.fillCircle(-5, eyeY, eyeSize);
-    this.face.fillCircle(5, eyeY, eyeSize);
 
-    // mouth
-    this.face.lineStyle(2, 0x2C1810);
+    // Eyes
+    this.face.fillStyle(0x3C2010);
+    this.face.fillCircle(-4, eyeY, eyeR);
+    this.face.fillCircle(4, eyeY, eyeR);
+
+    // Mouth
     if (mood === 'happy') {
+      this.face.lineStyle(1.5, 0x3C2010);
       this.face.beginPath();
-      this.face.arc(0, eyeY + 6, 5, 0, Math.PI, false);
+      this.face.arc(0, mouthY - 1, 4, 0.1, Math.PI - 0.1, false);
       this.face.strokePath();
     } else if (mood === 'angry') {
-      this.face.lineStyle(2, 0xCC2222);
+      this.face.lineStyle(1.5, 0xCC2222);
       this.face.beginPath();
-      this.face.arc(0, eyeY + 10, 5, Math.PI, 0, false);
+      this.face.arc(0, mouthY + 2, 4, Math.PI + 0.2, -0.2, false);
       this.face.strokePath();
     } else if (mood === 'hungry') {
       this.face.fillStyle(0x8B5E3C);
-      this.face.fillRoundedRect(-5, eyeY + 7, 10, 3, 1);
+      this.face.fillRoundedRect(-4, mouthY, 8, 1.5, 1);
     } else {
-      this.face.fillStyle(0x2C1810);
-      this.face.fillRect(-4, eyeY + 7, 8, 2);
+      // Neutral: flat line
+      this.face.fillStyle(0x3C2010);
+      this.face.fillRect(-3, mouthY, 6, 1.5);
     }
   }
 
@@ -244,21 +274,21 @@ export class Customer extends Phaser.GameObjects.Container {
       this.drawFace('neutral');
     }
 
-    // Patience bar
+    // Patience bar — pill shape at y=-42, 36×5px
     this.patienceBarFill.clear();
     if (this.patienceActive || this.state === 'waiting_food' || this.state === 'ordering') {
       const col = frac > 0.6 ? COLORS.UI_GREEN : frac > 0.3 ? 0xFF9800 : COLORS.UI_RED;
       this.patienceBarFill.fillStyle(col);
-      this.patienceBarFill.fillRoundedRect(-30, 30, 60 * frac, 8, 4);
+      this.patienceBarFill.fillRoundedRect(-18, -42, 36 * frac, 5, 2.5);
     }
 
-    // Eating progress bar
+    // Eating progress bar — below feet at y=30, 36×4px
     if (this.state === 'eating' && this.eatDuration > 0) {
       const elapsed = this.scene.time.now - this.eatStartMs;
       const eatFrac = Math.min(1, elapsed / this.eatDuration);
       this.eatBarFill.clear();
       this.eatBarFill.fillStyle(0x4CAF50);
-      this.eatBarFill.fillRoundedRect(-30, 40, 60 * eatFrac, 6, 3);
+      this.eatBarFill.fillRoundedRect(-18, 30, 36 * eatFrac, 4, 2);
     }
   }
 }

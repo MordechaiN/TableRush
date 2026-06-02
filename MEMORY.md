@@ -75,12 +75,17 @@ VALIDATION_REPORT.md               — 20/20 test results (v0.2.0)
 
 ## v0.7.0 Redesign Documents (AWAITING APPROVAL — no implementation yet)
 ```
+RESTAURANT_FANTASY.md   — Core fantasy: "best waiter in the room." Emotional arc, visual/mechanic audit
 GAMEPLAY_REDESIGN.md    — Priority system, order reveal, anger arc, tutorial rebuild
 VISUAL_REDESIGN.md      — Ambient motion, customer personality, food presentation
 BALANCE_REDESIGN.md     — Patience values, spawn caps, score formula, tips
 PROGRESSION_REDESIGN.md — XP visibility, table unlocks, shop, daily challenges
 RETENTION_REDESIGN.md   — Near-miss, last-session display, streaks, achievements
 ```
+
+### Core Fantasy (from RESTAURANT_FANTASY.md)
+> **"You are the best waiter in the room — and everyone knows it."**
+> Every design decision must answer: does this make the player feel like the best waiter in the room?
 
 ## v0.6.0 Critical Knowledge
 

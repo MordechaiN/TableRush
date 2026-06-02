@@ -2,6 +2,7 @@
 
 ## v0.7.0 — DESIGN PHASE (2026-06-02)
 ### Design Documents Created (no implementation — awaiting approval)
+- **RESTAURANT_FANTASY.md**: Core fantasy defined — "You are the best waiter in the room." Emotional highs (flow state, last-second save, lightning tip, combo crescendo), emotional lows (impossible choice, chain break), desired per-moment player emotions, visual cues that support vs hurt the fantasy, and the specific gap between "systems and timers" and a "living restaurant"
 - **GAMEPLAY_REDESIGN.md**: Single dominant action priority system; order reveal animation; 3-stage anger arc with departure warning; guided first-service tutorial
 - **VISUAL_REDESIGN.md**: Ambient motion layer (lamp sway, candle flicker, customer idle); character personality names+modifiers; food presentation (steam, garnish); visual escalation per difficulty tier
 - **BALANCE_REDESIGN.md**: Patience values redesigned (Tier 1: 110–140s to eliminate early-game failure for learners); spawn caps by tier (2/3/4 max customers); new score formula (price×15); deterministic tip system; new star thresholds (800/1600/3000)

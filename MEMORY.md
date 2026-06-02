@@ -5,18 +5,28 @@ _A new Claude session must understand the entire project by reading this file._
 ---
 
 ## Project Vision
-Fast-paced restaurant management game. Player serves customers through a complete lifecycle: seat → take order → cook → deliver → collect payment → clean table. Short 3-minute sessions designed for score-chasing and replayability.
+Fast-paced restaurant management game. Premium casual style (Overcooked / Good Pizza Great Pizza). Player serves customers through a complete lifecycle: seat → take order → cook → deliver → collect payment → clean table. Short 3-minute sessions designed for score-chasing and replayability.
 
 ## Design Philosophy
 - Sessions: 3 minutes (score-chase design)
-- Addiction loop: combo multiplier, near-failure tension, constant feedback
-- "Just one more round" feeling
-- Easy to learn, hard to master
-- No external assets — 100% procedural textures
+- "Just one more round" feeling via combo multiplier, speed bonuses, end-of-round stars
+- Easy to learn (tutorial), satisfying to master (speed/combo optimization)
+- Mobile-first, warm visual identity — NOT dark/cold/technical
 
 ## Credits
 - Game Concept & Product Owner: Mordechai Neeman
 - Implementation: Claude Code
+
+---
+
+## Current State: REDESIGN PENDING APPROVAL
+
+**v0.1.1 is the current deployed version** (working but prototype-quality).
+**Three redesign documents exist and are awaiting approval before implementation.**
+
+See: GAMEPLAY_REDESIGN.md, VISUAL_REDESIGN.md, BALANCE_REDESIGN.md
+
+Do NOT implement redesign until user approves.
 
 ---
 
@@ -25,6 +35,7 @@ Fast-paced restaurant management game. Player serves customers through a complet
 - **Entry:** `src/main.ts` → Phaser.Game with scene list
 - **Textures:** All generated in BootScene using `scene.make.graphics()` → `generateTexture()`
 - **Storage:** `localStorage` for high score + settings
+- **Build:** `VITE_BASE_PATH=/TableRush/ npm run build` for GitHub Pages
 
 ## Scene Flow
 ```
@@ -48,54 +59,23 @@ src/entities/Table.ts        — Table state + glow animations
 src/entities/Player.ts       — Player container + walkTo() movement
 ```
 
-## Gameplay Systems
+## Current Gameplay Systems (v0.1.1 — to be redesigned)
 
-### Customer Lifecycle (state machine)
+### Customer Lifecycle
 `entering → seated → ordering → waiting_food → eating → paying → leaving`
-- Angry path: any waiting state + patience=0 → `angry` → leaves, combo resets
 
-### Player Interaction (tap-to-act)
-- Tap table with **seated** customer → order menu popup (5 items)
-- Tap table with **waiting_food** customer (player carrying food) → deliver
-- Tap table with **paying** customer → collect payment
-- Tap **dirty** table → clean
+**Problems with current flow (redesign pending):**
+- Order taken via menu popup (wrong — should be automatic on arrival)
+- Patience only 25s initial (way too aggressive)
+- Angry customer leaves dirty table (wrong — should be clean)
+- No tutorial, no player guidance
 
-### Order Flow
-1. Player taps seated customer → menu popup
-2. Item selected → player `walkTo(kitchen)` → `cookTime` delay → player `walkTo(table)`
-3. Player arrives at table with food → table glows, player must tap again to deliver
-4. Customer eats (3–5s random) → state = paying
-5. Player taps → payment collected, tip based on patience fraction
-
-### Score
-- Delivery: `itemPrice * 10 * multiplier`
-- Payment: `(itemPrice + tip) * 10 * multiplier + 50`
-- Combo multiplier: increments 0.1 per consecutive payment, max 5x
-- Angry customer resets combo to 1x
-
-### Difficulty (GameConfig.ts)
-```
-INITIAL_SPAWN_INTERVAL: 6000ms  → ramps down to MIN: 2500ms
-INITIAL_PATIENCE:      25000ms  → ramps down to MIN: 10000ms
-SPAWN_RAMP_RATE: 0.97 per spawn
-PATIENCE_RAMP_RATE: 0.98 per spawn
-```
-
-### Tables
-- 5 fixed positions in `TABLE_POSITIONS`
-- States: `empty | occupied | dirty`
-- Dirty tables block new customers until cleaned
-
-### Menu Items (5)
-| Name | Price | Cook Time |
-|------|-------|-----------|
-| Burger | $12 | 3s |
-| Pizza | $15 | 4s |
-| Salad | $10 | 2s |
-| Pasta | $13 | 3.5s |
-| Sushi | $18 | 2.5s |
-
----
+### Redesign Intent (see GAMEPLAY_REDESIGN.md)
+`entering → seated → requesting → ordering (auto) → waiting_food → eating → paying → leaving`
+- Auto-order when waiter walks to customer
+- Patience 45–120s depending on difficulty tier
+- Angry customer: score penalty, combo reset, table immediately clean
+- Priority pulse system to guide player
 
 ## Repository Structure
 ```
@@ -103,15 +83,17 @@ PATIENCE_RAMP_RATE: 0.98 per spawn
 ├── index.html
 ├── package.json / tsconfig.json / vite.config.ts
 ├── .gitignore
-├── .github/workflows/ci.yml   — CI build + GitHub Pages deploy on main push
+├── .github/workflows/ci.yml   — CI build + GitHub Pages deploy (Actions-based)
 ├── src/
 │   ├── main.ts
 │   ├── config/GameConfig.ts
 │   ├── entities/Customer.ts / Table.ts / Player.ts
-│   └── scenes/BootScene.ts / MainMenuScene.ts / GameScene.ts /
-│             PauseScene.ts / GameOverScene.ts / CreditsScene.ts / SettingsScene.ts
+│   └── scenes/ (7 scenes)
 ├── MEMORY.md / PROJECT_STATUS.md / CHANGELOG.md
-├── KNOWN_ISSUES.md / ROADMAP.md / TEST_REPORT.md
+├── KNOWN_ISSUES.md / ROADMAP.md / TEST_REPORT.md / VALIDATION_REPORT.md
+├── GAMEPLAY_REDESIGN.md  ← NEW (awaiting approval)
+├── VISUAL_REDESIGN.md    ← NEW (awaiting approval)
+├── BALANCE_REDESIGN.md   ← NEW (awaiting approval)
 └── README.md
 ```
 
@@ -120,21 +102,21 @@ PATIENCE_RAMP_RATE: 0.98 per spawn
 ## Git Governance
 - **Branch:** `main` (direct commits, no PRs)
 - **Workflow:** `git add . && git commit && git push`
-- **CI:** GitHub Actions on push to main → build validation + GitHub Pages deploy
+- **CI:** GitHub Actions on push to main → type check + build (VITE_BASE_PATH=/TableRush/) + deploy to GitHub Pages
 
 ## Deployment
 - Local: `npm run dev` → http://localhost:3000
-- Production: `npm run build` → `dist/`
-- GitHub Pages: auto-deployed from main via `peaceiris/actions-gh-pages@v3`
-- `vite.config.ts` uses `base: './'` for relative asset paths
+- Production: `VITE_BASE_PATH=/TableRush/ npm run build` → `dist/`
+- GitHub Pages: auto-deployed via `actions/deploy-pages` on main push
+- **REQUIRED:** Repo Settings → Pages → Source → **GitHub Actions**
 
 ---
 
-## Current Priorities
-1. MVP complete and pushed to main ✅
-2. All core mechanics verified ✅
-3. Next: gameplay polish — audio, better animations, visual feedback
-
-## Known Issues
+## Known Issues (v0.1.1)
 - No audio (Settings UI is placeholder only)
-- Phaser bundle > 500KB (expected, not a bug)
+- Phaser bundle 1.48MB (expected, not a bug)
+- Visual style is prototype-level (redesign pending approval)
+- Patience values too aggressive (redesign pending approval)
+
+## Current Priority
+**AWAITING USER APPROVAL** on three redesign documents before implementing v0.2.0.

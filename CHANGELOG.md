@@ -7,6 +7,19 @@
 - `vite.config.ts`: `VITE_BASE_PATH` env var; CI sets `/TableRush/` so built assets use absolute paths, unambiguous at any subpath
 - Verified fix: Playwright headless test at simulated `/TableRush/` subpath — canvas renders, 0 errors, 0 network failures
 
+## v0.2.0 — PENDING APPROVAL
+### Planned (not yet implemented — awaiting approval)
+- Full visual redesign: warm palette, layered procedural art, distinct characters
+- Gameplay redesign: auto-order flow, priority pulse system, tutorial
+- Balance redesign: 45–120s patience, speed bonuses, ×3 combo cap, star rating
+- See: GAMEPLAY_REDESIGN.md, VISUAL_REDESIGN.md, BALANCE_REDESIGN.md
+
+## v0.1.1 — 2026-06-01
+### Fixed
+- GitHub Pages black screen: switched from gh-pages branch to actions/deploy-pages
+- vite.config.ts: VITE_BASE_PATH env var; CI sets /TableRush/ for absolute asset paths
+- Verified: Playwright test at /TableRush/ subpath confirms canvas renders correctly
+
 ## v0.1.0 — 2026-06-01
 ### Added
 - Full MVP gameplay loop: customer spawn → order → cook → deliver → eat → pay → clean

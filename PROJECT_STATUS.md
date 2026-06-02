@@ -6,7 +6,7 @@
 ---
 
 ## Current Focus
-MVP complete. Ready for gameplay polish pass.
+AWAITING USER APPROVAL on redesign documents before implementing v0.2.0.
 
 ## Completed Tasks
 - [x] Project scaffold (Vite + TypeScript + Phaser 3)
@@ -18,34 +18,29 @@ MVP complete. Ready for gameplay polish pass.
 - [x] 3-minute game timer with difficulty ramp
 - [x] Score + high score (localStorage)
 - [x] Procedural textures (no external assets)
-- [x] GitHub Actions CI/CD + GitHub Pages deploy
+- [x] GitHub Actions CI/CD + GitHub Pages deploy (modern actions/deploy-pages)
+- [x] GitHub Pages deployment fixed (base path `/TableRush/` via VITE_BASE_PATH)
 - [x] All documentation (MEMORY, STATUS, CHANGELOG, ROADMAP, KNOWN_ISSUES, TEST_REPORT)
 - [x] VALIDATION_REPORT.md — 20/20 PASS, 0 console errors, screenshots taken
-- [x] TypeScript strict — 0 errors
-- [x] Build verified clean
-- [x] Pushed to main (direct commit, governance applied)
+- [x] GAMEPLAY_REDESIGN.md — created, awaiting approval
+- [x] VISUAL_REDESIGN.md — created, awaiting approval
+- [x] BALANCE_REDESIGN.md — created, awaiting approval
 
 ## Current Task
-None — GitHub Pages deployment fix complete.
+Awaiting approval on redesign docs.
 
-## Completed Tasks (additional)
-- [x] GitHub Pages deployment audit
-- [x] Root cause identified: main branch dev HTML served instead of built assets
-- [x] Workflow switched to actions/deploy-pages (modern, single-build)
-- [x] vite.config.ts: VITE_BASE_PATH env var for absolute asset paths
-- [x] Fix verified locally via Playwright at /TableRush/ subpath
-
-## REQUIRED ONE-TIME USER ACTION
-Go to: GitHub repo → Settings → Pages → Source → **GitHub Actions**
-(Without this change, deployment will fail — the new workflow uses Actions-based deployment, not the gh-pages branch)
-
-## Next Task
-v0.2.0 — Audio + Visual Polish (CLEARED TO START after Pages confirmed working):
-- WebAudio sound effects (coin collect, order ready, angry customer)
-- Background ambient music loop
-- Particle burst on combo
-- Smoother customer walk animation
-- Kitchen "cooking" visual feedback
+## Next Task (after approval)
+v0.2.0 — Full redesign implementation:
+1. New visual system (warm palette, layered procedural art)
+2. New customer lifecycle (auto-order, correct angry behavior)
+3. Balance rebalance (90–120s patience, speed bonuses, star rating)
+4. Priority pulse system (player always knows what to do)
+5. Tutorial (first 30 seconds)
 
 ## Known Blockers
-None.
+- Redesign docs require user approval before any code changes
+- GitHub Pages requires one-time settings change: Settings → Pages → Source → GitHub Actions
+
+## Required User Action
+Go to: https://github.com/MordechaiN/TableRush/settings/pages
+Set: Source → **GitHub Actions**

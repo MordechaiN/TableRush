@@ -1,36 +1,38 @@
 # CHANGELOG
 
-## v0.2.0 — IN PROGRESS
+## v0.2.0 — 2026-06-02
 ### Added
 - Full visual redesign: warm palette (cream floor, mahogany tables, navy waiter)
-- Layered procedural art: shadows, gradients, highlights on all characters
-- 7 distinct customer variants with personality accessories
-- New customer lifecycle: `entering → seated → requesting → ordering → waiting_food → eating → paying → leaving`
+- Layered procedural art: shadows, highlights, accessories on all characters
+- 7 distinct customer variants with personality accessories (glasses, cap, flower, etc.)
+- New customer lifecycle: `entering → requesting → ordering → waiting_food → eating → paying → leaving`
 - Auto-order flow: player taps requesting customer, order assigned automatically (no popup)
-- Kitchen queue system with ticket rail UI
-- Priority pulse system: color-coded table animations always show highest-priority action
-- Tutorial overlay (first session only, 6 steps, tracked in localStorage)
-- XP/Level/Stars progression system (ProgressionSystem.ts)
-- Speed multiplier scoring (×0.75 to ×2.0 based on patience at delivery)
+- Kitchen queue system with ticket rail UI (tickets appear/disappear with animations)
+- Priority pulse system: blue (requesting), orange (kitchen ready), gold (paying), red (urgent)
+- Tutorial overlay for first session only (6 steps, tracked in localStorage)
+- XP/Level/Stars progression system (ProgressionSystem.ts): 10 levels persisted
+- Speed multiplier scoring: ×0.75–×2.0 based on patience at delivery
 - Named combo milestones: GOOD SERVICE (×1.5 @ 3), HOT STREAK (×2.0 @ 5), UNSTOPPABLE (×2.5 @ 8), TABLE MASTER (×3.0 @ 10+)
 - Star rating end-of-round: ⭐ (played), ⭐⭐ (70%+ happy), ⭐⭐⭐ (90%+ happy AND score ≥2000)
-- End-of-round screen: stars, XP earned, level progress bar, combo record, customers served, next unlock hint
-- Angry customers leave clean tables (no cleaning needed — correct behavior)
-- Time-based difficulty tiers instead of exponential ramp
+- End-of-round screen: stars animation, XP earned, XP bar tween, level-up flash, combo record, stats, next unlock hint
+- SVG favicon (no more 404 on load)
+- `window.game` exposed for testing/automation
+- 15 validation screenshots
 
 ### Changed
 - Patience: 45–120s (from broken 10–25s)
 - Spawn interval: 8s start → 3.5s end (from 6s → 2.5s)
 - Combo: reaches ×1.5 at 3 customers (from 10 customers for ×2)
+- Angry customers leave table CLEAN — not dirty (correct behavior)
 - Score penalty for angry leave: −50 to −150 (was 0)
-- All backgrounds, floors, and UI elements warm and inviting (not cold/dark)
+- Body background: warm cream #F5E6C8 (was dark navy)
+- All backgrounds, floors, and UI elements warm and inviting
 
 ## v0.1.1 — 2026-06-01
 ### Fixed
-- GitHub Pages black screen: root cause was Pages serving from `main` branch root (dev `index.html` with `/src/main.ts` — TypeScript, unexecutable by browsers)
-- Switched workflow to `actions/upload-pages-artifact` + `actions/deploy-pages` (official GitHub Pages deployment)
-- `vite.config.ts`: `VITE_BASE_PATH` env var; CI sets `/TableRush/` so built assets use absolute paths
-- Verified fix: Playwright headless test at simulated `/TableRush/` subpath — canvas renders, 0 errors
+- GitHub Pages black screen: switched from gh-pages branch to actions/deploy-pages
+- `vite.config.ts`: `VITE_BASE_PATH` env var; CI sets `/TableRush/` for absolute asset paths
+- Verified fix: Playwright test at `/TableRush/` subpath — canvas renders correctly
 
 ## v0.1.0 — 2026-06-01
 ### Added

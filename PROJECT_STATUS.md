@@ -1,12 +1,12 @@
 # PROJECT STATUS
 
 **Last Updated:** 2026-06-02
-**Current Version:** v0.8.1
+**Current Version:** v0.9.0
 
 ---
 
 ## Current Focus
-VISUAL REBOOT — P0 + P1 + P0.5 hotfixes complete. P0_P1_REVIEW.md + P0_5_HOTFIX_REPORT.md done. Awaiting owner approval to proceed to P2 (Waiter redesign).
+P2 RETENTION HUD complete — combo visible, escalation works, shift report redesigned. Awaiting owner approval.
 
 ## Design Documents Status (all approved)
 - [x] VISUAL_REBOOT_PLAN.md — approved, in progress
@@ -18,8 +18,8 @@ VISUAL REBOOT — P0 + P1 + P0.5 hotfixes complete. P0_P1_REVIEW.md + P0_5_HOTFI
 - [x] P1: Customer redesign — 48×72px, r=14 head, 2.5px outlines, r=3 eyes+highlight, 44×8 patience bar, name banners
 - [x] Quality Gate: P0_P1_REVIEW.md complete — 6/10 pass, 2 marginal, mobile unconfirmed
 - [x] P0.5 Hotfix: Urgent strobe, dirty amber, secondary 0.35, Elegant earrings+collar, Casual stripes, mobile confirmed
-- [ ] P2: Waiter redesign (larger, emotion visible) ← NEXT (pending approval)
-- [ ] P3: HUD redesign (combo always visible)
+- [x] P2: Retention HUD — combo visible, 5-stage escalation, progress bar, streak loss feedback, shift report ← COMPLETE (pending approval)
+- [ ] P3: Waiter redesign (larger, emotion visible) ← NEXT
 - [ ] P4: Table redesign (clean cloth, numbered)
 - [ ] P5: Kitchen redesign (readable tickets, bold ready zone)
 - [ ] P6: Speech bubbles (state-specific shapes)

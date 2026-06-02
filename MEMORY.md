@@ -20,13 +20,23 @@ Fast-paced restaurant management game. Premium casual — think Overcooked/Good 
 
 ---
 
-## Current State: VISUAL REBOOT IN PROGRESS — P0 + P1 + P0.5 COMPLETE
+## Current State: P2 RETENTION HUD COMPLETE — AWAITING APPROVAL
 
-**v0.8.1 implemented: P0.5 hotfixes — all quality gate issues resolved.**
-**Quality Gate + Hotfixes complete. Awaiting owner approval for P2 (Waiter).**
+**v0.9.0 implemented: P2 Retention HUD — combo visible, escalation system, shift report redesign.**
+**P0 + P1 + P0.5 + P2 complete. Awaiting owner approval for next phase.**
 **VISUAL_REBOOT_PLAN.md approved — implementation underway.**
 **ADDICTION_AND_RETENTION_PLAN.md approved — post-visual-reboot.**
 **GAME_IDENTITY.md approved — strategic reference.**
+
+### P2 Retention HUD Changes (v0.9.0)
+- **Combo always visible**: initializes as `×1.0` (gray, 14px) — never invisible again
+- **5-stage combo system**: ×1.0 (subdued) → ×2.0 (🔥 noticeable) → ×3.0 (🔥🔥 exciting) → ×4.0 (⭐ impressive) → ×5.0 (💫 peak)
+- **Combo milestones extended**: max multiplier raised from ×3.0 to ×5.0 (at count 15)
+- **Progress bar**: 4px strip at bottom of HUD shows fill toward next milestone — creates anticipation
+- **Combo lost feedback**: `💔 ×2.0 LOST!` float + red bar flash + camera shake + tween
+- **Perfect Service detection**: `⭐ PERFECT!` when patienceAtDelivery ≥ 75%
+- **Milestone announcements upgraded**: color + stroke + screen flash at ×3.0+ + star burst at ×4.0+
+- **Shift Report redesign**: combo always shown, total guests served prominent, narrative headlines updated for ×4.0/×5.0 tiers
 
 ### P0.5 Hotfix Changes (v0.8.1)
 - **Urgent state**: Alpha strobe (0.98→0.48, 180ms), faster tween (140ms), larger triangle (±18 vs ±15)

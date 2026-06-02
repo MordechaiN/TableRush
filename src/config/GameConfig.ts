@@ -64,13 +64,13 @@ export const DIFFICULTY_TIERS = [
   { maxTime: 180, patienceMin: 45000, patienceMax:  65000, spawnStart: 4000, spawnEnd: 3500, penalty: 150 },
 ];
 
-// Combo milestones
+// Combo milestones — five escalating stages
 export const COMBO_MILESTONES = [
   { min: 0,  multiplier: 1.0, label: '' },
-  { min: 3,  multiplier: 1.5, label: 'GOOD SERVICE' },
-  { min: 5,  multiplier: 2.0, label: 'HOT STREAK 🔥' },
-  { min: 8,  multiplier: 2.5, label: 'UNSTOPPABLE 🔥🔥' },
-  { min: 10, multiplier: 3.0, label: 'TABLE MASTER 💫' },
+  { min: 3,  multiplier: 2.0, label: 'HOT STREAK 🔥' },
+  { min: 6,  multiplier: 3.0, label: 'ON FIRE 🔥🔥' },
+  { min: 10, multiplier: 4.0, label: '⭐ TABLE LEGEND' },
+  { min: 15, multiplier: 5.0, label: '💫 TABLE MASTER' },
 ];
 
 // Speed multiplier based on patience % remaining at delivery

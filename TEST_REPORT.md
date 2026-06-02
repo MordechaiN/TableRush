@@ -1,5 +1,44 @@
 # TEST REPORT
 
+## v0.9.0 — P2 Retention HUD — 2026-06-02
+
+### Build & Type Check
+| Check | Result | Notes |
+|-------|--------|-------|
+| `tsc` (TypeScript strict) | ✅ PASS | 0 errors |
+| `vite build` | ✅ PASS | 67.07 kB game bundle |
+
+### P2 Retention HUD Verified
+| Feature | Result | Evidence |
+|---------|--------|----------|
+| Combo visible at ×1.0 | ✅ PASS | Initial text `'×1.0'` in buildUI() |
+| Combo text always present | ✅ PASS | Never empty string |
+| Progress bar initialized | ✅ PASS | `comboProgressGfx` in buildUI() |
+| 5 visual stages escalate | ✅ PASS | updateComboDisplay() reviewed |
+| Stage colors: gray→orange→deep→pink→gold | ✅ PASS | Code reviewed |
+| Stage sizes: 14→15→17→19→20→22px | ✅ PASS | Code reviewed |
+| Combo lost float `💔 ×N.N LOST!` | ✅ PASS | resetCombo() reviewed |
+| Progress bar flash red on loss | ✅ PASS | resetCombo() reviewed |
+| Camera shake on loss | ✅ PASS | `shake(100, 0.003)` |
+| Perfect Service `⭐ PERFECT!` | ✅ PASS | collectPayment() reviewed |
+| Milestone announcement enhanced | ✅ PASS | showComboAnnouncement() reviewed |
+| Screen flash at ×3.0+ | ✅ PASS | `cameras.main.flash()` |
+| Star burst at ×4.0+ | ✅ PASS | `spawnStarBurst()` called |
+| Celebrations at count 10 + 15 | ✅ PASS | triggerCelebration() parameterised |
+| Shift report combo always shown | ✅ PASS | Removed `if >= 3` guard |
+| Combo stat line with multiplier | ✅ PASS | getComboStatLine() helper |
+| Guests served total shown | ✅ PASS | Total in stat line |
+| Mobile HUD elements readable | ✅ PASS | Sizes unchanged, fits 56px panel |
+
+### Known Issues Resolved
+| Issue | Status |
+|-------|--------|
+| Combo invisible at ×1.0 (was `""`) | ✅ FIXED in v0.9.0 |
+| Combo record hidden if < 3 on end screen | ✅ FIXED in v0.9.0 |
+| No combo loss feedback beyond flash | ✅ FIXED in v0.9.0 |
+
+---
+
 ## v0.8.1 — P0.5 Hotfix — 2026-06-02
 
 ### Build & Type Check

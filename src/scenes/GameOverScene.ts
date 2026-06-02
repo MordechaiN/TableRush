@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { COLORS, GAME_WIDTH, GAME_HEIGHT } from '../config/GameConfig';
+import { COLORS, GAME_WIDTH, GAME_HEIGHT, COMBO_MILESTONES } from '../config/GameConfig';
 import { ProgressionSystem, RoundResult } from '../systems/ProgressionSystem';
 
 interface GameOverData {
@@ -8,6 +8,8 @@ interface GameOverData {
   customersHappy: number;
   customersAngry: number;
   comboRecord: number;
+  fastestDeliveryMs: number;
+  nearMissSaves: number;
 }
 
 export class GameOverScene extends Phaser.Scene {
@@ -72,26 +74,54 @@ export class GameOverScene extends Phaser.Scene {
     }).setOrigin(0.5);
     y += 30;
 
-    // Stats row
-    const statsY = y;
-    this.add.text(cx - 80, statsY, `${data.customersHappy} happy`, {
-      fontSize: '14px', color: COLORS.TEXT_GREEN,
+    // Shift Report
+    const lineGfx = this.add.graphics();
+    lineGfx.lineStyle(1, 0xDDCCAA, 0.8);
+    lineGfx.lineBetween(cx - 110, y, cx + 110, y);
+    y += 14;
+    this.add.text(cx, y, 'SHIFT REPORT', {
+      fontSize: '11px', fontFamily: 'Arial', color: '#AAAAAA', fontStyle: 'bold',
     }).setOrigin(0.5);
-    this.add.text(cx, statsY, `|`, { fontSize: '14px', color: '#AAAAAA' }).setOrigin(0.5);
-    this.add.text(cx + 80, statsY, `${data.customersAngry} upset`, {
-      fontSize: '14px', color: COLORS.TEXT_RED,
-    }).setOrigin(0.5);
-    y += 28;
+    y += 20;
 
-    if (data.comboRecord >= 3) {
-      this.add.text(cx, y, `🔥 Best combo: ${data.comboRecord} in a row`, {
-        fontSize: '14px', color: COLORS.TEXT_ORANGE,
-      }).setOrigin(0.5);
-      y += 28;
+    const headline = this.getShiftHeadline(data, summary.isNewHighScore);
+    this.add.text(cx, y, headline, {
+      fontSize: '13px', fontFamily: 'Arial', color: '#555555',
+      wordWrap: { width: 270 }, align: 'center',
+    }).setOrigin(0.5);
+    y += 36;
+
+    const total = data.customersHappy + data.customersAngry;
+    const allHappy = data.customersAngry === 0;
+
+    const addStat = (text: string, color: string) => {
+      this.add.text(cx, y, text, { fontSize: '13px', fontFamily: 'Arial', color }).setOrigin(0.5);
+      y += 22;
+    };
+
+    // Guests
+    if (allHappy) {
+      addStat(`✓  All ${total} guests left happy`, COLORS.TEXT_GREEN);
+    } else {
+      addStat(`👥  ${total} guests served — ${data.customersHappy} happy · ${data.customersAngry} left`, '#888888');
+    }
+
+    // Best combo — always shown
+    addStat(this.getComboStatLine(data.comboRecord), this.getComboStatColor(data.comboRecord));
+
+    // Fastest delivery
+    if (isFinite(data.fastestDeliveryMs) && data.fastestDeliveryMs > 0) {
+      const sec = (data.fastestDeliveryMs / 1000).toFixed(1);
+      addStat(`⚡  Fastest serve: ${sec}s kitchen-to-table`, '#888888');
+    }
+
+    // Close calls
+    if (data.nearMissSaves > 0) {
+      addStat(`💪  ${data.nearMissSaves} close call${data.nearMissSaves > 1 ? 's' : ''} — saved`, '#CC7733');
     }
 
     // XP bar
-    y += 8;
+    y += 6;
     this.add.text(cx, y, `Level ${summary.levelBefore}`, {
       fontSize: '13px', color: '#777777',
     }).setOrigin(0.5);
@@ -154,6 +184,67 @@ export class GameOverScene extends Phaser.Scene {
     if (summary.isNewHighScore) {
       this.spawnConfetti();
     }
+  }
+
+  private getShiftHeadline(data: GameOverData, isNewHighScore: boolean): string {
+    const total = data.customersHappy + data.customersAngry;
+    if (isNewHighScore && data.customersAngry === 0) {
+      return 'Personal best — and not a single upset guest. Exceptional.';
+    }
+    if (isNewHighScore) {
+      return "New personal best. You've never played this well.";
+    }
+    if (data.comboRecord >= 15) {
+      return `${data.comboRecord}-serve streak. The entire room fell silent. That's mastery.`;
+    }
+    if (data.comboRecord >= 10) {
+      return `A ${data.comboRecord}-serve run. This is what a great shift looks like.`;
+    }
+    if (data.customersAngry === 0 && data.comboRecord >= 6) {
+      return 'Flawless service and a hot streak. The room was yours.';
+    }
+    if (data.customersAngry === 0) {
+      return 'Flawless. Every guest left happy.';
+    }
+    if (data.nearMissSaves >= 3) {
+      return `${data.nearMissSaves} tables nearly walked — you saved them all.`;
+    }
+    if (data.comboRecord >= 6) {
+      return `A ${data.comboRecord}-serve streak. The whole restaurant felt it.`;
+    }
+    if (data.comboRecord >= 3) {
+      return 'You were on fire. Keep that streak alive.';
+    }
+    if (total > 0 && data.customersHappy / total >= 0.8) {
+      return 'Strong shift. Most guests left satisfied.';
+    }
+    if (total > 0 && data.customersHappy > data.customersAngry) {
+      return "More wins than losses. There's a comeback building.";
+    }
+    return 'You gave it everything you had.';
+  }
+
+  private getComboStatLine(count: number): string {
+    let mult = 1.0;
+    for (const m of COMBO_MILESTONES) {
+      if (count >= m.min) mult = m.multiplier;
+    }
+    if (count === 0) return '○  No streak built';
+    if (count <= 2) return `↑  Best streak: ${count} serve${count > 1 ? 's' : ''}`;
+    const icon = mult >= 5.0 ? '💫' : mult >= 4.0 ? '⭐' : mult >= 3.0 ? '🔥🔥' : '🔥';
+    return `${icon}  Best streak: ${count} serves → ×${mult.toFixed(1)}`;
+  }
+
+  private getComboStatColor(count: number): string {
+    let mult = 1.0;
+    for (const m of COMBO_MILESTONES) {
+      if (count >= m.min) mult = m.multiplier;
+    }
+    if (mult >= 5.0) return COLORS.TEXT_GOLD;
+    if (mult >= 4.0) return '#E91E63';
+    if (mult >= 3.0) return COLORS.TEXT_ORANGE;
+    if (mult >= 2.0) return '#FF8C42';
+    return '#888888';
   }
 
   private showStars(cx: number, y: number, count: number) {

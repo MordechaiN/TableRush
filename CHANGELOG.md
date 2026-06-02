@@ -1,5 +1,35 @@
 # CHANGELOG
 
+## v0.9.0 — P2 Retention HUD (2026-06-02)
+
+### Combo Visibility — Always Present
+- Combo text initializes as `×1.0` (gray, 14px) instead of empty string — visible from game start
+- Progress bar (4px, bottom edge of HUD) shows fill toward next multiplier milestone
+- `↑1` / `↑2` anticipation states before first milestone (gold, 15px)
+
+### 5-Stage Combo Escalation
+- Milestones extended: ×1.0 → ×2.0 → ×3.0 → ×4.0 → ×5.0 (was ×3.0 max)
+- Thresholds: 0 / 3 / 6 / 10 / 15 consecutive serves
+- Display: gray → 🔥 orange → 🔥🔥 deep orange → ⭐ pink → 💫 gold
+- Font size escalates: 14px → 15px → 17px → 19px → 20px → 22px
+
+### Combo Loss — Dramatic Feedback
+- Floating text: `💔 ×2.0 LOST!` shows exact multiplier lost
+- Progress bar flashes red, fades out (500ms), redraws empty
+- Camera shake (100ms, 0.003)
+- Both effects only trigger for meaningful streaks (count ≥ 3)
+
+### Performance Feedback — New Events
+- `⭐ PERFECT!` float when patienceAtDelivery ≥ 75% at payment collection
+- Milestone announcements: stroke outline + screen flash at ×3.0+, star burst at ×4.0+
+- Celebrations at count 10 (`⭐ TABLE LEGEND!`) and count 15 (`💫 TABLE MASTER!`)
+
+### Shift Report Redesign
+- Combo stat always shown — removed `if (comboRecord >= 3)` guard
+- Shows `○ No streak built` / `↑ 2 serves` / `🔥 8 serves → ×3.0`
+- Total guests served: `14 guests served — 12 happy · 2 left`
+- Narrative headlines cover ×4.0 (10-serve) and ×5.0 (15-serve) tiers
+
 ## v0.8.1 — P0.5 Hotfix Phase (2026-06-02)
 ### Task 1 — Urgent State
 - Arrow drawn 20% wider (±18 vs ±15) when urgent, taller tip (14 vs 12px)

@@ -20,13 +20,23 @@ Fast-paced restaurant management game. Premium casual — think Overcooked/Good 
 
 ---
 
-## Current State: DESIGN PHASE — THREE PLANS AWAITING APPROVAL
+## Current State: VISUAL REBOOT IN PROGRESS — P0 + P1 COMPLETE
 
-**v0.6.0 (art direction reboot) is fully implemented.**
-**v0.7.0 Phase 1 implemented but visual expression insufficient (validated).**
-**VISUAL_REBOOT_PLAN.md written — awaiting approval.**
-**ADDICTION_AND_RETENTION_PLAN.md written — awaiting approval.**
-**GAME_IDENTITY.md written — awaiting approval.**
+**v0.8.0 implemented: P0 (action arrows) + P1 (customer redesign).**
+**VISUAL_REBOOT_PLAN.md approved — implementation underway.**
+**ADDICTION_AND_RETENTION_PLAN.md approved — post-visual-reboot.**
+**GAME_IDENTITY.md approved — strategic reference.**
+
+### P0/P1 Key Changes (v0.8.0)
+- Action arrow (▼): scene-level Graphics depth 15, always ≥0.95 alpha, scale pulse only. Replaces invisible pulse ring.
+- Arrow colors: blue=requesting, orange=kitchen_ready, gold=paying, red=urgent, gray=dirty
+- Primary arrow: scale 1.0. Secondary arrows: scale 0.5. Both always visible.
+- Kitchen glow: solid green fillRoundedRect on READY zone (right half of counter). Alpha 0.45–0.82.
+- Customer sprites: 48×72px (was 32×52). Head r=14 (was r=10). 2.5px outlines (was 1.5px).
+- Eyes: r=3 with white+pupil+highlight (was r=1.5 dark dot).
+- Patience bar: 44×8px (was 36×5px). Bubble container at y=−88 (was y=−66).
+- Name banner appears on arrival (variant name, fades after 1.6s).
+- Arrow depth-15 architecture: arrow MUST be a scene-level object, NOT a container child, or customers will cover it.
 
 ### Game Identity (from GAME_IDENTITY.md)
 **Unique Fantasy:** "Grace under pressure — being the most capable person in the room, and making it look effortless."
@@ -133,22 +143,24 @@ GAME_IDENTITY.md        — Competitive positioning, unique fantasy, elevator pi
 
 ## v0.6.0 Critical Knowledge
 
-### Face Coordinate System (FIXED)
-Customer texture 32×52, sprite origin 0.5,0.5 → container (0,0) = texture center (16,26):
-- Head center in container: **(0, −16)**
-- Eyes: **(±4, −18)** — eyeR = 1.5
-- Mouth: **y = −13**
+### Face Coordinate System (v0.8.0 — UPDATED for 48×72 customer)
+Customer texture 48×72, sprite origin 0.5,0.5 → container (0,0) = texture center (24,36):
+- Head center in container: **(0, −22)** ← HEAD_CY
+- Eyes: **(±5, −24)** — eyeR = 3, white base + dark pupil + highlight ← EYE_Y
+- Mouth: **y = −19** ← MOUTH_Y
+- Head angry overlay: `fillRoundedRect(-15, -36, 30, 28, 6)` (head spans −36 to −8)
 
 Player texture 40×62, sprite origin 0.5,0.5 → container (0,0) = texture center (20,31):
 - Head center in container: **(0, −17)**
-- Eyes: **(±4, −19)** — eyeR = 1.5 (in Player.ts as `cy − 2` where `cy = −17`)
+- Eyes: **(±4, −19)** — eyeR = 1.5
 - Mouth: **y = −13** (as `cy + 4`)
 
-### Patience Bar Layout (v0.6.0)
-- Track: `fillRoundedRect(-18, -42, 36, 5, 2.5)` — pill at y=−42 above head
-- Fill: same rect, width = `36 * frac`
-- Bubble container: y = −66 (above patience bar, tail tip at y=−46, 4px gap)
-- Eat bar: `fillRoundedRect(-18, 30, 36, 4, 2)` — below feet at y=30
+### Patience Bar Layout (v0.8.0)
+- Track: `fillRoundedRect(-22, -50, 44, 8, 4)` — 44×8px pill at y=−50
+- Fill: same rect, width = `44 * frac`
+- Bubble container: y = −88 (tail tip at y=−54, 4px above patience bar top at −50)
+- Eat bar: `fillRoundedRect(-22, 38, 44, 5, 2.5)` — below feet at y=38
+- Bubble tail: `fillTriangle(-7, 16, 7, 16, 0, 34)` in bubble local space
 
 ### Carry Display (v0.6.0)
 Player now shows: tray (y=−44) + plate bg `food_plate` (y=−55) + emoji (y=−53)

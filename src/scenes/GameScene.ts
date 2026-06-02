@@ -194,13 +194,11 @@ export class GameScene extends Phaser.Scene {
       fontSize: '10px', fontFamily: 'Arial Black', color: '#4CAF50', fontStyle: 'bold',
     }).setOrigin(0.5).setDepth(3);
 
-    // Kitchen glow
+    // Kitchen glow — solid bold fill over the READY zone (right side of counter)
     this.kitchenGlow = this.add.graphics().setDepth(3);
-    this.kitchenGlow.lineStyle(4, COLORS.UI_ORANGE, 0);
-    this.kitchenGlow.strokeRoundedRect(
-      KITCHEN_X - (GAME_WIDTH - 20) / 2, KITCHEN_Y - 40,
-      GAME_WIDTH - 20, 80, 8
-    );
+    const _kw = GAME_WIDTH - 20;
+    this.kitchenGlow.fillStyle(0x27AE60, 1.0);
+    this.kitchenGlow.fillRoundedRect(KITCHEN_X + 6, KITCHEN_Y - 36, _kw * 0.46, 72, 6);
     this.kitchenGlow.setAlpha(0);
 
     // Ticket rail
@@ -323,6 +321,7 @@ export class GameScene extends Phaser.Scene {
         customer.startPatience();
         customer.showRequestBubble();
         customer.seatBounce();
+        customer.showNameBanner();
         table.setPriority('requesting');
 
         if (this.tutorialActive && this.tutorialStep === 0) {
@@ -740,8 +739,8 @@ export class GameScene extends Phaser.Scene {
 
     if (this.kitchenGlowTween) { this.kitchenGlowTween.stop(); this.kitchenGlowTween = null; }
 
-    const maxAlpha = isPrimary ? 0.7 : 0.25;
-    const minAlpha = isPrimary ? 0.1 : 0.04;
+    const maxAlpha = isPrimary ? 0.82 : 0.38;
+    const minAlpha = isPrimary ? 0.45 : 0.18;
 
     this.kitchenGlowTween = this.tweens.add({
       targets: this.kitchenGlow,

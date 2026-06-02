@@ -1,22 +1,22 @@
 # PROJECT STATUS
 
 **Last Updated:** 2026-06-02
-**Current Version:** v0.6.0
+**Current Version:** v0.8.0
 
 ---
 
 ## Current Focus
-DESIGN PHASE. Three documents written, all awaiting owner approval before any implementation.
+VISUAL REBOOT — P0 and P1 complete. Awaiting approval to proceed to P2.
 
-## Design Documents Status
-- [x] VISUAL_REBOOT_PLAN.md — complete, awaiting approval
-- [x] ADDICTION_AND_RETENTION_PLAN.md — complete, awaiting approval
-- [x] GAME_IDENTITY.md — complete, awaiting approval
+## Design Documents Status (all approved)
+- [x] VISUAL_REBOOT_PLAN.md — approved, in progress
+- [x] ADDICTION_AND_RETENTION_PLAN.md — approved, post-visual-reboot queue
+- [x] GAME_IDENTITY.md — approved, strategic reference
 
-## Visual Reboot Status (pending approval)
-- [ ] P0: Action arrow indicator (replaces invisible pulse rings)
-- [ ] P1: Customer redesign (48×72px, bold outlines, name banners)
-- [ ] P2: Waiter redesign (larger, emotion visible)
+## Visual Reboot Status
+- [x] P0: Action arrow indicator — depth-15 scene arrow, scale pulse, 5 colors, primary/secondary scale
+- [x] P1: Customer redesign — 48×72px, r=14 head, 2.5px outlines, r=3 eyes+highlight, 44×8 patience bar, name banners
+- [ ] P2: Waiter redesign (larger, emotion visible) ← NEXT (pending approval)
 - [ ] P3: HUD redesign (combo always visible)
 - [ ] P4: Table redesign (clean cloth, numbered)
 - [ ] P5: Kitchen redesign (readable tickets, bold ready zone)

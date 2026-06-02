@@ -116,148 +116,151 @@ export class BootScene extends Phaser.Scene {
     g.generateTexture('player_walk', 40, 62);
 
     // ─── CUSTOMER VARIANTS ────────────────────────────────────────────────────
-    // 32×52 — head circle at (16,10) radius 10
-    // In container (origin 0.5): head center = (0, 10−26) = (0, −16)
+    // 48×72 — head circle at (24,14) radius 14
+    // In container (origin 0.5): head center = (0, 14−36) = (0, −22)
     CUSTOMER_VARIANTS.forEach((variant, i) => {
       g.clear();
 
-      // Elder has shorter legs to appear older/shorter
-      const isElder = variant.accessory === 'glasses';
-      const legH = isElder ? 8 : 12;
-      const legY = isElder ? 40 : 36;
-      // Business has squared wider shoulders
+      const isElder    = variant.accessory === 'glasses';
       const isBusiness = variant.accessory === 'briefcase';
-      const bodyW = isBusiness ? 22 : 20;
-      const bodyX = 16 - bodyW / 2;
+      const isElegant  = variant.accessory === 'necklace';
+      const isRomantic = variant.accessory === 'flower';
+      const isTrendy   = variant.accessory === 'sunglasses';
+      const isTeen     = variant.accessory === 'cap';
+
+      const legH = isElder ? 10 : 14;
+      const legY = isElder ? 52 : 52;
+      const bodyW = isBusiness ? 30 : 26;
+      const bodyX = 24 - bodyW / 2;
 
       // Shadow
-      g.fillStyle(0x000000, 0.10);
-      g.fillEllipse(16, 50, 26, 7);
+      g.fillStyle(0x000000, 0.12);
+      g.fillEllipse(24, 70, 40, 10);
 
       // Shoes
       g.fillStyle(0x2C1810);
-      g.fillRoundedRect(8, legY + legH - 1, 7, 5, 2);
-      g.fillRoundedRect(17, legY + legH - 1, 7, 5, 2);
+      g.fillRoundedRect(12, legY + legH - 1, 10, 6, 2.5);
+      g.fillRoundedRect(26, legY + legH - 1, 10, 6, 2.5);
 
-      // Legs (dark neutral pants)
+      // Legs
       g.fillStyle(0x1A1A2A);
-      g.fillRoundedRect(9, legY, 6, legH, 2);
-      g.fillRoundedRect(17, legY, 6, legH, 2);
+      g.fillRoundedRect(13, legY, 9, legH, 2.5);
+      g.fillRoundedRect(26, legY, 9, legH, 2.5);
 
       // Body
       g.fillStyle(variant.outfit);
-      g.fillRoundedRect(bodyX, 18, bodyW, 20, 5);
-      // Body outline
-      g.lineStyle(1.5, 0x3C2010, 0.6);
-      g.strokeRoundedRect(bodyX, 18, bodyW, 20, 5);
+      g.fillRoundedRect(bodyX, 26, bodyW, 26, 7);
+      // Body outline (2.5px bold)
+      g.lineStyle(2.5, 0x1A1A1A, 0.85);
+      g.strokeRoundedRect(bodyX, 26, bodyW, 26, 7);
 
       // Collar V
-      g.fillStyle(0xFFFFFF, 0.22);
-      g.fillTriangle(16, 18, 13, 23, 19, 23);
+      g.fillStyle(0xFFFFFF, 0.25);
+      g.fillTriangle(24, 26, 19, 34, 29, 34);
 
-      // Variant body accessories (drawn before head so head covers top)
+      // Body accessories (before head)
       if (isBusiness) {
-        // Tie (dark red down the front)
+        // Bold tie
         g.fillStyle(0xCC1111);
-        g.fillTriangle(16, 22, 14, 32, 18, 32);
-        g.fillRect(15, 32, 2, 3);
-      } else if (variant.accessory === 'necklace') {
+        g.fillTriangle(24, 30, 21, 46, 27, 46);
+        g.fillRect(22, 46, 5, 5);
+      } else if (isElegant) {
         // Pearl necklace arc + pendant
-        g.lineStyle(1.5, 0xFFD700);
+        g.lineStyle(2, 0xFFD700);
         g.beginPath();
-        g.arc(16, 24, 5, 0.3, Math.PI - 0.3, false);
+        g.arc(24, 34, 7, 0.3, Math.PI - 0.3, false);
         g.strokePath();
         g.fillStyle(0xFFD700);
-        g.fillCircle(16, 29, 2);
+        g.fillCircle(24, 41, 3);
       }
 
-      // Elegant: tall collar (collar wings drawn before head; head will cover center)
-      if (variant.accessory === 'necklace') {
+      // Elegant: tall collar wings (before head so head covers center)
+      if (isElegant) {
         g.fillStyle(variant.outfit);
-        g.fillRoundedRect(11, 14, 4, 8, 1);
-        g.fillRoundedRect(17, 14, 4, 8, 1);
-        g.lineStyle(1, 0x3C2010, 0.5);
-        g.strokeRoundedRect(11, 14, 4, 8, 1);
-        g.strokeRoundedRect(17, 14, 4, 8, 1);
+        g.fillRoundedRect(15, 22, 7, 10, 2);
+        g.fillRoundedRect(26, 22, 7, 10, 2);
+        g.lineStyle(1.5, 0x1A1A1A, 0.5);
+        g.strokeRoundedRect(15, 22, 7, 10, 2);
+        g.strokeRoundedRect(26, 22, 7, 10, 2);
       }
 
-      // Head (skin warm #FDBA8C per ART_DIRECTION)
-      g.fillStyle(0xFDBA8C);
-      g.fillCircle(16, 10, 10);
+      // Head
+      g.fillStyle(0xFFCB9A);
+      g.fillCircle(24, 14, 14);
 
       // Ears
-      g.fillStyle(0xE08B5A);
-      g.fillCircle(6, 11, 3);
-      g.fillCircle(26, 11, 3);
+      g.fillStyle(0xE8A070);
+      g.fillCircle(9, 14, 4.5);
+      g.fillCircle(39, 14, 4.5);
 
       // Head highlight
-      g.fillStyle(0xFFFFFF, 0.13);
-      g.fillCircle(12, 7, 4);
+      g.fillStyle(0xFFFFFF, 0.18);
+      g.fillCircle(18, 9, 6);
 
-      // Head outline
-      g.lineStyle(1.5, 0x3C2010, 0.7);
-      g.strokeCircle(16, 10, 10);
+      // Head outline (2.5px bold)
+      g.lineStyle(2.5, 0x1A1A1A, 0.9);
+      g.strokeCircle(24, 14, 14);
 
-      // Hair (variant-specific styles)
-      if (variant.accessory === 'cap') {
-        // Teen: cap crown + extended brim (beyond head edges at x=6 and x=26)
+      // Hair
+      if (isTeen) {
+        // Cap crown + wide brim
         g.fillStyle(0x223366);
-        g.fillRoundedRect(7, 1, 18, 6, 3);      // cap crown
-        g.fillRect(4, 6, 24, 3);                 // brim extends to x=4 and x=28 (beyond head)
+        g.fillRoundedRect(11, 0, 26, 9, 5);
+        g.fillRect(6, 8, 36, 5);
         g.fillStyle(0x334488, 0.6);
-        g.fillRoundedRect(9, 1, 6, 3, 1);        // logo panel
-        g.lineStyle(1, 0x111133, 0.5);
-        g.strokeRect(4, 6, 24, 3);
-      } else if (variant.accessory === 'flower') {
-        // Romantic: hair + large flower extending beyond right head edge
+        g.fillRoundedRect(13, 1, 9, 5, 2);
+        g.lineStyle(1.5, 0x111133, 0.6);
+        g.strokeRect(6, 8, 36, 5);
+      } else if (isRomantic) {
+        // Hair + large flower extending right
         g.fillStyle(variant.hair);
-        g.fillRoundedRect(7, 2, 18, 7, 4);
-        g.fillStyle(0xFFFFFF, 0.2);
-        g.fillRoundedRect(8, 2, 7, 3, 2);
-        // Flower (extends to x=30, beyond head edge at x=26)
-        g.fillStyle(0xFF85C2);
-        g.fillCircle(25, 3, 4.5);
-        g.fillStyle(0xFF4499);
-        g.fillCircle(23, 1, 3);
-        g.fillCircle(27, 1, 3);
-        g.fillStyle(0xFFFF55);
-        g.fillCircle(25, 3, 2);
-      } else if (isElder) {
-        // Elder: white/gray hair
-        g.fillStyle(0xC8C8C8);
-        g.fillRoundedRect(7, 1, 18, 8, 4);
-        g.fillStyle(0xFFFFFF, 0.5);
-        g.fillRoundedRect(8, 1, 7, 4, 2);
-      } else {
-        // Standard hair block
-        g.fillStyle(variant.hair);
-        g.fillRoundedRect(7, 2, 18, 7, 4);
+        g.fillRoundedRect(10, 0, 28, 10, 5);
         g.fillStyle(0xFFFFFF, 0.22);
-        g.fillRoundedRect(8, 2, 7, 3, 2);
+        g.fillRoundedRect(12, 1, 10, 4, 2);
+        // Flower (extends well beyond head right edge at x=38)
+        g.fillStyle(0xFF85C2);
+        g.fillCircle(40, 4, 7);
+        g.fillStyle(0xFF4499);
+        g.fillCircle(37, 1, 5);
+        g.fillCircle(43, 1, 5);
+        g.fillStyle(0xFFFF55);
+        g.fillCircle(40, 4, 3);
+      } else if (isElder) {
+        // White/gray hair
+        g.fillStyle(0xCCCCCC);
+        g.fillRoundedRect(10, 0, 28, 11, 5);
+        g.fillStyle(0xFFFFFF, 0.55);
+        g.fillRoundedRect(12, 1, 10, 5, 2);
+      } else {
+        // Standard hair
+        g.fillStyle(variant.hair);
+        g.fillRoundedRect(10, 0, 28, 10, 5);
+        g.fillStyle(0xFFFFFF, 0.25);
+        g.fillRoundedRect(12, 1, 10, 4, 2);
       }
 
-      // Accessories (drawn last, on top of hair)
+      // Face accessories (on top of hair)
       if (isElder) {
-        // Glasses with temples extending beyond head edges
+        // Glasses with temples beyond head edges
+        g.lineStyle(2, 0x555555);
+        g.strokeCircle(17, 12, 5.5);
+        g.strokeCircle(31, 12, 5.5);
+        g.lineBetween(22.5, 12, 25.5, 12);
+        g.lineBetween(11.5, 12, 4, 12);   // left temple
+        g.lineBetween(36.5, 12, 44, 12);  // right temple
+      } else if (isTrendy) {
+        // Oversized sunglasses extending beyond head edges
+        g.fillStyle(0x111111, 0.93);
+        g.fillRoundedRect(5, 9, 14, 9, 3);   // left lens (extends to x=5, head left at x=10)
+        g.fillRoundedRect(21, 9, 14, 9, 3);  // right lens (ends x=35, head right at x=38)
+        g.lineStyle(1.5, 0x555555);
+        g.lineBetween(19, 13.5, 21, 13.5);   // bridge
         g.lineStyle(1.5, 0x444444);
-        g.strokeCircle(11, 10, 3.5);
-        g.strokeCircle(21, 10, 3.5);
-        g.lineBetween(14.5, 10, 17.5, 10); // bridge
-        g.lineBetween(7.5, 10, 3, 10);     // left temple (extends to x=3, beyond head at x=6)
-        g.lineBetween(24.5, 10, 29, 10);   // right temple (extends to x=29, beyond head at x=26)
-      } else if (variant.accessory === 'sunglasses') {
-        // Trendy: sunglasses extend beyond head (head spans x=6 to x=26)
-        g.fillStyle(0x111111, 0.92);
-        g.fillRoundedRect(4, 7, 9, 5, 2);  // left lens x=4 (2px beyond head at 6)
-        g.fillRoundedRect(19, 7, 9, 5, 2); // right lens ends at x=28 (2px beyond head at 26)
-        g.lineStyle(1, 0x555555);
-        g.lineBetween(13, 9.5, 19, 9.5);   // bridge
-        g.lineStyle(1, 0x333333);
-        g.lineBetween(4, 9, 2, 9);          // left arm
-        g.lineBetween(28, 9, 30, 9);         // right arm
+        g.lineBetween(5, 13, 2, 13);          // left arm
+        g.lineBetween(35, 13, 38, 13);        // right arm
       }
 
-      g.generateTexture(`customer_${i}`, 32, 52);
+      g.generateTexture(`customer_${i}`, 48, 72);
     });
 
     // ─── TABLE (mahogany + checkered linen) ───────────────────────────────────

@@ -1,5 +1,36 @@
 # CHANGELOG
 
+## v0.8.0 — VISUAL REBOOT P0 + P1 (2026-06-02)
+### P0 — Action Indicator Redesign
+- **Action arrow (Table.ts)**: Replaced invisible 4px `strokeRoundedRect` pulse ring with a solid filled ▼ arrow (30×22px) at scene depth 15. Arrow drawn as filled triangle with 2.5px black outline + highlight. Colors: blue=requesting, orange=kitchen_ready, gold=paying, red=urgent, gray=dirty. Pulses by scale (0.88–1.14×), never tweens alpha below 0.95.
+- **Architecture fix**: Arrow is a scene-level Graphics object (NOT inside Table container). Tables render below customers in z-order; scene-level depth 15 ensures arrow is always above all gameplay entities.
+- **Primary/secondary system**: `setUrgencyLevel()` now sets `arrowBaseScale` (1.0 primary vs 0.5 secondary) instead of alpha multiplier. Both values produce a visible indicator.
+- **Kitchen glow redesign (GameScene.ts)**: Replaced 4px `strokeRoundedRect` with solid `fillRoundedRect` over the READY zone (right half of counter). Green (#27AE60). Alpha tweens 0.45–0.82 (primary) or 0.18–0.38 (secondary) — never invisible.
+- **BEFORE_AFTER_REPORT.md**: Full validation report with screenshots and measured improvements.
+
+### P1 — Customer Redesign
+- **Sprite size**: 48×72px (was 32×52px) — 50% larger each axis, 2.25× more area
+- **Head**: radius r=14 (was r=10), center at pixel (24, 14) in texture
+- **Face coordinates (Customer.ts)**: HEAD_CY=−22, EYE_Y=−24, MOUTH_Y=−19 (all updated for new sprite)
+- **Eyes**: r=3 circles with white base, dark pupil, bright highlight dot (was r=1.5 dark-only dots)
+- **Outlines**: 2.5px near-black on head and body (was 1.5px)
+- **Patience bar**: 44×8px at y=−50 (was 36×5px at y=−42) — 78% wider, 60% taller
+- **Eat bar**: 44×5px at y=38 (was 36×4px at y=30)
+- **Bubble container**: y=−88 (was y=−66) — adjusted for larger sprite; tail tip at local y=34
+- **Name banner**: `showNameBanner()` on Customer, called from trySpawnCustomer after seatBounce. Variant name slides up and fades after 1.6s.
+- **Variant silhouettes redesigned** for 48×72 canvas with bolder proportions:
+  - Business: large bold tie triangle, wide shoulders
+  - Elegant: visible collar wings + large gold pendant
+  - Teen: wide cap brim clearly past head edges
+  - Elder: thick glasses with visible temples
+  - Trendy: oversized sunglasses past head edges
+  - Romantic: large 3-circle flower cluster at right
+  - Casual: round clean face (default reference)
+- **Skin tone**: #FFCB9A (cleaner, lighter cartoon skin)
+- **Ear radius**: 4.5px (was 3px)
+
+---
+
 ## GAME IDENTITY — 2026-06-02
 ### Design Document Created (no implementation — awaiting approval)
 - **GAME_IDENTITY.md**: Full identity discovery document

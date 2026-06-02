@@ -6,7 +6,7 @@
 ---
 
 ## Current Focus
-v0.6.0 implemented — art direction reboot. Visual identity established, face bug fixed, all characters improved. Awaiting owner review.
+v0.7.0 design phase — five redesign documents written. Awaiting owner approval before implementation begins.
 
 ## Completed Tasks
 - [x] Project scaffold (Vite + TypeScript + Phaser 3)
@@ -52,6 +52,12 @@ v0.6.0 implemented — art direction reboot. Visual identity established, face b
 - [x] v0.6.0 — Kitchen: pot+pan silhouettes on burners
 - [x] v0.6.0 — Menu board (chalkboard) above kitchen counter
 - [x] v0.6.0 — Food plate background when carrying (food_plate texture + plateImage in Player)
+- [ ] v0.7.0 — AWAITING APPROVAL: gameplay clarity, balance, progression, retention redesign
+  - GAMEPLAY_REDESIGN.md: priority system, order reveal, anger arc, tutorial
+  - VISUAL_REDESIGN.md: ambient motion, customer personality, food presentation
+  - BALANCE_REDESIGN.md: patience values (110–140s T1), spawn caps, score formula
+  - PROGRESSION_REDESIGN.md: table unlocks per level, XP ticker, shop
+  - RETENTION_REDESIGN.md: near-miss gaps, last-session display, streaks, achievements
 
 ## Known Blockers
 - GitHub Pages requires one-time user action: Settings → Pages → Source → GitHub Actions

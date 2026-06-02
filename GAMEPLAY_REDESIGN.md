@@ -1,176 +1,221 @@
 # GAMEPLAY REDESIGN — TableRush
 
 **Status: AWAITING APPROVAL — do not implement**
-**Author: Claude Code**
-**Date: 2026-06-01**
+**Last Updated: 2026-06-02**
 
 ---
 
-## 1. What Is Wrong Now
+## Executive Summary
 
-### 1a. Order flow is mechanical, not fun
-The current flow forces the player to:
-1. Click seated customer → order popup appears
-2. Click a menu item
-3. Wait while watching nothing happen
-4. Click the table again to deliver
+The game is mechanically complete. The loop is correct. The problem is that the loop has no **felt meaning**. Each action is invisible. Each success is silent. Each failure is random-feeling. The player finishes a round and doesn't understand what they did right or wrong, and has no reason to play again.
 
-This is a two-click-wait-click pattern with no player agency between steps. It feels like a form, not a game.
-
-### 1b. No teaching
-The game starts immediately with customers appearing. There is no indication that you should tap a seated customer to take their order. First-time players will wait and lose customers before understanding the mechanic.
-
-### 1c. Angry customers leave dirty tables
-Currently: customer leaves angry → table is dirty → player must still clean it. This is doubly punishing and unintuitive. The customer never received food, so the table should be fine.
-
-### 1d. Player loses track of tasks
-When 3-4 customers are at tables simultaneously, there is no priority indicator telling the player who needs help most urgently.
+This document proposes solutions for every failure point.
 
 ---
 
-## 2. New Customer Lifecycle
+## Problem 1: The Player Never Knows What to Do Next
 
-Each customer goes through exactly these states:
+### Observed Problem
+At any moment the player faces simultaneous signals: blue table pulse, orange kitchen glow, gold paying pulse, red patience bar. All at equal visual intensity. No hierarchy. The player's eye cannot land anywhere.
+
+### Root Cause
+The priority pulse system treats all urgency equally. A requesting customer and a nearly-angry customer look like the same problem at the same volume.
+
+### Proposed Solution: Single Dominant Action
+
+At all times, exactly **one** object is the PRIMARY action target. It pulses at 100% intensity. All other actionable objects pulse at 35% intensity.
+
+**Priority hierarchy (highest first):**
+1. Customer patience < 20% AND player not carrying food → Save them. Urgent red pulse + border
+2. Kitchen order ready AND player not carrying → Pick up food. Orange pulse, full glow
+3. Player carrying food AND matching customer exists → Deliver. Orange arrow above player pointing to table
+4. Customer in `requesting` state → Take order. Blue pulse, "wave" bounce on customer
+5. Customer in `paying` state → Collect payment. Gold pulse
+6. Table `dirty` → Clean. Broom icon + dim gray pulse
+
+**Visual intensity model:**
+- PRIMARY: full pulse, ring opacity 1.0, 500ms cycle
+- SECONDARY (other actionables): ring opacity 0.35, 1000ms cycle
+- INACTIVE: no pulse
+
+This creates a clear visual hierarchy. The player's eye goes to the brightest object. Secondary tasks remain visible but don't compete.
+
+### Also Needed: Directional Arrow for Delivery
+
+When player picks up food from kitchen, show a small animated arrow above the player's head pointing toward the destination table. The arrow updates as the player moves. Disappears on delivery. This removes ambiguity about which table needs food.
+
+---
+
+## Problem 2: Taking an Order Has No Payoff
+
+### Observed Problem
+Player taps requesting customer → player walks → customer bubble silently changes from ❓ to food emoji → small ticket appears in kitchen. No drama. No "I did it" moment. Players report the game feels like "nothing is happening."
+
+### Root Cause
+The auto-order mechanic is correct design (no menus = fast paced = fun) but it lacks **feedback theater**. The player's action must feel meaningful and rewarded.
+
+### Proposed Solution: Order Reveal Animation
+
+When player reaches the requesting table and order is taken:
+
+1. **Customer bubble pop**: ❓ → food emoji with Back.easeOut scale punch (0.3s)
+2. **"+ORDER TAKEN" floating text**: rises from customer position in orange, scale punch
+3. **Kitchen ticket slide-in**: the new ticket slides from right to left onto the rail with a satisfying settle
+4. **Customer mood shift**: customer's expression changes from neutral/hungry to anticipating (slightly happy)
+5. **Waiter nod**: player sprite does a quick bob (head dip) to signal acknowledgement
+
+This sequence takes 0.4s total. It communicates: "I see you. I know what you want. It's on its way."
+
+**Key: the food emoji bubble must stay visible until food is delivered.** Currently it hides after ordering. Keeping it visible reminds the player what each customer ordered AND makes the delivery confirmation more satisfying (bubble goes away WHEN the food arrives).
+
+---
+
+## Problem 3: The Correct Game Flow Is Not Self-Evident
+
+### Observed Problem
+New players don't know:
+- That tapping the kitchen picks up food
+- Which table to deliver to after pickup
+- That they need to tap the customer again to collect payment
+- What the broom icon means
+
+### Root Cause
+The game teaches these through a text-based tutorial that few players read carefully. Games must teach through **play**, not text.
+
+### Proposed Solution: Contextual Prompt System
+
+Small animated tooltips appear the first time a new interaction becomes available. Not a tutorial overlay — a contextual whisper.
+
+| Moment | Prompt |
+|--------|--------|
+| First customer appears | "✋ Tap the table to take their order" |
+| First order cooking | "👨‍🍳 Wait for kitchen to cook..." |
+| First order ready | "👆 Tap kitchen to pick up!" |
+| Player carrying food | "🍽️ Deliver to [table arrow]" |
+| First customer paying | "💰 Tap to collect payment!" |
+| First dirty table | "🧹 Tap to clean" |
+
+Each prompt appears ONCE, for 3 seconds, then dismisses forever (localStorage tracked). Not a blocking tutorial — a hint that doesn't interrupt play.
+
+### Also: "What To Do" pulse on player when idle
+
+If the player stands still for more than 3 seconds and there are available actions, the player sprite gets a small bouncing "?" above their head with an arrow pointing toward the highest-priority task. Gentle nudge, not intrusive.
+
+---
+
+## Problem 4: Angry Customer Departure Is Invisible
+
+### Observed Problem
+Customer patience reaches zero → they instantly disappear → score penalty floats briefly → combo resets. Player may not notice if mid-walk. The punishment feels arbitrary.
+
+### Root Cause
+No warning before departure. No visual consequence. The player learns nothing. They don't feel the loss as a meaningful failure — just a random negative event.
+
+### Proposed Solution: Three-Stage Anger Arc
+
+**Stage 1 — Impatient (patience 30–60%):**
+- Customer face: `hungry` mood (already implemented)
+- Customer taps table (small repeating animation: y−2 every 1.5s)
+- Table pulse: orange, medium intensity
+
+**Stage 2 — Angry (patience 10–30%):**
+- Customer face: `angry` mood (already implemented)
+- Customer stands up from seat (y offset −8, visible)
+- Table pulse: red, HIGH intensity (primary priority)
+- "😤 Losing patience!" floats above customer for 2s (appears ONCE at 15% threshold)
+
+**Stage 3 — Leaving (patience 0–10% countdown):**
+- "LEAVING NOW!" in red appears 3 seconds before departure
+- Customer turns toward door
+- Table pulses at maximum intensity
+
+**On departure:**
+- Customer walks toward door (off-screen), visible walk
+- Red burst particles from where they sat
+- "CUSTOMER LOST" text, size 24, red, stays for 1.5s
+- Camera tiny shake
+- Waiter stress reaction (already implemented)
+- Score penalty text prominent (−50/−100/−150)
+
+This makes the failure visible, legible, and preventable next time.
+
+---
+
+## Problem 5: The Tutorial Doesn't Create a First Success
+
+### Observed Problem
+Current 6-step tutorial: text overlays that must be dismissed. Player feels lectured. First real experience is confusing multi-customer pressure.
+
+### Root Cause
+Tutorial teaches features, not success. The first session should be scripted to create a single perfect service chain that makes the player feel like a great waiter.
+
+### Proposed Solution: "Guided First Service"
+
+Tutorial is a single scripted customer (pre-determined variant, pre-determined order).
+
+Step-by-step with LARGE arrow indicators:
 
 ```
-ENTERING → SEATED → REQUESTING → ORDERING → WAITING_FOOD → EATING → PAYING → LEAVING
+1. One customer enters. Sits down. Requests attention.
+   ARROW → table. "Someone needs you!"
+   
+2. Player taps table. Order taken.
+   Flash: "Order taken! 🍕 Pizza on the way!"
+   ARROW → kitchen.
+   
+3. Kitchen cooks (sped up to 1.5s for tutorial).
+   "Kitchen is cooking..."
+   
+4. Order ready. Kitchen glows.
+   ARROW → kitchen. "Pick up the order!"
+   
+5. Player picks up. Arrow → table.
+   "Deliver the food!"
+   
+6. Player delivers. Customer eats.
+   "Excellent! Customer is happy! 😄"
+   
+7. Customer pays. Gold ring appears.
+   ARROW → table. "Collect payment!"
+   
+8. Payment collected. BIG REWARD: 
+   "PERFECT SERVICE! +200 bonus!
+   ⭐ First round: serve as many customers as you can in 3 minutes!"
 ```
 
-### State descriptions
-
-| State | Visual Cue | Player Action |
-|-------|-----------|---------------|
-| ENTERING | Customer walks from door to table | None (watch) |
-| SEATED | Customer settles, patience bar appears | None (brief settle delay ~1.5s) |
-| REQUESTING | Speech bubble with ❓ appears, table pulses | Tap table → player walks over |
-| ORDERING | Player arrives → order bubble auto-shows item | None (auto-resolved) |
-| WAITING_FOOD | Order bubble shows item icon, patience ticks | Collect food from kitchen, tap table |
-| EATING | Content animation, patience bar frozen | None |
-| PAYING | 💳 icon appears, table pulses | Tap table to collect |
-| LEAVING | Customer walks out smiling | None |
-
-### Key design changes
-
-**Order is automatic.** When the player walks to a REQUESTING customer, the order is taken automatically. No menu popup. The customer's order is randomly assigned from the menu and displayed in their speech bubble. This removes the awkward popup and keeps the game flowing.
-
-**Two distinct interaction moments per customer:**
-1. Walk to customer (take order) → go to kitchen → pick up food → walk back to deliver
-2. Tap table to collect payment
-
-This creates a satisfying two-act structure per customer.
-
-**Kitchen queue is visible.** A horizontal ticket rail at the top of the kitchen area shows pending orders as colored food icons. The player taps the kitchen when a matching order is ready, picks it up, and delivers.
+Tutorial: one customer, one cycle, scripted success. Then full game begins.
 
 ---
 
-## 3. Angry Customer Behavior
+## Correct Core Loop (as designed — validation)
 
-When patience runs out:
+The user-specified flow IS what the game implements. What needs to change is the **feedback** at each step:
 
-- Customer shows 😡 expression
-- Speech bubble turns red
-- Customer stands, walks out
-- **Score penalty:** −50 points × current difficulty multiplier
-- **Combo reset:** multiplier returns to ×1.0
-- **Table becomes immediately available** (no cleaning needed — customer never ate)
-- Table does NOT become dirty
-
-This is fair. The player is penalized for ignoring a customer but not punished twice.
-
----
-
-## 4. Table Cleaning — When It Applies
-
-Table cleaning ONLY happens after a customer eats and pays and leaves normally.
-
-After a happy customer leaves:
-- Table shows leftover visual (crumbs, empty plates)
-- 🧹 indicator appears
-- Player taps table to clean (1-2 second animation)
-- Table becomes available again
-
-Cleaning is a **positive ritual** — it marks a successful service cycle.
+| Step | Current Feedback | Required Feedback |
+|------|-----------------|-------------------|
+| Customer enters | Walk animation | Walk + name tag flash (Elegant / Teen / etc.) |
+| Customer requests | ❓ bubble + blue pulse | ❓ bubble + blue pulse + character wave animation |
+| Player takes order | Silent bubble change | Pop animation + "+ORDER" toast + ticket slide-in |
+| Order cooking | Ticket + small progress bar | Ticket + cook bar + steam particles (already done) |
+| Order ready | Kitchen glow | Kitchen glow + "READY!" text flash |
+| Player picks up | Food appears on tray | Food on plate + pickup animation + delivery arrow |
+| Player delivers | Food disappears | Pop animation + "😋 Enjoy!" customer reaction |
+| Customer eats | Eat bar fills | Eat bar + "mmm" emoji bubble |
+| Customer pays | Gold ring | Gold ring + "💰 Thank you!" bubble + coin sparkle |
+| Table dirty | Broom icon | Broom icon (fine as-is) |
+| Table cleaned | Table clears | Clean shine effect |
 
 ---
 
-## 5. Player Guidance — Priority System
+## Implementation Priority
 
-The game must always communicate who needs the player most.
-
-### Attention priority (highest → lowest):
-1. ❗ Customer patience < 25% → table pulses red urgently
-2. 🍽️ Food is ready in kitchen → kitchen pulses warm orange
-3. ❓ Customer requesting order → table pulses soft blue
-4. 💳 Customer ready to pay → table pulses gold
-5. 🧹 Table needs cleaning → table shows subtle broom icon
-
-This creates a clear visual hierarchy. The player scans the screen, finds the most urgent pulse, acts.
-
-### Waiter indicator
-An arrow or highlight shows the waiter's current target when moving. The player always knows: "my waiter is going here."
-
----
-
-## 6. Addiction Loop
-
-### Per-customer rewards
-| Achievement | Bonus |
-|-------------|-------|
-| Served before 75% patience used | ⚡ Fast Bonus +25 pts |
-| Served before 50% patience used | ⚡⚡ Speed Bonus +50 pts |
-| All 5 customers happy simultaneously | 🌟 Full House +100 pts |
-| 5 consecutive happy customers | 🔥 Combo ×2 |
-| 10 consecutive happy customers | 🔥🔥 Combo ×3 |
-
-### End-of-round rating
-After the 3-minute round ends:
-- Count: customers served / customers who left angry
-- Rating: 3 stars (all served) → 2 stars (< 3 angry) → 1 star (< 5 angry)
-- Star rating shown prominently on Game Over screen
-- High score = best score (not star count, but stars are displayed)
-
-### Visual feedback moments
-- Coin burst on payment collection
-- Score pop with multiplier shown (+240 ×2!)
-- Combo number animates when increasing
-- Streak counter visible in HUD
-
----
-
-## 7. Tutorial — First 30 Seconds
-
-On first play:
-1. One customer spawns and sits (no others)
-2. Arrow points to customer, text: "Tap the table!"
-3. Player taps → waiter walks → order taken automatically
-4. Arrow points to kitchen: "Pick up the order!"
-5. Player taps kitchen → picks up food
-6. Arrow points back to table: "Deliver it!"
-7. Player taps → food delivered
-8. Customer eats → pays → arrow: "Collect payment!"
-9. Tutorial complete → normal game begins
-
-Tutorial state tracked in localStorage. Only shown once.
-
----
-
-## 8. What Does Not Change
-
-- 3-minute session length
-- 5 tables maximum
-- Menu items (Burger, Pizza, Salad, Pasta, Sushi)
-- High score persistence
-- Pause / Game Over / Main Menu screens
-- TypeScript + Phaser 3 implementation
-
----
-
-## 9. Implementation Priority
-
-1. Fix customer state machine (new states)
-2. Fix order flow (auto-order on arrival)
-3. Fix angry customer (no dirty table)
-4. Add priority visual system
-5. Add bonus system
-6. Add tutorial
-7. Add end-of-round star rating
+| Priority | Feature |
+|----------|---------|
+| 🔴 CRITICAL | Single dominant action visual hierarchy |
+| 🔴 CRITICAL | Order reveal animation + kitchen ticket slide-in |
+| 🟠 HIGH | Anger warning 3-stage arc |
+| 🟠 HIGH | Delivery arrow indicator |
+| 🟡 MEDIUM | Contextual first-time hints (not blocking tutorial) |
+| 🟡 MEDIUM | Tutorial redesign (guided first service) |
+| 🟢 LOW | Customer type name tag on arrival |
+| 🟢 LOW | "Thank you!" payment bubble |

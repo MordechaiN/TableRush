@@ -1,292 +1,196 @@
 # VISUAL REDESIGN — TableRush
 
 **Status: AWAITING APPROVAL — do not implement**
-**Author: Claude Code**
-**Date: 2026-06-01**
+**Last Updated: 2026-06-02**
 
 ---
 
-## 1. What Is Wrong Now
+## Executive Summary
 
-| Element | Current | Problem |
-|---------|---------|---------|
-| Background | Dark navy `#1a1a2e` | Cold, tech-feeling, not a restaurant |
-| Floor | Dark checkerboard | Looks like a game editor grid |
-| Tables | Dark rectangle + thin blue stroke | Wireframe placeholder |
-| Chairs | Dark squares | Invisible against background |
-| Waiter | Blue circle + rectangle body | Debug graphics |
-| Customers | Colored circles + rectangles | Indistinguishable, no personality |
-| Food | Colored circles | Cannot tell what food it is |
-| Speech bubbles | White box + emoji text | Functional but not polished |
-| Patience bar | Thin green strip | Easy to miss, hard to read |
-| HUD | Plain text on dark bar | No visual identity |
+v0.6.0 corrected the most critical bugs (face coordinates, UI positions, outlines). The bones are now right. The next visual problem is not correctness — it is **life**. The game looks like a stopped photograph of a restaurant. Nothing moves except when the player acts. Real restaurants are alive at all times. This document defines what visual life means for TableRush and how to achieve it.
 
 ---
 
-## 2. Color Palette — New Direction
+## Problem 1: The Restaurant Feels Static
 
-Warm, inviting, premium casual. Think brasserie + modern app.
+### Observed
+Between player actions, the scene is frozen. Tables don't breathe. Customers sit like statues. Kitchen never moves. The restaurant has the energy of a screenshot, not a place.
 
-```
-Restaurant Palette:
-  Floor warm:     #F5E6C8   (warm cream tile)
-  Floor alt:      #EDD9A3   (alternating tile)
-  Wall:           #FFF8F0   (warm white)
-  Wall accent:    #C17B3A   (wood trim)
+### Analysis
+Reference games all have ambient motion as a core feel:
+- Good Pizza Great Pizza: customers nod, tap foot
+- Overcooked: kitchen tools steam, ingredients jiggle
+- Diner Dash: customers have varied idle animations
 
-  Table surface:  #8B4513   (rich mahogany)
-  Table top:      #A0522D   (lighter wood grain)
-  Table cloth:    #FDFAF6   (white linen)
-  Chair:          #5C3317   (dark wood)
+Static scenes feel like prototypes. Moving scenes feel like worlds.
 
-  Waiter jacket:  #1A237E   (deep navy)
-  Waiter shirt:   #FFFFFF   (white)
-  Waiter skin:    #FDBCB4   (warm peach)
+### Proposed Solution: Ambient Motion Layer
 
-  UI primary:     #FF6B35   (energetic orange)
-  UI secondary:   #FFD700   (gold for coins/score)
-  UI success:     #4CAF50   (green for bonuses)
-  UI danger:      #F44336   (red for angry/urgent)
-  UI info:        #2196F3   (blue for neutral info)
+**Tier 1 — Always running (no gameplay impact):**
+- Pendant lamps: very slow sway (±2° rotation, 4s yoyo, Sine ease). Subtle.
+- Kitchen steam: already implemented, keep + add slight opacity variation
+- Candle flames: slight scale oscillation (0.9–1.1x, 1.5s yoyo per candle, random delay offset so they don't sync)
 
-  Text dark:      #2C1810   (warm dark brown)
-  Text light:     #FFFFFF
-  Text gold:      #FFD700
-```
+**Tier 2 — Customer idle animations (while seated, waiting):**
+- Every 2–4s (random): customer does a subtle "looking around" tilt (y−3, 0.3s ease)
+- At patience 60–100%: customer sits contentedly (no animation)
+- At patience 30–60%: customer does periodic table-tap (arm dips y+2 briefly)
+- At patience < 30%: customer drums table (rapid y+2 yoyo, 0.4s cycle)
 
----
+These are drawn in `preUpdate`, driven by `patienceActive` and elapsed time.
 
-## 3. Restaurant Environment
-
-### Floor
-- Warm cream/tan diagonal tile pattern
-- Subtle grout lines between tiles
-- Not dark. Not cold. Warm and bright.
-
-### Walls
-- Warm off-white top section (visible at edges)
-- Wooden wainscoting strip mid-wall
-- Subtle wall decorations: framed art, a plant, a clock
-
-### Kitchen area (top zone)
-- Stainless counter with warm lighting glow
-- Ticket rail: horizontal bar showing order tickets
-- Each ticket: small colored card with food emoji
-- "KITCHEN" label in warm font, not monospace
-
-### Decorations
-- Two potted plants (bottom corners)
-- Wall clock (top right area, shows game timer)
-- Hanging pendant lights (circles above table areas)
-- Welcome mat at the door (bottom center)
-
-### Door
-- Proper door shape with handle
-- Customers enter and exit through it
-- Subtle shadow
+**Tier 3 — Event-driven ambient:**
+- When new customer arrives: door opens (brief flash at entrance)
+- When customer leaves happy: brief wave animation at door edge
+- When kitchen order is ready: bell ring flash on kitchen (bright white circle expands + fades)
 
 ---
 
-## 4. Tables
+## Problem 2: Characters Lack Personality
 
-Each table has three layers:
+### Observed
+7 customer variants look like 7 differently-colored shapes with small accessory differences. They feel like data entries, not characters.
 
-1. **Shadow** — soft dark ellipse below the table
-2. **Table body** — warm mahogany rectangle, rounded corners (radius 12)
-3. **Tablecloth** — white/cream inset rectangle, slightly smaller
-4. **Place settings** — tiny fork/knife icons when table is empty (inviting)
-5. **Dirty state** — crumbs drawn on tablecloth, slight disarray
+### Analysis
+Character appeal in mobile casual games comes from:
+1. Distinctive silhouettes (mostly solved in v0.6.0)
+2. Expressive reactions that feel human
+3. Moment-to-moment personality (a Teen acts differently than an Elder)
+4. Names / labels that create emotional attachment
 
-No wireframes. No strokes. Filled, warm, readable.
+### Proposed Solution: Character Personality Layer
 
-Size: 110 × 75px (slightly larger than current 100 × 70)
+**Names for each variant** (shown briefly on arrival):
+| Variant | Name | Personality |
+|---------|------|-------------|
+| Elegant | Sofia | Patient, tips well |
+| Business | Marco | Impatient, orders fast |
+| Casual | Jake | Relaxed, takes time |
+| Trendy | Zara | Selfie-aware, expressive |
+| Romantic | Rosa | Warm, grateful on payment |
+| Elder | Nonno | Very patient, tips generously |
+| Teen | Kyle | Fast eater, no tip (but combo bonus) |
 
----
+**Personality differences in patience:**
+Not all customers have the same patience timers. The variant itself modulates the base patience:
+- Nonno (Elder): +20% patience
+- Sofia (Elegant): +10% patience, higher tip multiplier
+- Marco (Business): −20% patience, higher price items
+- Kyle (Teen): −10% patience but quick eater (−30% eat time)
 
-## 5. Waiter Character
+These multipliers apply ON TOP of difficulty tier values.
 
-The player character is a waiter. Distinct, readable, charming.
-
-Layers (drawn procedurally):
-1. **Legs** — dark trouser rectangles
-2. **Shoes** — small black rounded rectangles
-3. **Body** — navy jacket (rounded rectangle)
-4. **Collar** — white triangle shirt visible at top
-5. **Head** — warm peach circle
-6. **Hair** — brown/dark shape on top of head
-7. **Face** — two small dot eyes, tiny smile arc
-8. **Bow tie** — small black bow at collar
-9. **Tray** (when carrying food) — gray circle held above head, food icon on top
-
-Movement: smooth tween with slight vertical bob (via y offset oscillation while moving).
-
-When idle: subtle idle animation (slight body sway, 2s period).
-
-Size: approximately 36 × 56px
-
----
-
-## 6. Customer Characters
-
-7 distinct customer variants. Each is a combination of:
-- Body color (outfit)
-- Hair color/style
-- Accessory (hat, glasses, bow)
-
-**Variants:**
-
-| # | Outfit | Hair | Accessory | Feeling |
-|---|--------|------|-----------|---------|
-| 0 | Red dress | Dark bun | Pearl necklace | Elegant lady |
-| 1 | Blue suit | Short brown | Briefcase beside | Business man |
-| 2 | Green hoodie | Blonde ponytail | None | Casual young |
-| 3 | Orange t-shirt | Curly afro | Sunglasses | Trendy |
-| 4 | Purple dress | Long black | Flower in hair | Romantic |
-| 5 | Teal jacket | Grey hair | Round glasses | Elder |
-| 6 | Yellow shirt | Red spiked | Cap | Teen |
-
-Each customer always uses the same variant (by customerId % 7).
-
-**Mood states expressed via face:**
-- WAITING: neutral face 😐 → eyes slightly drooping
-- HAPPY (eating): smile 😊
-- HUNGRY (patience < 50%): slight frown
-- ANGRY (patience < 20%): eyebrows angled down, frown 😠
-- FURIOUS (patience expired): red tint face, strong frown 😡
-
-Face elements are drawn on top of head circle. Mood transitions are instant (no tween needed — the face just redraws).
+**Payment personality:**
+- Sofia: "Magnifique! 💋" bubble on payment
+- Marco: "$$ EXCELLENT SERVICE" bubble
+- Nonno: "Grazie, figlio mio! 🙏" bubble
+- Kyle: "mid 🤙" bubble
 
 ---
 
-## 7. Speech Bubbles & Order Display
+## Problem 3: Food Looks Unappealing
 
-### Request bubble (customer wants attention)
-- White rounded rectangle with tail pointing down-left
-- Content: ❓ large emoji, pulsing (scale 0.9 → 1.1, 600ms loop)
-- Border: soft blue `#2196F3`
-- Appears above customer head
+### Observed
+Food is an emoji on a plate circle. Technically correct per v0.6.0 spec. But the food doesn't make you hungry. In Good Pizza Great Pizza, food is the most satisfying visual in the game.
 
-### Order bubble (customer's food request)
-- White rounded rectangle with tail
-- Content: food emoji (large, ~28px) + item name below (12px text)
-- Border: warm orange `#FF6B35`
-- Stays visible until food is delivered
+### Analysis
+Food emojis are appropriate for this game's art style and scope. The issue is PRESENTATION not the emoji choice. In v0.6.0 the food now sits on a plate — that's a start. But the plate has no depth. No light. No appeal.
 
-### Payment bubble
-- White rounded rectangle
-- Content: 💳 emoji + price in gold text
-- Border: gold `#FFD700`
+### Proposed Solution: Food Presentation Enhancement
 
-### Anger bubble
-- Red-tinted rounded rectangle
-- Content: 😠 large emoji
-- Shakes slightly (tween x ±3px, 80ms)
+**On the tray (player carrying):**
+- Plate circle: keep white inner + subtle rim shadow
+- Add tiny food-specific "steam" effect for hot dishes (Pasta, Pizza): 2 wisp circles floating up from plate, very subtle
+- Add garnish dot for cold dishes (Salad, Sushi): small green circle at plate edge
 
----
+**On customer table (eating):**
+- When food is delivered: brief "wow" sparkle on customer bubble (3 small stars radiate)
+- Food emoji on table (under customer) during eating phase — currently disappears
+- After eating: empty plate visible for 0.5s before clearing (feels satisfying)
 
-## 8. Kitchen Order Tickets
-
-A horizontal rail at the bottom of the kitchen zone displays pending orders.
-
-Each ticket:
-- Small warm card (cream background, orange border)
-- Food emoji centered (24px)
-- Ticket appears with slide-in animation from right
-- Completed ticket flips/fades out
-- Maximum 5 tickets visible simultaneously
-
-When an order is ready (cook time elapsed):
-- Ticket glows warm gold
-- Small ✓ checkmark appears
-- Kitchen area pulses once
+**On kitchen ticket:**
+- Ticket bg already orange-bordered
+- Add food-specific color tint on ticket bg:
+  - Salad: light green tint
+  - Burger: warm orange tint
+  - Pasta: warm yellow tint
+  - Sushi: cool blue tint
+  - Pizza: deep orange tint
 
 ---
 
-## 9. Patience Bar
+## Problem 4: The UI Lacks Character
 
-Current: thin green strip above customer. Hard to see.
+### Observed
+HUD is functional but sterile. It looks like a generic game template. Score, timer, combo — nothing makes it feel like TableRush specifically.
 
-New design:
-- Placed BELOW the speech bubble
-- Width: 60px, height: 8px
-- Rounded ends
-- Color transitions:
-  - > 60%: warm green `#4CAF50`
-  - 30–60%: amber `#FF9800`
-  - < 30%: urgent red `#F44336` with pulse animation
-- Small clock icon (🕐) to the left of the bar
-- Background track: dark rounded rect
+### Analysis
+Branded UI contributes to memorability. The game should feel like a place called TableRush, not "generic restaurant game #47."
 
----
+### Proposed Solution: UI Personality
 
-## 10. HUD (Heads-Up Display)
+**Score display:**
+Current: "🍽️  0"
+Proposed: Score shown in a warm wood-colored panel with a fork/knife icon. Font: slightly rounded, warm orange on cream. Not just a number — "Total Tips: 420" with a coin icon.
 
-### Top bar (60px height)
-- Warm cream/white background (not dark)
-- Left: 🍽️ SCORE: **1,240** (score in bold, warm brown text)
-- Center: 🔥 ×2.0 (combo multiplier, orange when > 1)
-- Right: ⏱ 2:34 (timer with clock icon)
-- Pause button: ⏸ top-right corner
+**Combo display:**
+When combo is active, the combo display gets a flame effect behind it (orange/red gradient that intensifies with higher combo). The name "HOT STREAK" literally has heat shimmer.
 
-### Score popup (floating text)
-- Appears at point of payment collection
-- "+$12" in warm orange, "+50 FAST!" in gold
-- Rises 60px, fades over 1.2s
-- Size: 22px bold
+**Timer display:**
+Normal time: neutral warm color. Below 60s: amber. Below 30s: red with subtle pulse. Last 10s: large countdown font, each second animates in.
 
-### Combo announcement
-- When combo increases: large text slides in from right
-- "COMBO ×2! 🔥" in bright orange
-- Stays 1.5s, slides out
-- Gets bigger with each increment (max ×5 = very large)
+**HUD height:**
+Current: 56px. Propose: 60px. Slightly more breathing room. Score left, restaurant name center (small, light text: "Bella Notte"), timer right.
 
 ---
 
-## 11. State Indicators on Tables
+## Problem 5: No Visual Progression Within a Round
 
-| State | Indicator |
-|-------|-----------|
-| Empty | Subtle sparkle (tiny ✨ particles, periodic) |
-| Customer seated, requesting | Soft blue pulse ring around table |
-| Order taken, waiting food | Food emoji float above table |
-| Food delivered, eating | Fork/knife icon, customer satisfied smile |
-| Customer paying | Gold shimmer, 💳 icon |
-| Dirty | Visible crumbs on tablecloth, 🧹 icon top-right |
-| Being cleaned | Sparkle wipe animation |
+### Observed
+The game looks identical at second 1 and second 170. There's no visual escalation. No sense of building momentum.
 
----
+### Analysis
+Visual escalation creates psychological momentum. When the game looks harder, players feel more invested in surviving. When multiple systems are firing, the screen should feel alive with activity.
 
-## 12. Procedural Art Quality Bar
+### Proposed Solution: Visual Escalation Layer
 
-All art is still procedural (no external files). But the approach changes:
+**60 seconds:** Normal atmosphere
+**60–120 seconds:** Kitchen area gets slightly brighter orange glow. More steam wisps per cooking order. Customers arrive slightly faster (visual density increases).
+**120–180 seconds (Rush Hour):**
+- Background slightly darkens (0.96x brightness overlay) — barely perceptible
+- "RUSH HOUR!" text flashes on-screen when this tier begins
+- All pulse speeds increase by 20%
+- Waiter can have a "determined" expression at this point
 
-**Old approach:** `fillRect` + `fillCircle` = flat primitives
-
-**New approach:**
-- Multiple layered shapes per character (shadow → body → detail)
-- Gradients via multiple overlapping shapes with alpha
-- Highlight dots on surfaces (white circle, 30% alpha, top-left of any sphere)
-- Shadows below objects (dark ellipse, 40% alpha)
-- Rounded corners everywhere (`fillRoundedRect` with radius 8–16)
-- Warm color palette throughout
-
-The goal: players should not notice the art is procedural. It should look intentional and polished.
+**High Combo Visual Escalation:**
+- Combo 3: warm orange tint on entire floor (very subtle)
+- Combo 5: orange + gold shimmer on player
+- Combo 10: screen edge gets golden glow, player leaves a brief "trail" of stars while walking
 
 ---
 
-## 13. Animation Inventory
+## Visual System: What We're NOT Changing
 
-| Animation | Duration | Easing |
-|-----------|----------|--------|
-| Customer walk in | 800ms | Quad.easeOut |
-| Customer walk out (happy) | 700ms | Quad.easeIn |
-| Customer walk out (angry) | 500ms | Quad.easeIn (faster, stomping) |
-| Waiter walk | distance × 1.6ms | Quad.easeInOut |
-| Waiter idle bob | 1800ms yoyo | Sine.easeInOut |
-| Bubble appear | 200ms scale 0→1 | Back.easeOut |
-| Score float | 1200ms | Quad.easeOut |
-| Combo slide | 300ms/300ms | Back.easeOut/in |
-| Coin burst (4 coins) | 600ms | Quad.easeOut |
-| Patience bar pulse (urgent) | 400ms yoyo | Sine.easeInOut |
-| Table pulse (needs action) | 700ms yoyo | Sine.easeInOut |
-| Kitchen glow (food ready) | 500ms yoyo | Sine.easeInOut |
+To avoid scope creep, the following are locked and should not be revisited:
+- Face coordinates (fixed in v0.6.0)
+- Patient bar position and size
+- Bubble layout and shadow
+- Table/kitchen/player textures (accepted for now)
+- Floor tile pattern
+- Wall art positions
+
+---
+
+## Implementation Priority
+
+| Priority | Feature |
+|----------|---------|
+| 🔴 CRITICAL | Nothing — v0.6.0 visuals are acceptable baseline |
+| 🟠 HIGH | Ambient candle flicker + lamp sway |
+| 🟠 HIGH | Customer idle animations (table tap at low patience) |
+| 🟡 MEDIUM | Customer name labels on arrival |
+| 🟡 MEDIUM | Food presentation (steam on hot dishes, garnish on cold) |
+| 🟡 MEDIUM | Combo visual escalation (floor tint, player trail) |
+| 🟢 LOW | Payment personality bubbles per customer type |
+| 🟢 LOW | "RUSH HOUR" tier transition visual |
+| 🟢 LOW | UI branding pass (named panels, styled timer) |

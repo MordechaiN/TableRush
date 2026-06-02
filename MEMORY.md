@@ -20,10 +20,10 @@ Fast-paced restaurant management game. Premium casual — think Overcooked/Good 
 
 ---
 
-## Current State: v0.6.0 IMPLEMENTED
+## Current State: v0.6.0 IMPLEMENTED — v0.7.0 REDESIGN IN PROGRESS
 
-**v0.6.0 (art direction reboot — visual identity, face coordinates fixed, character outlines, UI layout overhaul) is fully implemented.**
-**AWAITING owner review.**
+**v0.6.0 (art direction reboot) is fully implemented.**
+**v0.7.0 redesign documents written. AWAITING owner approval before any implementation.**
 
 ---
 
@@ -71,6 +71,15 @@ ART_DIRECTION.md                   — Visual identity doc (palette, character r
 VISUAL_STYLE_GUIDE.md              — Component specs (typography, proportions, animation timing)
 LAYOUT_GUIDE.md                    — Fixed anchor points (zones, tables, kitchen, z-order)
 VALIDATION_REPORT.md               — 20/20 test results (v0.2.0)
+```
+
+## v0.7.0 Redesign Documents (AWAITING APPROVAL — no implementation yet)
+```
+GAMEPLAY_REDESIGN.md    — Priority system, order reveal, anger arc, tutorial rebuild
+VISUAL_REDESIGN.md      — Ambient motion, customer personality, food presentation
+BALANCE_REDESIGN.md     — Patience values, spawn caps, score formula, tips
+PROGRESSION_REDESIGN.md — XP visibility, table unlocks, shop, daily challenges
+RETENTION_REDESIGN.md   — Near-miss, last-session display, streaks, achievements
 ```
 
 ## v0.6.0 Critical Knowledge

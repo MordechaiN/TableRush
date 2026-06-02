@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## v0.7.0 — DESIGN PHASE (2026-06-02)
+### Design Documents Created (no implementation — awaiting approval)
+- **GAMEPLAY_REDESIGN.md**: Single dominant action priority system; order reveal animation; 3-stage anger arc with departure warning; guided first-service tutorial
+- **VISUAL_REDESIGN.md**: Ambient motion layer (lamp sway, candle flicker, customer idle); character personality names+modifiers; food presentation (steam, garnish); visual escalation per difficulty tier
+- **BALANCE_REDESIGN.md**: Patience values redesigned (Tier 1: 110–140s to eliminate early-game failure for learners); spawn caps by tier (2/3/4 max customers); new score formula (price×15); deterministic tip system; new star thresholds (800/1600/3000)
+- **PROGRESSION_REDESIGN.md**: Table unlocks per level (3 at start, unlock more); XP visible during play; star-based upgrade shop (EconomySystem activation); daily challenges; personal records screen
+- **RETENTION_REDESIGN.md**: Near-miss gap on GameOver; "last session" goal on main menu; progression promise (next unlock); achievement system; streak + comeback bonus; share score button
+
+---
+
 ## v0.6.0 — 2026-06-02
 ### Art Direction
 - **ART_DIRECTION.md**: Full visual identity doc — Bella Notte Trattoria theme, complete palette (Primary/Environment/Characters/UI), character design rules, state visual language, face placement coordinates

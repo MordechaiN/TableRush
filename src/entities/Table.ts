@@ -1,82 +1,106 @@
 import Phaser from 'phaser';
-import { COLORS } from '../config/GameConfig';
 
-export type TableState = 'empty' | 'occupied' | 'dirty' | 'served';
+export type TableState = 'empty' | 'occupied' | 'dirty';
+
+// Priority levels for visual pulse system
+export type TablePriority = 'none' | 'dirty' | 'requesting' | 'kitchen_ready' | 'paying' | 'urgent';
 
 export class Table extends Phaser.GameObjects.Container {
   public id: number;
   public state: TableState = 'empty';
-  public customerId: number = -1;
+  public customerId = -1;
 
-  private tableImg: Phaser.GameObjects.Image;
-  private stateIndicator: Phaser.GameObjects.Graphics;
-  private dirtIndicator: Phaser.GameObjects.Text;
+  private tableBody!: Phaser.GameObjects.Image;
+  private pulseRing!: Phaser.GameObjects.Graphics;
+  private dirtIcon!: Phaser.GameObjects.Text;
   private glowTween: Phaser.Tweens.Tween | null = null;
+  private currentPriority: TablePriority = 'none';
 
   constructor(scene: Phaser.Scene, x: number, y: number, id: number) {
     super(scene, x, y);
     this.id = id;
 
-    this.tableImg = scene.add.image(0, 0, 'table');
-    this.add(this.tableImg);
+    // Shadow
+    const shadow = scene.add.graphics();
+    shadow.fillStyle(0x000000, 0.15);
+    shadow.fillEllipse(0, 8, 110, 30);
+    this.add(shadow);
 
-    // Chair indicators (4 sides)
-    const chairOffsets = [[-44, 0], [44, 0], [0, -30], [0, 30]];
-    chairOffsets.forEach(([cx, cy]) => {
-      this.add(scene.add.image(cx, cy, 'chair'));
-    });
+    this.tableBody = scene.add.image(0, 0, 'table');
+    this.add(this.tableBody);
 
-    this.stateIndicator = scene.add.graphics();
-    this.add(this.stateIndicator);
+    this.pulseRing = scene.add.graphics();
+    this.add(this.pulseRing);
 
-    this.dirtIndicator = scene.add.text(0, 0, '🧹', { fontSize: '24px' }).setOrigin(0.5).setVisible(false);
-    this.add(this.dirtIndicator);
+    this.dirtIcon = scene.add.text(38, -26, '🧹', { fontSize: '16px' }).setOrigin(0.5).setVisible(false);
+    this.add(this.dirtIcon);
 
     scene.add.existing(this);
-    this.setInteractive(new Phaser.Geom.Rectangle(-50, -35, 100, 70), Phaser.Geom.Rectangle.Contains);
+    this.setInteractive(new Phaser.Geom.Rectangle(-55, -38, 110, 76), Phaser.Geom.Rectangle.Contains);
   }
 
   setEmpty() {
     this.state = 'empty';
     this.customerId = -1;
-    this.stateIndicator.clear();
-    this.dirtIndicator.setVisible(false);
-    this.stopGlow();
+    this.dirtIcon.setVisible(false);
+    this.clearPulse();
   }
 
   setOccupied(customerId: number) {
     this.state = 'occupied';
     this.customerId = customerId;
-    this.dirtIndicator.setVisible(false);
+    this.dirtIcon.setVisible(false);
+    this.clearPulse();
   }
 
   setDirty() {
     this.state = 'dirty';
     this.customerId = -1;
-    this.dirtIndicator.setVisible(true);
-    this.startGlow(COLORS.GRAY);
+    this.dirtIcon.setVisible(true);
+    this.setPriority('dirty');
   }
 
-  setNeedsAttention() {
-    this.startGlow(COLORS.ACCENT);
-  }
+  setPriority(priority: TablePriority) {
+    if (priority === this.currentPriority) return;
+    this.currentPriority = priority;
+    this.clearPulse();
 
-  stopGlow() {
-    if (this.glowTween) {
-      this.glowTween.stop();
-      this.glowTween = null;
-    }
-    this.tableImg.setAlpha(1);
-  }
+    if (priority === 'none') return;
 
-  private startGlow(color: number) {
-    this.stopGlow();
+    const configs: Record<Exclude<TablePriority, 'none'>, { color: number; alpha: number; duration: number }> = {
+      urgent:       { color: 0xF44336, alpha: 0.7, duration: 300 },
+      paying:       { color: 0xFFD700, alpha: 0.6, duration: 600 },
+      kitchen_ready:{ color: 0xFF6B35, alpha: 0.55, duration: 500 },
+      requesting:   { color: 0x2196F3, alpha: 0.5, duration: 700 },
+      dirty:        { color: 0x888888, alpha: 0.35, duration: 900 },
+    };
+
+    const cfg = configs[priority];
+    this.pulseRing.clear();
+    this.pulseRing.lineStyle(4, cfg.color, cfg.alpha);
+    this.pulseRing.strokeRoundedRect(-55, -38, 110, 76, 10);
+
     this.glowTween = this.scene.tweens.add({
-      targets: this.tableImg,
-      alpha: { from: 1, to: 0.6 },
-      duration: 600,
+      targets: this.pulseRing,
+      alpha: { from: cfg.alpha, to: 0.1 },
+      duration: cfg.duration,
       yoyo: true,
       repeat: -1,
+      ease: 'Sine.easeInOut',
+    });
+  }
+
+  clearPulse() {
+    this.currentPriority = 'none';
+    if (this.glowTween) { this.glowTween.stop(); this.glowTween = null; }
+    this.pulseRing.clear();
+    this.pulseRing.setAlpha(1);
+  }
+
+  flashClean() {
+    this.scene.tweens.add({
+      targets: this.tableBody, alpha: { from: 0.5, to: 1 },
+      duration: 300, ease: 'Quad.easeOut',
     });
   }
 }

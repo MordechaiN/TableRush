@@ -1,37 +1,45 @@
 # PROJECT STATUS
 
-## Version: 0.1.0
+**Last Updated:** 2026-06-02
+**Current Version:** v0.2.0 (IN PROGRESS)
+
+---
+
+## Current Focus
+Implementing v0.2.0 — full redesign of gameplay, balance, and visuals.
 
 ## Completed Tasks
 - [x] Project scaffold (Vite + TypeScript + Phaser 3)
-- [x] BootScene with procedural texture generation
-- [x] MainMenuScene (Play, Settings, Credits, High Score display)
-- [x] GameScene — full gameplay loop
-  - [x] 5 tables with states
-  - [x] Customer spawning with patience timers
-  - [x] Order taking (menu popup)
-  - [x] Food delivery (player walks to kitchen + cook time)
-  - [x] Customer eating → paying
-  - [x] Payment collection with tip based on patience
-  - [x] Table cleanup
-  - [x] Angry customer leaves on patience timeout
-  - [x] Score system with combo multiplier
-  - [x] 3-minute game timer
-  - [x] High score persistence (localStorage)
-- [x] PauseScene (ESC key or pause button)
-- [x] GameOverScene (score counter animation, new record detection)
-- [x] CreditsScene
-- [x] SettingsScene (SFX/Music toggles, reset high score)
-- [x] GitHub Actions CI/CD workflow
-- [x] Documentation (MEMORY, STATUS, CHANGELOG, ROADMAP, KNOWN_ISSUES)
+- [x] All scenes: Boot, MainMenu, Game, Pause, GameOver, Credits, Settings
+- [x] Full gameplay loop (spawn → order → cook → deliver → eat → pay → clean)
+- [x] 5 tables, 7 customer types, 5 menu items
+- [x] Patience system with visual bar + angry customer
+- [x] Combo multiplier (up to 5x)
+- [x] 3-minute game timer with difficulty ramp
+- [x] Score + high score (localStorage)
+- [x] Procedural textures (no external assets)
+- [x] GitHub Actions CI/CD + GitHub Pages deploy (modern actions/deploy-pages)
+- [x] GitHub Pages deployment fixed (base path `/TableRush/` via VITE_BASE_PATH)
+- [x] VALIDATION_REPORT.md — 20/20 PASS, 0 console errors
+- [x] GAMEPLAY_REDESIGN.md — APPROVED
+- [x] VISUAL_REDESIGN.md — APPROVED
+- [x] BALANCE_REDESIGN.md — APPROVED
+- [x] MEMORY.md updated for v0.2.0 architecture
 
-## Current Task
-MVP gameplay loop — COMPLETE
+## In Progress
+- [ ] `src/config/GameConfig.ts` — full rewrite (warm palette, difficulty tiers, combo milestones)
+- [ ] `src/systems/ProgressionSystem.ts` — NEW FILE
+- [ ] `src/scenes/BootScene.ts` — warm art style rewrite
+- [ ] `src/entities/Customer.ts` — new states + mood faces
+- [ ] `src/entities/Table.ts` — new visual + priority pulse
+- [ ] `src/entities/Player.ts` — layered waiter + tray display
+- [ ] `src/scenes/GameScene.ts` — kitchen queue, auto-order, tutorial, speed multiplier
+- [ ] `src/scenes/GameOverScene.ts` — stars, XP bar, level progress
+- [ ] `src/scenes/MainMenuScene.ts` — warm palette + level display
 
-## Next Task
-- Verify build passes (`npm install && npm run build`)
-- Test full gameplay loop
-- Fix any TypeScript errors
+## Known Blockers
+- GitHub Pages requires one-time settings change: Settings → Pages → Source → GitHub Actions
 
-## Blockers
-None known
+## Required User Action
+Go to: https://github.com/MordechaiN/TableRush/settings/pages
+Set: Source → **GitHub Actions**

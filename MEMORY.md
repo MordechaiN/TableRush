@@ -20,10 +20,18 @@ Fast-paced restaurant management game. Premium casual — think Overcooked/Good 
 
 ---
 
-## Current State: v0.7.0 PHASE 1 IN PROGRESS
+## Current State: v0.7.0 PHASE 1 VALIDATED — REDESIGN REQUIRED
 
 **v0.6.0 (art direction reboot) is fully implemented.**
-**v0.7.0 Phase 1 (gameplay clarity) — single dominant action priority system implemented.**
+**v0.7.0 Phase 1 (gameplay clarity) implemented and validated. Priority visualization insufficient — needs redesign before Phase 2.**
+
+### Phase 1 Validation Summary
+- Priority hierarchy logic: ✓ CORRECT in code
+- urgencyMultiplier dimming: ✓ WORKS in code, **NOT VISIBLE in play** — pulse rings too thin (4px), alpha too low (0.035–0.5 range on beige tablecloth)
+- Order flow fix (❓ stays during walk): ✓ WORKING
+- Kitchen glow primary/secondary: ✓ LOGIC CORRECT, **NOT VISIBLE** (4px border on dark kitchen)
+- Tutorial text timing: ✗ PRE-EXISTING BUG — "Order taken!" fires on customer ARRIVE, not player action
+- **Recommendation:** Before Phase 2, replace thin pulse ring with a bold, always-readable primary action indicator (min 0.5 alpha at dimmest point)
 
 ---
 

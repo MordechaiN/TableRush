@@ -6,7 +6,15 @@
 ---
 
 ## Current Focus
-v0.7.0 design phase — five redesign documents written. Awaiting owner approval before implementation begins.
+v0.7.0 Phase 1 VALIDATED. Priority visualization needs redesign. See PHASE1_VALIDATION.md.
+
+## Phase 1 Validation Results
+- ✓ Priority hierarchy code: correct (urgent > paying > carrying > kitchen > requesting > dirty)
+- ✓ Order flow: ❓ stays during walk, food emoji pop-in on arrival
+- ✗ Pulse rings not visually detectable (4px line, 0.035–0.5 alpha on beige tablecloth)
+- ✗ Kitchen glow not visually detectable (4px line on dark kitchen)
+- ✗ Tutorial text timing bug (pre-existing): step fires on customer arrive, not player action
+- **Action required: redesign priority visual before Phase 2**
 
 ## Completed Tasks
 - [x] Project scaffold (Vite + TypeScript + Phaser 3)

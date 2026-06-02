@@ -14,6 +14,8 @@ export class Player extends Phaser.GameObjects.Container {
   private trayLabel: Phaser.GameObjects.Text | null = null;
   private emotionBadge: Phaser.GameObjects.Text | null = null;
   private walkTween: Phaser.Tweens.Tween | null = null;
+  private walkAnimTimer: Phaser.Time.TimerEvent | null = null;
+  private walkFrame = 0;
   private idleTween: Phaser.Tweens.Tween | null = null;
   private revertTimer: Phaser.Time.TimerEvent | null = null;
   public isWalking = false;
@@ -40,6 +42,7 @@ export class Player extends Phaser.GameObjects.Container {
     this.stopIdleAnim();
     this.isWalking = true;
     this.sprite.setFlipX(x < this.x);
+    this.startWalkAnim();
 
     const dist = Math.hypot(x - this.x, y - this.y);
     this.walkTween = this.scene.tweens.add({
@@ -48,6 +51,7 @@ export class Player extends Phaser.GameObjects.Container {
       duration: dist * 1.6,
       ease: 'Quad.easeInOut',
       onComplete: () => {
+        this.stopWalkAnim();
         this.isWalking = false;
         this.startIdleAnim();
         onComplete?.();
@@ -236,6 +240,27 @@ export class Player extends Phaser.GameObjects.Container {
         this.face.strokePath();
         break;
     }
+  }
+
+  private startWalkAnim() {
+    this.stopWalkAnim();
+    this.walkFrame = 0;
+    this.walkAnimTimer = this.scene.time.addEvent({
+      delay: 160,
+      loop: true,
+      callback: () => {
+        this.walkFrame = 1 - this.walkFrame;
+        // player_walk may not exist yet (loaded from BootScene); fall back silently
+        const key = this.walkFrame === 1 ? 'player_walk' : 'player';
+        if (this.scene.textures.exists(key)) this.sprite.setTexture(key);
+      },
+    });
+  }
+
+  private stopWalkAnim() {
+    if (this.walkAnimTimer) { this.walkAnimTimer.remove(); this.walkAnimTimer = null; }
+    if (this.scene.textures.exists('player')) this.sprite.setTexture('player');
+    this.walkFrame = 0;
   }
 
   private startIdleAnim() {

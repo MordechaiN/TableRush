@@ -20,9 +20,9 @@ Fast-paced restaurant management game. Premium casual — think Overcooked/Good 
 
 ---
 
-## Current State: v0.4.0 IMPLEMENTED
+## Current State: v0.5.0 IMPLEMENTED
 
-**v0.4.0 (waiter personality + busy feedback + economy architecture) is fully implemented and type-checks/builds clean.**
+**v0.5.0 (restaurant atmosphere + walk animation + steam + carry architecture) is fully implemented.**
 **AWAITING owner review.**
 
 ---
@@ -58,6 +58,7 @@ src/main.ts                        — Phaser config + scene list (window.game e
 src/config/GameConfig.ts           — ALL constants (palette, difficulty tiers, menu items, combo milestones)
 src/systems/ProgressionSystem.ts   — XP/Level/Stars persistence + exportSave/importSave
 src/systems/EconomySystem.ts       — Economy architecture stub (coins/shop/upgrades, not yet active)
+src/systems/CarrySystem.ts         — Carry capacity system (1-item default, expandable)
 src/scenes/BootScene.ts            — Procedural texture generation (warm art style)
 src/scenes/GameScene.ts            — Core gameplay (v0.3.0: physical walk for all steps)
 src/scenes/GameOverScene.ts        — Reward screen (stars, XP bar, stats)

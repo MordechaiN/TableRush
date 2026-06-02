@@ -63,6 +63,8 @@ export class GameScene extends Phaser.Scene {
   private kitchenGlowTween: Phaser.Tweens.Tween | null = null;
   private ticketRail!: Phaser.GameObjects.Container;
 
+  private steamTimer: Phaser.Time.TimerEvent | null = null;
+
   private tutorialStep = 0;
   private tutorialActive = false;
   private tutorialOverlay!: Phaser.GameObjects.Container;
@@ -91,6 +93,11 @@ export class GameScene extends Phaser.Scene {
 
     this.player = new Player(this, GAME_WIDTH / 2, 700);
 
+    this.steamTimer = this.time.addEvent({
+      delay: 700, loop: true,
+      callback: this.spawnKitchenSteam, callbackScope: this,
+    });
+
     this.input.keyboard?.addKey('ESC').on('down', () => this.pauseGame());
 
     const isTutorial = !ProgressionSystem.isTutorialDone();
@@ -105,7 +112,7 @@ export class GameScene extends Phaser.Scene {
   // ─── Restaurant Layout ─────────────────────────────────────────────────────
 
   private buildRestaurant() {
-    // Warm floor with tile pattern
+    // ── Floor ────────────────────────────────────────────────────────────────
     this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, COLORS.FLOOR_WARM);
     for (let row = 0; row < 14; row++) {
       for (let col = 0; col < 7; col++) {
@@ -114,21 +121,68 @@ export class GameScene extends Phaser.Scene {
         }
       }
     }
+    // Grout lines
+    const grout = this.add.graphics().setDepth(0);
+    grout.lineStyle(1, 0xD4C4A8, 0.45);
+    for (let col = 1; col < 7; col++) grout.lineBetween(col * 70, 88, col * 70, GAME_HEIGHT);
+    for (let row = 2; row < 13; row++) grout.lineBetween(0, row * 70 - 2, GAME_WIDTH, row * 70 - 2);
 
-    // Wall accent strip at top
+    // ── Walls ─────────────────────────────────────────────────────────────────
     this.add.rectangle(GAME_WIDTH / 2, 0, GAME_WIDTH, 90, COLORS.WALL_ACCENT);
-    this.add.rectangle(GAME_WIDTH / 2, 88, GAME_WIDTH, 6, COLORS.WALL);
+    // Wainscoting detail
+    const wall = this.add.graphics().setDepth(1);
+    wall.lineStyle(2, 0xA06830, 0.5);
+    wall.lineBetween(0, 86, GAME_WIDTH, 86);
+    wall.lineStyle(1, 0xD4944C, 0.3);
+    wall.lineBetween(10, 10, GAME_WIDTH - 10, 10);
+    wall.lineBetween(10, 76, GAME_WIDTH - 10, 76);
+    this.add.rectangle(GAME_WIDTH / 2, 88, GAME_WIDTH, 6, 0x9B6020);
 
-    // Kitchen counter
-    this.add.image(KITCHEN_X, KITCHEN_Y, 'kitchen').setOrigin(0.5, 0.5);
+    // ── Wall art ──────────────────────────────────────────────────────────────
+    if (this.textures.exists('wall_frame')) {
+      this.add.image(76, 45, 'wall_frame').setOrigin(0.5).setDepth(1);
+      this.add.image(GAME_WIDTH - 76, 45, 'wall_frame').setOrigin(0.5).setDepth(1);
+    } else {
+      // Fallback: simple drawn frames
+      [[76, 45], [GAME_WIDTH - 76, 45]].forEach(([fx, fy]) => {
+        const fr = this.add.graphics().setDepth(1);
+        fr.fillStyle(0x7A5214); fr.fillRoundedRect(fx - 28, fy - 20, 56, 40, 3);
+        fr.fillStyle(0xD4B896); fr.fillRect(fx - 24, fy - 16, 48, 32);
+        fr.fillStyle(0x4A90D9, 0.6); fr.fillRect(fx - 24, fy - 16, 48, 18);
+        fr.fillStyle(0xFFD700, 0.7); fr.fillCircle(fx, fy - 8, 6);
+      });
+    }
 
-    this.add.text(KITCHEN_X, KITCHEN_Y - 26, '🍳 KITCHEN', {
-      fontSize: '14px', fontFamily: 'Arial Black',
-      color: '#555555', fontStyle: 'bold',
-    }).setOrigin(0.5);
+    // ── Pendant lamps ─────────────────────────────────────────────────────────
+    [100, GAME_WIDTH / 2, GAME_WIDTH - 100].forEach(lx => {
+      const lamp = this.add.graphics().setDepth(2);
+      // Cord
+      lamp.fillStyle(0x6B4C1A); lamp.fillRect(lx - 1, 88, 2, 36);
+      // Shade cap
+      lamp.fillStyle(0xC07020); lamp.fillRect(lx - 14, 122, 28, 4);
+      // Shade body (trapezoid)
+      lamp.fillStyle(0xFFBB30); lamp.fillTriangle(lx - 14, 126, lx + 14, 126, lx + 8, 148);
+      lamp.fillStyle(0xFFDD66, 0.5); lamp.fillTriangle(lx - 10, 126, lx + 10, 126, lx + 4, 144);
+      // Bulb glow
+      lamp.fillStyle(0xFFFF99, 0.8); lamp.fillCircle(lx, 147, 3);
+      // Light pool on floor (subtle)
+      const pool = this.add.graphics().setDepth(0);
+      pool.fillStyle(0xFFFF88, 0.045); pool.fillCircle(lx, 320, 75);
+    });
 
-    // Kitchen glow (shows when order ready)
-    this.kitchenGlow = this.add.graphics();
+    // ── Kitchen ───────────────────────────────────────────────────────────────
+    this.add.image(KITCHEN_X, KITCHEN_Y, 'kitchen').setOrigin(0.5, 0.5).setDepth(2);
+
+    // Zone labels
+    this.add.text(KITCHEN_X - 90, KITCHEN_Y - 24, 'COOKING', {
+      fontSize: '10px', fontFamily: 'Arial Black', color: '#FF9800', fontStyle: 'bold',
+    }).setOrigin(0.5).setDepth(3);
+    this.add.text(KITCHEN_X + 90, KITCHEN_Y - 24, '✓ READY', {
+      fontSize: '10px', fontFamily: 'Arial Black', color: '#4CAF50', fontStyle: 'bold',
+    }).setOrigin(0.5).setDepth(3);
+
+    // Kitchen glow
+    this.kitchenGlow = this.add.graphics().setDepth(3);
     this.kitchenGlow.lineStyle(4, COLORS.UI_ORANGE, 0);
     this.kitchenGlow.strokeRoundedRect(
       KITCHEN_X - (GAME_WIDTH - 20) / 2, KITCHEN_Y - 40,
@@ -138,26 +192,39 @@ export class GameScene extends Phaser.Scene {
 
     // Ticket rail
     this.ticketRail = this.add.container(KITCHEN_X, KITCHEN_Y + 10);
+    this.ticketRail.setDepth(4);
 
     // Kitchen tap zone
     const kitchenZone = this.add.zone(KITCHEN_X, KITCHEN_Y, GAME_WIDTH - 20, 80)
       .setInteractive({ useHandCursor: true });
     kitchenZone.on('pointerdown', () => this.onKitchenClick());
 
-    // Tables
+    // ── Tables ────────────────────────────────────────────────────────────────
     TABLE_POSITIONS.forEach((pos, i) => {
       const t = new Table(this, pos.x, pos.y, i);
       t.on('pointerdown', () => this.onTableClick(i));
       this.tables.push(t);
+      // Candle on each table
+      const candleKey = this.textures.exists('candle') ? 'candle' : null;
+      if (candleKey) {
+        this.add.image(pos.x + 34, pos.y - 16, candleKey).setOrigin(0.5).setDepth(3);
+      } else {
+        this.add.text(pos.x + 34, pos.y - 16, '🕯️', { fontSize: '11px' }).setOrigin(0.5).setDepth(3);
+      }
     });
 
-    // Door
+    // ── Entrance & Plants ─────────────────────────────────────────────────────
     this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT - 30, 80, 16, COLORS.WALL_ACCENT);
-    this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 36, '🚪', { fontSize: '22px' }).setOrigin(0.5);
+    this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 36, '🚪', { fontSize: '22px' }).setOrigin(0.5).setDepth(2);
+    // Door mat
+    const mat = this.add.graphics().setDepth(1);
+    mat.fillStyle(0x8B4513, 0.4); mat.fillRoundedRect(GAME_WIDTH / 2 - 40, GAME_HEIGHT - 18, 80, 10, 4);
 
-    // Decorative plants
-    this.add.text(24, GAME_HEIGHT - 80, '🪴', { fontSize: '32px' }).setOrigin(0.5);
-    this.add.text(GAME_WIDTH - 24, GAME_HEIGHT - 80, '🪴', { fontSize: '32px' }).setOrigin(0.5);
+    this.add.text(24, GAME_HEIGHT - 80, '🪴', { fontSize: '36px' }).setOrigin(0.5).setDepth(2);
+    this.add.text(GAME_WIDTH - 24, GAME_HEIGHT - 80, '🪴', { fontSize: '36px' }).setOrigin(0.5).setDepth(2);
+    // Second pair of plants near kitchen
+    this.add.text(20, 170, '🌿', { fontSize: '20px' }).setOrigin(0.5).setDepth(1);
+    this.add.text(GAME_WIDTH - 20, 170, '🌿', { fontSize: '20px' }).setOrigin(0.5).setDepth(1);
   }
 
   // ─── UI ───────────────────────────────────────────────────────────────────
@@ -872,9 +939,37 @@ export class GameScene extends Phaser.Scene {
     this.scene.launch('PauseScene');
   }
 
+  private spawnKitchenSteam() {
+    const activeCooking = this.kitchenOrders.filter(o => !o.ready);
+    if (activeCooking.length === 0) return;
+
+    const count = Math.min(activeCooking.length, 3);
+    for (let i = 0; i < count; i++) {
+      const sx = KITCHEN_X - 100 + i * 70 + (Math.random() - 0.5) * 25;
+      const sy = KITCHEN_Y - 32;
+      const steam = this.add.graphics().setDepth(5);
+      steam.fillStyle(0xFFFFFF, 0.25 + Math.random() * 0.15);
+      steam.fillCircle(0, 0, 3 + Math.random() * 3);
+      steam.setPosition(sx, sy);
+      this.tweens.add({
+        targets: steam,
+        y: sy - 30 - Math.random() * 25,
+        x: sx + (Math.random() - 0.5) * 14,
+        alpha: 0,
+        scaleX: 2 + Math.random(),
+        scaleY: 2 + Math.random(),
+        duration: 850 + Math.random() * 400,
+        ease: 'Quad.easeOut',
+        onComplete: () => steam.destroy(),
+      });
+    }
+  }
+
   private endGame() {
     this.spawnTimer?.remove();
     this.gameTimer?.remove();
+    this.steamTimer?.remove();
+    this.steamTimer = null;
 
     const total = this.customersHappy + this.customersAngry;
     const happyRate = total > 0 ? this.customersHappy / total : 0;

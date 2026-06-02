@@ -1,12 +1,12 @@
 # PROJECT STATUS
 
 **Last Updated:** 2026-06-02
-**Current Version:** v0.4.0
+**Current Version:** v0.5.0
 
 ---
 
 ## Current Focus
-v0.4.0 implemented — waiter personality + busy feedback + economy architecture. Awaiting owner review.
+v0.5.0 implemented — restaurant atmosphere pass + walk animation + steam + carry architecture. Awaiting owner review.
 
 ## Completed Tasks
 - [x] Project scaffold (Vite + TypeScript + Phaser 3)
@@ -35,6 +35,12 @@ v0.4.0 implemented — waiter personality + busy feedback + economy architecture
 - [x] v0.4.0 — Angry customer → waiter stressed reaction
 - [x] v0.4.0 — Timer urgency (30s warning + last-10s pulse)
 - [x] v0.4.0 — EconomySystem.ts architecture stub (ready for future)
+- [x] v0.5.0 — Restaurant atmosphere (lamps, wall art, grout, wainscoting, candles)
+- [x] v0.5.0 — 2-frame waiter walk animation (player/player_walk texture swap)
+- [x] v0.5.0 — Steam particles from kitchen during cooking
+- [x] v0.5.0 — Kitchen zone labels (COOKING / READY)
+- [x] v0.5.0 — Visual texture improvements (player apron, table cloth, kitchen granite)
+- [x] v0.5.0 — CarrySystem.ts architecture (1-item capacity, expandable to 2-3)
 
 ## Known Blockers
 - GitHub Pages requires one-time user action: Settings → Pages → Source → GitHub Actions

@@ -1,5 +1,28 @@
 # CHANGELOG
 
+## v0.5.0 — 2026-06-02
+### Added
+- **2-frame walk animation**: waiter alternates `player`/`player_walk` textures every 160ms while walking — first real character movement
+- **Steam particles**: animated steam rises from kitchen counter whenever orders are cooking (700ms interval, up to 3 wisps per tick)
+- **Pendant lamps**: 3 hanging lamps drawn above dining area with cord, shade, bulb glow, and warm floor light-pool
+- **Wall art**: picture frames on both sides of the back wall
+- **Grout lines**: subtle tile grid lines on floor for restaurant texture
+- **Kitchen zone labels**: "COOKING" (orange) and "✓ READY" (green) text overlays on counter
+- **Candles**: tea candle at each table corner for warmth
+- **Door mat**: subtle mat at entrance
+- **Wainscoting detail**: wall border lines
+- **Extra plants**: two small 🌿 plants flanking the kitchen area
+- **CarrySystem.ts**: full architecture stub — slots, capacity, upgrade path, pick-up/drop API (capacity=1 for v0.5.0, expandable)
+- **New textures**: `player_walk` (stride legs), `candle` (12×22), `wall_frame` (60×50 with simple painting)
+- **Table texture improvement**: cloth border line + circular place-setting marks
+- **Player texture improvement**: white apron over navy jacket
+- **Kitchen texture improvement**: dark granite surface, cooking zone (warm tint), ready zone (cool tint), burner rings
+
+### Changed
+- `ticketRail` and kitchen elements assigned depth 3–4 to layer correctly above floor
+- Pendant lamps at depth 2, table candles at depth 3
+- `endGame()` removes steam timer
+
 ## v0.4.0 — 2026-06-02
 ### Added
 - **Waiter personality system**: Player has emotional states — normal, happy, proud, stressed, excited

@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## v0.8.0 — Quality Gate Review (2026-06-02)
+### P0_P1_REVIEW.md — Post-implementation quality gate
+- Validated all 5 table states: REQUESTING/KITCHEN_READY/PAYING pass, URGENT/DIRTY marginal
+- Validated priority hierarchy 1–5 tables: works clearly at 1–3; crowded at 4–5
+- Validated 7 customer variants: 5/7 pass at-a-glance, Elegant and Casual need silhouette work
+- Identified mobile validation failure (Playwright captured Credits screen, not gameplay)
+- Self-critique: 10 remaining visual problems cataloged with Critical/High/Medium/Low ranking
+- Roadmap confirmed: P2=Waiter + combo-grayed supplement, P3=full HUD
+- Game identity evaluation: Foundation laid, identity not yet delivered
+
 ## v0.8.0 — VISUAL REBOOT P0 + P1 (2026-06-02)
 ### P0 — Action Indicator Redesign
 - **Action arrow (Table.ts)**: Replaced invisible 4px `strokeRoundedRect` pulse ring with a solid filled ▼ arrow (30×22px) at scene depth 15. Arrow drawn as filled triangle with 2.5px black outline + highlight. Colors: blue=requesting, orange=kitchen_ready, gold=paying, red=urgent, gray=dirty. Pulses by scale (0.88–1.14×), never tweens alpha below 0.95.

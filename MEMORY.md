@@ -20,12 +20,22 @@ Fast-paced restaurant management game. Premium casual — think Overcooked/Good 
 
 ---
 
-## Current State: VISUAL REBOOT IN PROGRESS — P0 + P1 COMPLETE
+## Current State: VISUAL REBOOT IN PROGRESS — P0 + P1 COMPLETE, QUALITY GATE DONE
 
 **v0.8.0 implemented: P0 (action arrows) + P1 (customer redesign).**
+**Quality Gate complete: P0_P1_REVIEW.md written. Awaiting owner approval for P2.**
 **VISUAL_REBOOT_PLAN.md approved — implementation underway.**
 **ADDICTION_AND_RETENTION_PLAN.md approved — post-visual-reboot.**
 **GAME_IDENTITY.md approved — strategic reference.**
+
+### Quality Gate Findings (P0_P1_REVIEW.md)
+- REQUESTING / KITCHEN_READY / PAYING: all pass < 1 second recognition
+- URGENT: marginal — red color works, urgency feeling weak (needs strobe/exaggeration in P2)
+- DIRTY: marginal — broom icon carries weight, gray arrow too small at secondary scale
+- Priority hierarchy: works at 1–3 tables; crowded at 4–5 (consider 3:1 scale ratio)
+- 5/7 customer variants identifiable at glance (Trendy + Romantic excellent; Elegant + Casual weak)
+- Mobile validation FAILED — screenshots captured Credits screen, not gameplay; must re-run
+- Recommended roadmap: P2 (Waiter) + combo ×1.0 grayed supplement, then P3 (full HUD)
 
 ### P0/P1 Key Changes (v0.8.0)
 - Action arrow (▼): scene-level Graphics depth 15, always ≥0.95 alpha, scale pulse only. Replaces invisible pulse ring.

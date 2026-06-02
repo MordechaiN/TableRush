@@ -1,5 +1,54 @@
 # TEST REPORT
 
+## v0.8.0 Quality Gate — 2026-06-02
+
+### Build & Type Check
+| Check | Result | Notes |
+|-------|--------|-------|
+| `tsc` (TypeScript strict) | ✅ PASS | 0 errors |
+| `vite build` | ✅ PASS | Bundle unchanged, no regressions |
+
+### P0 — Action Arrow System
+| Test | Result | Notes |
+|------|--------|-------|
+| REQUESTING state visible | ✅ PASS | Blue ▼ + ❓ bubble: instant read |
+| KITCHEN READY state visible | ✅ PASS | Orange ▼ + bold green fill: instant read |
+| PAYING state visible | ✅ PASS | Gold ▼ + $ text: instant read |
+| URGENT state visible | ⚠️ MARGINAL | Red ▼ works but lacks urgency treatment |
+| DIRTY TABLE state visible | ⚠️ MARGINAL | Gray ▼ too small; broom icon carries weight |
+| Primary arrow clearly dominant | ✅ PASS | Scale 1.0 vs 0.5 — visible at 1–3 tables |
+| Primary dominance at 5 tables | ⚠️ MARGINAL | 2:1 scale ratio insufficient at max density |
+| Arrow alpha ≥ 0.95 always | ✅ PASS | Never fades below visibility |
+| Kitchen glow alpha 0.45–0.82 primary | ✅ PASS | Confirmed 0.82 at peak via script |
+| Arrow at depth 15 (above customers) | ✅ PASS | Scene-level Graphics, not container child |
+
+### P1 — Customer Redesign
+| Test | Result | Notes |
+|------|--------|-------|
+| Customer sprites at 48×72px | ✅ PASS | 50% larger each axis |
+| Patience bar at 44×8px | ✅ PASS | Readable from playing distance |
+| Name banner on arrival | ✅ PASS | All variants: banner appears, fades 1.6s |
+| Trendy variant identifiable at glance | ✅ PASS | Oversized sunglasses — excellent silhouette |
+| Romantic variant identifiable at glance | ✅ PASS | Pink flower — excellent silhouette |
+| Elder variant identifiable at glance | ✅ PASS | Circular glasses — good silhouette |
+| Business variant identifiable at glance | ✅ PASS | Red tie — good silhouette |
+| Teen variant identifiable at glance | ⚠️ MARGINAL | Cap brim visible but reads "hat" not "teen" |
+| Elegant variant identifiable at glance | ⚠️ NEEDS WORK | Necklace too small; no clear silhouette |
+| Casual variant identifiable at glance | ⚠️ NEEDS WORK | Plain by design but ambiguous |
+| 5/7 variants pass at-a-glance test | ✅ PASS | Trendy, Romantic, Elder, Business, (Casual=ok with name) |
+
+### Mobile Validation (390×844)
+| Test | Result | Notes |
+|------|--------|-------|
+| Game loads at mobile dimensions | ❌ FAIL | Playwright captured Credits screen instead of gameplay |
+| Arrow visibility at 390px | ❌ UNCONFIRMED | Cannot validate without correct screenshots |
+| Patience bar at 390px | ❌ UNCONFIRMED | Cannot validate without correct screenshots |
+| HUD at 390px | ❌ UNCONFIRMED | Cannot validate without correct screenshots |
+
+**Mobile validation requires re-run before P0+P1 can be declared mobile-ready.**
+
+---
+
 ## v0.6.0 — 2026-06-02
 
 ### Build & Type Check

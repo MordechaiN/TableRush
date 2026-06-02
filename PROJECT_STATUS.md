@@ -6,7 +6,7 @@
 ---
 
 ## Current Focus
-VISUAL REBOOT — P0 and P1 complete. Awaiting approval to proceed to P2.
+VISUAL REBOOT — P0 and P1 complete. Quality Gate review complete (P0_P1_REVIEW.md). Awaiting owner approval to proceed to P2.
 
 ## Design Documents Status (all approved)
 - [x] VISUAL_REBOOT_PLAN.md — approved, in progress
@@ -16,6 +16,7 @@ VISUAL REBOOT — P0 and P1 complete. Awaiting approval to proceed to P2.
 ## Visual Reboot Status
 - [x] P0: Action arrow indicator — depth-15 scene arrow, scale pulse, 5 colors, primary/secondary scale
 - [x] P1: Customer redesign — 48×72px, r=14 head, 2.5px outlines, r=3 eyes+highlight, 44×8 patience bar, name banners
+- [x] Quality Gate: P0_P1_REVIEW.md complete — 6/10 pass, 2 marginal, mobile unconfirmed
 - [ ] P2: Waiter redesign (larger, emotion visible) ← NEXT (pending approval)
 - [ ] P3: HUD redesign (combo always visible)
 - [ ] P4: Table redesign (clean cloth, numbered)

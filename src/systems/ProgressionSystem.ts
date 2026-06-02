@@ -118,4 +118,22 @@ export class ProgressionSystem {
   static markTutorialDone(): void {
     try { localStorage.setItem('tablerush_tutorial_done', '1'); } catch { /* ignore */ }
   }
+
+  static exportSave(): string {
+    return JSON.stringify({
+      progress: load(),
+      tutorialDone: ProgressionSystem.isTutorialDone(),
+    });
+  }
+
+  static importSave(json: string): boolean {
+    try {
+      const parsed = JSON.parse(json) as { progress?: ProgressData; tutorialDone?: boolean };
+      if (parsed.progress) save(parsed.progress);
+      if (parsed.tutorialDone) ProgressionSystem.markTutorialDone();
+      return true;
+    } catch {
+      return false;
+    }
+  }
 }

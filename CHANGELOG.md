@@ -1,5 +1,21 @@
 # CHANGELOG
 
+## v0.3.0 — 2026-06-02
+### Added
+- Cooking progress bars on kitchen tickets (green → orange as ready, clears on complete)
+- Eating progress bar on customer sprite (fills over eat duration)
+- Cleaning progress bar on table (animated fill during CLEAN_TIME)
+- `exportSave()` / `importSave(json)` on ProgressionSystem for save portability
+- Scale-punch animation on all floating score/status labels
+
+### Changed
+- Delivery now requires waiter to physically walk to table (`deliverFood` uses `walkTo`)
+- Guard added: if customer goes angry during delivery walk, carry is cleared cleanly
+- `cleanTable()` uses `table.startCleaningProgress()` instead of invisible `delayedCall`
+- Pause button hidden on touch devices (ESC-only on desktop)
+- `customer.seatBounce()` plays when customer first sits down
+- `customer.startEating()` / `stopEating()` properly wired — eating bar visible during eat phase
+
 ## v0.2.0 — 2026-06-02
 ### Added
 - Full visual redesign: warm palette (cream floor, mahogany tables, navy waiter)

@@ -13,7 +13,10 @@ export class Table extends Phaser.GameObjects.Container {
   private tableBody!: Phaser.GameObjects.Image;
   private pulseRing!: Phaser.GameObjects.Graphics;
   private dirtIcon!: Phaser.GameObjects.Text;
+  private cleanBarTrack!: Phaser.GameObjects.Graphics;
+  private cleanBarFill!: Phaser.GameObjects.Graphics;
   private glowTween: Phaser.Tweens.Tween | null = null;
+  private cleanTween: Phaser.Tweens.Tween | null = null;
   private currentPriority: TablePriority = 'none';
 
   constructor(scene: Phaser.Scene, x: number, y: number, id: number) {
@@ -34,6 +37,16 @@ export class Table extends Phaser.GameObjects.Container {
 
     this.dirtIcon = scene.add.text(38, -26, '🧹', { fontSize: '16px' }).setOrigin(0.5).setVisible(false);
     this.add(this.dirtIcon);
+
+    this.cleanBarTrack = scene.add.graphics();
+    this.cleanBarTrack.fillStyle(0x888888, 0.3);
+    this.cleanBarTrack.fillRoundedRect(-30, 28, 60, 7, 3);
+    this.cleanBarTrack.setVisible(false);
+    this.add(this.cleanBarTrack);
+
+    this.cleanBarFill = scene.add.graphics();
+    this.cleanBarFill.setVisible(false);
+    this.add(this.cleanBarFill);
 
     scene.add.existing(this);
     this.setInteractive(new Phaser.Geom.Rectangle(-55, -38, 110, 76), Phaser.Geom.Rectangle.Contains);
@@ -95,6 +108,31 @@ export class Table extends Phaser.GameObjects.Container {
     if (this.glowTween) { this.glowTween.stop(); this.glowTween = null; }
     this.pulseRing.clear();
     this.pulseRing.setAlpha(1);
+  }
+
+  startCleaningProgress(duration: number, onComplete: () => void) {
+    this.cleanBarTrack.setVisible(true);
+    this.cleanBarFill.setVisible(true);
+
+    const prog = { value: 0 };
+    this.cleanTween = this.scene.tweens.add({
+      targets: prog,
+      value: 1,
+      duration,
+      ease: 'Linear',
+      onUpdate: () => {
+        this.cleanBarFill.clear();
+        this.cleanBarFill.fillStyle(0x4CAF50);
+        this.cleanBarFill.fillRoundedRect(-30, 28, 60 * prog.value, 7, 3);
+      },
+      onComplete: () => {
+        this.cleanBarTrack.setVisible(false);
+        this.cleanBarFill.setVisible(false);
+        this.cleanBarFill.clear();
+        this.cleanTween = null;
+        onComplete();
+      },
+    });
   }
 
   flashClean() {

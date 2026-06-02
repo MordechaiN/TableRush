@@ -28,6 +28,7 @@ interface KitchenOrder {
   startTime: number;
   ready: boolean;
   ticketObj?: Phaser.GameObjects.Container;
+  progressBar?: Phaser.GameObjects.Graphics;
 }
 
 export class GameScene extends Phaser.Scene {
@@ -176,9 +177,11 @@ export class GameScene extends Phaser.Scene {
       fontSize: '17px', fontFamily: 'Arial Black', color: COLORS.TEXT_DARK, fontStyle: 'bold',
     }).setOrigin(1, 0.5);
 
-    const pauseBtn = this.add.text(GAME_WIDTH - 14, 28, '⏸', { fontSize: '20px' })
-      .setOrigin(1.6, 0.5).setInteractive({ useHandCursor: true }).setDepth(5);
-    pauseBtn.on('pointerdown', () => this.pauseGame());
+    if (!this.sys.game.device.input.touch) {
+      const pauseBtn = this.add.text(GAME_WIDTH - 14, 28, '⏸', { fontSize: '20px' })
+        .setOrigin(1.6, 0.5).setInteractive({ useHandCursor: true }).setDepth(5);
+      pauseBtn.on('pointerdown', () => this.pauseGame());
+    }
   }
 
   // ─── Spawning ─────────────────────────────────────────────────────────────
@@ -239,6 +242,7 @@ export class GameScene extends Phaser.Scene {
         customer.state = 'requesting';
         customer.startPatience();
         customer.showRequestBubble();
+        customer.seatBounce();
         table.setPriority('requesting');
 
         if (this.tutorialActive && this.tutorialStep === 0) {
@@ -381,7 +385,7 @@ export class GameScene extends Phaser.Scene {
 
   private onOrderReady(order: KitchenOrder) {
     if (order.ticketObj) {
-      // Swap to ready ticket style
+      order.progressBar?.clear();
       const badge = this.add.text(0, -16, '✓', {
         fontSize: '14px', color: COLORS.TEXT_GOLD, fontStyle: 'bold',
       }).setOrigin(0.5);
@@ -395,44 +399,53 @@ export class GameScene extends Phaser.Scene {
     this.playerBusy = true;
     table.clearPulse();
 
-    customer.patienceAtDelivery = customer.getPatienceFraction();
-    customer.hideBubble();
-    customer.state = 'eating';
-    customer.stopPatience();
-    customer.refillPatience();
-
-    this.player.clearCarry();
-    this.carryingOrderId = -1;
-
-    // Remove from queue
-    this.kitchenOrders = this.kitchenOrders.filter(o => o.id !== order.id);
-
-    // Speed multiplier
-    const speedMult = this.getSpeedMultiplier(customer.patienceAtDelivery);
-    const deliveryScore = Math.floor(customer.order.price * 10 * speedMult * this.comboMultiplier);
-    this.addScore(deliveryScore);
-
-    if (speedMult > 1) {
-      const label = SPEED_MULTIPLIERS.find(s => customer.patienceAtDelivery >= s.minPct)?.label ?? '';
-      if (label) this.showFloating(label, table.x, table.y - 60, COLORS.TEXT_GOLD);
-    }
-
-    this.showFloating(`+$${deliveryScore}`, table.x, table.y - 40, COLORS.TEXT_ORANGE);
-    this.player.bounce();
-    this.playerBusy = false;
-
-    // Customer eats for 2-4 seconds then wants to pay
-    const eatTime = 2000 + Math.random() * 2000;
-    this.time.delayedCall(eatTime, () => {
-      if (customer.state !== 'eating') return;
-      customer.state = 'paying';
-      customer.startPatience();
-      customer.showPayBubble(customer.order!.price);
-      table.setPriority('paying');
-
-      if (this.tutorialActive && this.tutorialStep === 3) {
-        this.advanceTutorial();
+    this.player.walkTo(table.x, table.y + 40, () => {
+      // Customer may have gotten angry while player was walking over
+      if (customer.state !== 'waiting_food') {
+        this.player.clearCarry();
+        this.carryingOrderId = -1;
+        this.kitchenOrders = this.kitchenOrders.filter(o => o.id !== order.id);
+        this.playerBusy = false;
+        return;
       }
+
+      this.player.bounce();
+      customer.patienceAtDelivery = customer.getPatienceFraction();
+      customer.hideBubble();
+      customer.state = 'eating';
+      customer.stopPatience();
+      customer.refillPatience();
+
+      this.player.clearCarry();
+      this.carryingOrderId = -1;
+      this.kitchenOrders = this.kitchenOrders.filter(o => o.id !== order.id);
+
+      const speedMult = this.getSpeedMultiplier(customer.patienceAtDelivery);
+      const deliveryScore = Math.floor(customer.order!.price * 10 * speedMult * this.comboMultiplier);
+      this.addScore(deliveryScore);
+
+      if (speedMult > 1) {
+        const label = SPEED_MULTIPLIERS.find(s => customer.patienceAtDelivery >= s.minPct)?.label ?? '';
+        if (label) this.showFloating(label, table.x, table.y - 60, COLORS.TEXT_GOLD);
+      }
+      this.showFloating(`+${deliveryScore}`, table.x, table.y - 40, COLORS.TEXT_ORANGE);
+      this.playerBusy = false;
+
+      const eatTime = 2000 + Math.random() * 2000;
+      customer.startEating(eatTime);
+
+      this.time.delayedCall(eatTime, () => {
+        if (customer.state !== 'eating') return;
+        customer.stopEating();
+        customer.state = 'paying';
+        customer.startPatience();
+        customer.showPayBubble(customer.order!.price);
+        table.setPriority('paying');
+
+        if (this.tutorialActive && this.tutorialStep === 3) {
+          this.advanceTutorial();
+        }
+      });
     });
   }
 
@@ -482,7 +495,7 @@ export class GameScene extends Phaser.Scene {
     table.clearPulse();
     this.player.walkTo(table.x, table.y + 40, () => {
       this.player.bounce();
-      this.time.delayedCall(CLEAN_TIME, () => {
+      table.startCleaningProgress(CLEAN_TIME, () => {
         table.setEmpty();
         table.flashClean();
         this.playerBusy = false;
@@ -567,10 +580,18 @@ export class GameScene extends Phaser.Scene {
 
     const container = this.add.container(x, 0);
     const bg = this.add.image(0, 0, 'ticket');
-    const emoji = this.add.text(0, 5, order.item.emoji, { fontSize: '22px' }).setOrigin(0.5);
-    container.add([bg, emoji]);
+    const emoji = this.add.text(0, 2, order.item.emoji, { fontSize: '22px' }).setOrigin(0.5);
+
+    const progressTrack = this.add.graphics();
+    progressTrack.fillStyle(0x2C1810, 0.25);
+    progressTrack.fillRoundedRect(-20, 14, 40, 5, 2);
+
+    const progressBar = this.add.graphics();
+
+    container.add([bg, emoji, progressTrack, progressBar]);
     this.ticketRail.add(container);
     order.ticketObj = container;
+    order.progressBar = progressBar;
 
     // slide in from right
     container.setX(200);
@@ -611,6 +632,15 @@ export class GameScene extends Phaser.Scene {
       const nonAngryStates = ['leaving', 'eating', 'paying'];
       if (customer.isAngry() && !nonAngryStates.includes(customer.state)) {
         this.customerLeaveAngry(id, customer);
+      }
+    }
+
+    for (const order of this.kitchenOrders) {
+      if (!order.ready && order.progressBar) {
+        const frac = Math.min(1, (this.time.now - order.startTime) / order.item.cookTime);
+        order.progressBar.clear();
+        order.progressBar.fillStyle(frac > 0.8 ? 0xFF9800 : 0x4CAF50);
+        order.progressBar.fillRoundedRect(-20, 14, 40 * frac, 5, 2);
       }
     }
   }
@@ -721,11 +751,23 @@ export class GameScene extends Phaser.Scene {
   private showFloating(text: string, x: number, y: number, color: string) {
     const t = this.add.text(x, y, text, {
       fontSize: '20px', fontFamily: 'Arial Black', color,
-    }).setOrigin(0.5).setDepth(25);
+    }).setOrigin(0.5).setDepth(25).setScale(0);
     this.tweens.add({
-      targets: t, y: y - 60, alpha: 0,
-      duration: 1200, ease: 'Quad.easeOut',
-      onComplete: () => t.destroy(),
+      targets: t, scale: 1.25,
+      duration: 120, ease: 'Back.easeOut',
+      onComplete: () => {
+        this.tweens.add({
+          targets: t, scale: 1,
+          duration: 80,
+          onComplete: () => {
+            this.tweens.add({
+              targets: t, y: y - 60, alpha: 0,
+              duration: 1000, ease: 'Quad.easeOut',
+              onComplete: () => t.destroy(),
+            });
+          },
+        });
+      },
     });
   }
 

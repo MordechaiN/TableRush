@@ -20,10 +20,10 @@ Fast-paced restaurant management game. Premium casual — think Overcooked/Good 
 
 ---
 
-## Current State: v0.2.0 IMPLEMENTED AND VALIDATED
+## Current State: v0.3.0 IMPLEMENTED
 
-**v0.2.0 is fully implemented, passing 20/20 validation tests, and pushed to main.**
-**AWAITING owner review before any further development.**
+**v0.3.0 game feel update is fully implemented and type-checks/builds clean.**
+**AWAITING owner review.**
 
 ---
 
@@ -56,17 +56,17 @@ BootScene (generate textures)
 ```
 src/main.ts                        — Phaser config + scene list (window.game exposed)
 src/config/GameConfig.ts           — ALL constants (palette, difficulty tiers, menu items, combo milestones)
-src/systems/ProgressionSystem.ts   — XP/Level/Stars persistence (localStorage)
+src/systems/ProgressionSystem.ts   — XP/Level/Stars persistence + exportSave/importSave
 src/scenes/BootScene.ts            — Procedural texture generation (warm art style)
-src/scenes/GameScene.ts            — Core gameplay
+src/scenes/GameScene.ts            — Core gameplay (v0.3.0: physical walk for all steps)
 src/scenes/GameOverScene.ts        — Reward screen (stars, XP bar, stats)
 src/scenes/MainMenuScene.ts        — Main menu (shows level + best score)
-src/entities/Customer.ts           — Customer state machine + mood faces + patience bar
-src/entities/Table.ts              — Table state + priority pulse system
+src/entities/Customer.ts           — Customer state machine + mood faces + patience/eating bars
+src/entities/Table.ts              — Table state + priority pulse + cleaning progress bar
 src/entities/Player.ts             — Waiter character + idle bob + tray carry display
 screenshots/                       — Validation screenshots (v_01 through v_15)
 V0_2_REVIEW.md                     — Player experience review + screenshot descriptions
-VALIDATION_REPORT.md               — 20/20 test results
+VALIDATION_REPORT.md               — 20/20 test results (v0.2.0)
 ```
 
 ## Gameplay Systems (v0.2.0)

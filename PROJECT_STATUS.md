@@ -1,12 +1,12 @@
 # PROJECT STATUS
 
 **Last Updated:** 2026-06-02
-**Current Version:** v0.2.0
+**Current Version:** v0.3.0
 
 ---
 
 ## Current Focus
-AWAITING owner review of v0.2.0. No further development until approved.
+v0.3.0 implemented — game feel update complete. Awaiting owner review.
 
 ## Completed Tasks
 - [x] Project scaffold (Vite + TypeScript + Phaser 3)
@@ -25,11 +25,10 @@ AWAITING owner review of v0.2.0. No further development until approved.
 - [x] Time-based difficulty tiers (not exponential ramp)
 - [x] GitHub Actions CI/CD + GitHub Pages deploy (modern actions/deploy-pages)
 - [x] SVG favicon added (no 404)
-- [x] VALIDATION_REPORT.md — 20/20 PASS
-- [x] V0_2_REVIEW.md — full player experience review with screenshots
-
-## Blocked On
-Owner review of V0_2_REVIEW.md and VALIDATION_REPORT.md.
+- [x] v0.3.0 — Game feel: physical delivery walk, cooking/eating/cleaning progress bars
+- [x] v0.3.0 — exportSave() / importSave() on ProgressionSystem
+- [x] v0.3.0 — Mobile: no pause button (ESC desktop-only)
+- [x] v0.3.0 — Scale-punch floating labels, seatBounce on arrival
 
 ## Known Blockers
 - GitHub Pages requires one-time user action: Settings → Pages → Source → GitHub Actions

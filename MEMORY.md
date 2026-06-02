@@ -20,11 +20,23 @@ Fast-paced restaurant management game. Premium casual — think Overcooked/Good 
 
 ---
 
-## Current State: VISUAL REBOOT IN PROGRESS — AWAITING APPROVAL
+## Current State: DESIGN PHASE — TWO PLANS AWAITING APPROVAL
 
 **v0.6.0 (art direction reboot) is fully implemented.**
 **v0.7.0 Phase 1 implemented but visual expression insufficient (validated).**
-**VISUAL_REBOOT_PLAN.md written. Awaiting owner approval before any implementation.**
+**VISUAL_REBOOT_PLAN.md written — awaiting approval.**
+**ADDICTION_AND_RETENTION_PLAN.md written — awaiting approval.**
+
+### North Star (from ADDICTION_AND_RETENTION_PLAN.md)
+> "I am the most capable person in this room — and the room knows it."
+All design decisions must support the player's sense of EARNED COMPETENCE.
+
+### Top 5 Post-Visual-Reboot Features (by retention impact × low complexity)
+1. Combo always visible (shows ×1 grayed when inactive — currently invisible at ×1.0)
+2. Daily goal on main menu (proven #1 mobile retention mechanic)
+3. Last-second save theater (<8% patience → flashing bar + "CLOSE CALL!" peak moment)
+4. Yesterday's score on main menu ("LAST SESSION: 2,840 — beat it?")
+5. Shift report end screen (narrative summary of session highlights)
 
 ### Visual Reboot Direction
 Chosen direction: **Stylized Cartoon** (Direction C)

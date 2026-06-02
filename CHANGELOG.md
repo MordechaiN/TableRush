@@ -1,5 +1,20 @@
 # CHANGELOG
 
+## ADDICTION & RETENTION PLAN — 2026-06-02
+### Design Document Created (no implementation — awaiting approval)
+- **ADDICTION_AND_RETENTION_PLAN.md**: Retention and engagement design
+  - Section 1: Core loop analysis — boredom begins at ~minute 7 when learning ends and execution routine begins
+  - Section 2: Psychology of restaurant game addiction — urgency/empathy loops, flow state architecture, variable reward intervals, visible improvement, satisfaction peak moments
+  - Section 3: 10 original hooks — Reputation Arc, Rush Hour Events, The Inspector, Customer Memory, Kitchen Mastery, Shift Reports, VIP Cascade, Daily Special, Combo Crescendo Escalation, Personal Challenge Mode
+  - Section 4: Retention systems ranked — daily goals, achievements (progress + discovery), unlockables, cosmetics, challenges
+  - Section 5: First 30 minutes — minute-by-minute emotional arc (Discovery → Mastery → Stakes → Optimization)
+  - Section 6: First 7 days — Day 1 hook through Day 7 milestone
+  - Section 7: Future monetization (cosmetics only, never pay-to-win)
+  - Section 8: North Star — "I am the most capable person in this room — and the room knows it."
+  - Top 5 post-visual-reboot features: combo visibility, daily goal, last-second save theater, yesterday's score on menu, shift report end screen
+
+---
+
 ## VISUAL REBOOT PLAN — 2026-06-02
 ### Design Document Created (no implementation — awaiting approval)
 - **VISUAL_REBOOT_PLAN.md**: Full visual identity audit and rebuild plan

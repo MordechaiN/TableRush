@@ -6,10 +6,13 @@
 ---
 
 ## Current Focus
-VISUAL REBOOT. VISUAL_REBOOT_PLAN.md written. Awaiting owner approval.
+DESIGN PHASE. Two documents written, both awaiting owner approval before any implementation.
 
-## Visual Reboot Status
+## Design Documents Status
 - [x] VISUAL_REBOOT_PLAN.md — complete, awaiting approval
+- [x] ADDICTION_AND_RETENTION_PLAN.md — complete, awaiting approval
+
+## Visual Reboot Status (pending approval)
 - [ ] P0: Action arrow indicator (replaces invisible pulse rings)
 - [ ] P1: Customer redesign (48×72px, bold outlines, name banners)
 - [ ] P2: Waiter redesign (larger, emotion visible)

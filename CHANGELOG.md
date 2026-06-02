@@ -1,5 +1,24 @@
 # CHANGELOG
 
+## v0.4.0 — 2026-06-02
+### Added
+- **Waiter personality system**: Player has emotional states — normal, happy, proud, stressed, excited
+- **Busy feedback**: clicking while waiter is busy → red tint flash, sprite shake, "BUSY!" floating label (400ms duration)
+- **Emotion faces**: waiter face redrawn per emotion (neutral/smile/squint/sparkle-eyes/frown+worried-brows)
+- **Emotion badges**: emoji floats above waiter head on key states (😊 happy, 🤩 excited, 😰 stressed, 😤 proud)
+- **Combo cascade reactions**: waiter reacts at x3 (excited), x5 (excited + scale pulse + star burst), x10+ (excited + pulse + full celebration)
+- **TABLE MASTER celebration**: camera flash + "🌟 TABLE MASTER!" text + 14 star particles at combo 10+
+- **Angry customer reaction**: waiter shows stressed face + slump animation for 2s after customer storms out
+- **30s warning**: floating ⏰ text + camera shake when 30s remain
+- **Last 10s pulse**: timer text scales up each second in final countdown
+- **EconomySystem.ts**: full architecture stub — coins, shop catalog (8 items), upgrades/cosmetics/boosts, localStorage persistence, ready for future activation
+
+### Changed
+- Player container depth set to 10 (always renders above tables/customers)
+- `clearCarry()` now uses explicit object references (no fragile children-array indexing)
+- Proud emotion priority > happy (payment success feels more significant than delivery)
+- Busy click ignores carry-only state (silently) — only warns on `playerBusy`
+
 ## v0.3.0 — 2026-06-02
 ### Added
 - Cooking progress bars on kitchen tickets (green → orange as ready, clears on complete)

@@ -263,7 +263,19 @@ export class GameScene extends Phaser.Scene {
         const m = Math.floor(remaining / 60);
         const s = Math.floor(remaining % 60);
         this.timeTxt.setText(`${m}:${s.toString().padStart(2, '0')}`);
-        if (remaining <= 30) this.timeTxt.setColor(COLORS.TEXT_RED);
+        if (remaining <= 30) {
+          this.timeTxt.setColor(COLORS.TEXT_RED);
+          if (remaining <= 30 && remaining > 29) {
+            this.showFloating('⏰ 30s LEFT!', GAME_WIDTH / 2, GAME_HEIGHT / 2 - 40, COLORS.TEXT_RED);
+            this.cameras.main.shake(150, 0.003);
+          }
+        }
+        if (remaining <= 10 && remaining > 0) {
+          this.tweens.add({
+            targets: this.timeTxt, scale: { from: 1, to: 1.2 },
+            duration: 400, yoyo: true,
+          });
+        }
         if (remaining <= 0) this.endGame();
       },
       loop: true,
@@ -273,7 +285,11 @@ export class GameScene extends Phaser.Scene {
   // ─── Table Interaction ────────────────────────────────────────────────────
 
   private onTableClick(tableId: number) {
-    if (this.playerBusy) return;
+    if (this.playerBusy) {
+      this.player.showBusy();
+      this.showFloating('BUSY!', this.player.x, this.player.y - 60, COLORS.TEXT_RED);
+      return;
+    }
 
     const table = this.tables[tableId];
     const customer = this.getCustomerAtTable(tableId);
@@ -305,7 +321,12 @@ export class GameScene extends Phaser.Scene {
   }
 
   private onKitchenClick() {
-    if (this.playerBusy || this.carryingOrderId !== -1) return;
+    if (this.playerBusy) {
+      this.player.showBusy();
+      this.showFloating('BUSY!', this.player.x, this.player.y - 60, COLORS.TEXT_RED);
+      return;
+    }
+    if (this.carryingOrderId !== -1) return;
 
     const readyOrder = this.kitchenOrders.find(o => o.ready);
     if (!readyOrder) return;
@@ -465,6 +486,7 @@ export class GameScene extends Phaser.Scene {
 
       this.customersHappy++;
       this.incrementCombo();
+      this.player.setEmotion('proud', 1800);
 
       customer.hideBubble();
       customer.state = 'leaving';
@@ -545,6 +567,14 @@ export class GameScene extends Phaser.Scene {
 
     if (this.comboMultiplier > 1) {
       this.comboTxt.setText(`🔥 ×${this.comboMultiplier.toFixed(1)}`);
+    }
+
+    // Waiter reactions at combo milestones
+    this.player.celebrateCombo(this.comboCount);
+    if (this.comboCount >= 10) {
+      this.triggerCelebration();
+    } else if (this.comboCount === 5) {
+      this.spawnStarBurst(this.player.x, this.player.y - 20);
     }
   }
 
@@ -659,6 +689,7 @@ export class GameScene extends Phaser.Scene {
     this.scoreTxt.setText(`🍽️  ${this.score}`);
     this.showFloating(`-${penalty} 😠`, customer.x, customer.y - 40, COLORS.TEXT_RED);
     this.cameras.main.shake(200, 0.004);
+    this.player.reactToAngry();
 
     this.resetCombo();
 
@@ -790,6 +821,50 @@ export class GameScene extends Phaser.Scene {
       if (c === target) return id;
     }
     return -1;
+  }
+
+  private spawnStarBurst(x: number, y: number) {
+    for (let i = 0; i < 8; i++) {
+      const angle = (Math.PI * 2 / 8) * i;
+      const star = this.add.text(x, y, '⭐', { fontSize: '14px' }).setOrigin(0.5).setDepth(30);
+      this.tweens.add({
+        targets: star,
+        x: x + Math.cos(angle) * 55,
+        y: y + Math.sin(angle) * 55,
+        alpha: 0, scale: 0,
+        duration: 650, delay: i * 40, ease: 'Quad.easeOut',
+        onComplete: () => star.destroy(),
+      });
+    }
+  }
+
+  private triggerCelebration() {
+    this.cameras.main.flash(250, 255, 230, 100, false);
+
+    const txt = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 60, '🌟 TABLE MASTER! 🌟', {
+      fontSize: '26px', fontFamily: 'Arial Black', color: COLORS.TEXT_GOLD,
+    }).setOrigin(0.5).setDepth(40).setScale(0);
+
+    this.tweens.add({
+      targets: txt, scale: 1.1,
+      duration: 350, ease: 'Back.easeOut',
+      onComplete: () => {
+        this.time.delayedCall(1200, () => {
+          this.tweens.add({ targets: txt, alpha: 0, duration: 300, onComplete: () => txt.destroy() });
+        });
+      },
+    });
+
+    for (let i = 0; i < 14; i++) {
+      const sx = Phaser.Math.Between(40, GAME_WIDTH - 40);
+      const sy = Phaser.Math.Between(GAME_HEIGHT / 3, GAME_HEIGHT * 2 / 3);
+      const star = this.add.text(sx, sy, '✨', { fontSize: '20px' }).setOrigin(0.5).setDepth(35);
+      this.tweens.add({
+        targets: star, y: sy - 130, alpha: 0,
+        duration: 900, delay: i * 55, ease: 'Quad.easeOut',
+        onComplete: () => star.destroy(),
+      });
+    }
   }
 
   private pauseGame() {

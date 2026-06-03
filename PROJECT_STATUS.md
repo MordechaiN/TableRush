@@ -1,19 +1,20 @@
 # PROJECT STATUS
 
 **Last Updated:** 2026-06-03
-**Current Version:** v1.3
+**Current Version:** v1.4 (Alpha)
 
 ---
 
 ## Current Focus
-Visual Clarity Pass v1.3 complete. Dirty tables now flash orange — impossible to miss. Action arrows are 33-39% larger. Ready tickets pop with a scale-punch. Kitchen UI decluttered (removed noise label). Customer seats 4px higher for better table-depth illusion.
+Alpha build v1.4 complete. Full playable loop validated: queue → seat → order → cook → deliver → eat → pay → dirty → clean. All table states now have on-table visual objects (menu booklet, ticket slip, plate with food, bill/check folder). Kitchen COOKING/READY zones clearly differentiated. Restaurant has host stand, queue zone, recipe strip, dining area tint. Tutorial compact card non-intrusive. Zero console errors.
 
 ## Next Candidates
 - Sound effects (order taken, food delivered, payment, dishwasher burst, rush hour siren)
-- Customer arriving/happy/satisfied reactions on payment
-- Host stand visual at entrance
-- Menu scene polish
+- Customer eating animation (head nod, fork motion)
+- Customer happy/satisfied reaction on payment
+- Menu scene polish (animated chalkboard)
 - More customer variant idle personalities
+- End-of-shift tip screen with customer name callouts
 
 ## Design Documents Status (all approved)
 - [x] VISUAL_REBOOT_PLAN.md — approved, in progress
@@ -31,6 +32,7 @@ Visual Clarity Pass v1.3 complete. Dirty tables now flash orange — impossible 
 - [x] v1.1 Restaurant Simulation — entrance queue, dirty dish carry, dishwasher station interactive, purple seating arrows, 7-step tutorial ← COMPLETE
 - [x] v1.2 Living Restaurant — idle behaviors, rush hour, VIP customer, queue patience, player 1.25×, dishwasher steam ← COMPLETE
 - [x] v1.3 Visual Clarity — dirty table orange tint, arrows 33% larger, ready ticket pop, kitchen UI cleaner, customer seated 4px higher ← COMPLETE
+- [x] v1.4 Alpha — table state visuals (menu/ticket/plate/bill), kitchen COOKING/READY zones, host stand, queue zone, recipe strip, compact tutorial, menu board fix ← COMPLETE
 - [ ] Sound effects (order, delivery, payment, combo)
 - [ ] Customer eating/happy animations
 - [ ] Animated entrance customers

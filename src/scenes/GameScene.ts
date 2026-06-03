@@ -505,19 +505,19 @@ export class GameScene extends Phaser.Scene {
 
     // ── Queue zone — "WAIT HERE" floor marking for arriving guests ───────────
     const queueZone = this.add.graphics().setDepth(0);
-    queueZone.fillStyle(0xDDCC88, 0.18);
+    queueZone.fillStyle(0xDDCC88, 0.28);
     queueZone.fillRoundedRect(100, GAME_HEIGHT - 115, 240, 50, 8);
-    queueZone.lineStyle(1.5, 0xBBAA66, 0.3);
+    queueZone.lineStyle(2, 0xBBAA44, 0.7);
     queueZone.strokeRoundedRect(100, GAME_HEIGHT - 115, 240, 50, 8);
     // Footprint icons
     ['👣', '👣'].forEach((icon, i) => {
       this.add.text(175 + i * 90, GAME_HEIGHT - 98, icon, {
-        fontSize: '14px',
-      }).setOrigin(0.5).setDepth(0).setAlpha(0.22);
+        fontSize: '16px',
+      }).setOrigin(0.5).setDepth(0).setAlpha(0.55);
     });
     this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 120, 'WAIT HERE', {
-      fontSize: '8px', fontFamily: 'Arial Black', color: '#AA9933', letterSpacing: 3,
-    }).setOrigin(0.5).setDepth(1).setAlpha(0.55);
+      fontSize: '9px', fontFamily: 'Arial Black', color: '#AA8800', letterSpacing: 3,
+    }).setOrigin(0.5).setDepth(1).setAlpha(0.8);
 
     // Rush hour overlay (hidden by default — subtle full-screen red warmth during rush)
     this.rushHourOverlay = this.add.graphics().setDepth(1).setAlpha(0);

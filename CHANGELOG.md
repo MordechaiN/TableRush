@@ -1,5 +1,45 @@
 # CHANGELOG
 
+## v1.4 — Alpha Build (2026-06-03)
+
+### Table State Visuals
+- Added `setStateVisual()` on Table: draws contextual object on table surface for each game state
+  - `'menu'`: dark-green booklet with spine, cream pages, and text lines (customer requesting)
+  - `'ticket'`: white order slip with tear perforation, text lines, and orange stamp circle (food cooking)
+  - `'plate'`: rimmed plate with orange food blob and green garnish (customer eating)
+  - `'bill'`: dark-leather check folder with gold clasp and corner ornaments (paying)
+- All visuals positioned at container x:−42 to −18, y:−30 to −8 — clear of customer sprite, front-face overlay, candle, and table number badge
+- State cleared on `setEmpty()`, `setOccupied()`, `setDirty()`
+
+### Kitchen Zone Clarity
+- COOKING zone: orange-tinted background rectangle, orange `🔥 COOKING` badge
+- READY zone: green-tinted background rectangle, green `✅ READY` badge
+- Vertical divider line between zones
+- Kitchen glow now covers full READY zone rectangle (was a single bar)
+
+### Menu Board Fix
+- Replaced hidden chalkboard (y=4–56, behind HUD panel at depth 3) with visible recipe strip at y=62
+- Recipe strip: dark-green background with `MENU: 🥗 🍔 🍝 🍣 🍕` — always readable
+
+### Restaurant Environment
+- Host stand added at entrance right side: mahogany podium with clipboard + gold pen + "HOST" label
+- Dining area zone: subtle golden-amber tint over table area to differentiate from kitchen floor
+- Kitchen floor: dark tint over kitchen area to ground cooking zone visually
+- Queue zone visibility improved: stronger border (0.7 alpha), larger footprints (16px, 0.55 alpha), bolder "WAIT HERE" text (0.8 alpha)
+
+### Tutorial Rewrite
+- Previous: 160px multi-line panel with step numbers and detailed instructions
+- Now: 54px compact floating card at bottom of screen, single-line action prompts, 7 progress dots
+- Steps: Guest arrives → Take order → Food cooking → Pick up food → Deliver → Pay → Clean → Dishwasher
+- First step delayed 800ms to let game load before tutorial fires
+
+### Alpha Validation
+- Full game loop playtested end-to-end: queue → seat → order → cook → deliver → eat → pay → dirty → clean
+- All state visuals confirmed working at each transition
+- Zero console errors, TypeScript compiles clean
+
+---
+
 ## v1.3 — Visual Clarity Pass (2026-06-03)
 
 ### Dirty Table Readability

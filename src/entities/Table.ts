@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 
 export type TableState = 'empty' | 'occupied' | 'dirty';
 
-export type TablePriority = 'none' | 'dirty' | 'requesting' | 'kitchen_ready' | 'paying' | 'urgent';
+export type TablePriority = 'none' | 'dirty' | 'seating' | 'requesting' | 'kitchen_ready' | 'paying' | 'urgent';
 
 export class Table extends Phaser.GameObjects.Container {
   public id: number;
@@ -156,6 +156,7 @@ export class Table extends Phaser.GameObjects.Container {
       paying:       { color: 0xFFD700, duration: 580 },
       kitchen_ready:{ color: 0xFF6B35, duration: 480 },
       requesting:   { color: 0x3498DB, duration: 680 },
+      seating:      { color: 0x9B59B6, duration: 700 },
       dirty:        { color: 0xC4823A, duration: 900 },
     };
 

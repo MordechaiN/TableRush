@@ -74,6 +74,11 @@ export class Player extends Phaser.GameObjects.Container {
     this.add(this.trayLabel);
   }
 
+  carryDishes() {
+    this.carryItem('🍽️');
+    if (this.plateImage) this.plateImage.setTint(0xAA8866);
+  }
+
   clearCarry() {
     this.trayImage?.destroy(); this.trayImage = null;
     this.plateImage?.destroy(); this.plateImage = null;

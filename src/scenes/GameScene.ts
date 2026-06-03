@@ -62,9 +62,13 @@ export class GameScene extends Phaser.Scene {
 
   private playerBusy = false;
   private carryingOrderId = -1;
+  private carryingDirty = false;
+  private waitingQueue: Customer[] = [];
 
   private kitchenGlow!: Phaser.GameObjects.Graphics;
   private kitchenGlowTween: Phaser.Tweens.Tween | null = null;
+  private dishwasherGlow!: Phaser.GameObjects.Graphics;
+  private dishwasherGlowTween: Phaser.Tweens.Tween | null = null;
   private ticketRail!: Phaser.GameObjects.Container;
 
   private steamTimer: Phaser.Time.TimerEvent | null = null;
@@ -90,6 +94,8 @@ export class GameScene extends Phaser.Scene {
     this.orderStartTimes.clear();
     this.playerBusy = false;
     this.carryingOrderId = -1;
+    this.carryingDirty = false;
+    this.waitingQueue = [];
     this.kitchenOrders = [];
     this.nextOrderId = 0;
     this.nextCustomerId = 0;
@@ -393,6 +399,15 @@ export class GameScene extends Phaser.Scene {
       fontSize: '7px', fontFamily: 'Arial Black', color: '#777777',
     }).setOrigin(0.5).setDepth(3);
 
+    // Dishwasher glow (amber, shown when player carries dirty dishes)
+    this.dishwasherGlow = this.add.graphics().setDepth(3).setAlpha(0);
+    this.dishwasherGlow.fillStyle(0xFF8800, 1);
+    this.dishwasherGlow.fillRoundedRect(8, 172, 56, 48, 5);
+
+    // Dishwasher interactive zone
+    this.add.zone(36, 196, 60, 56).setInteractive({ useHandCursor: true })
+      .on('pointerdown', () => this.onDishwasherClick());
+
     // ── Entrance — proper double-door with glass panels ───────────────────────
     const dcx = GAME_WIDTH / 2;
     const doorGfx = this.add.graphics().setDepth(3);
@@ -470,8 +485,7 @@ export class GameScene extends Phaser.Scene {
   // ─── Spawning ─────────────────────────────────────────────────────────────
 
   private startSpawnCycle() {
-    // First customer after short delay
-    this.time.delayedCall(2000, () => this.trySpawnCustomer());
+    this.time.delayedCall(2000, () => this.tryEnqueueCustomer());
     this.scheduleNextSpawn();
   }
 
@@ -484,7 +498,7 @@ export class GameScene extends Phaser.Scene {
     this.spawnTimer = this.time.addEvent({
       delay: interval,
       callback: () => {
-        this.trySpawnCustomer();
+        this.tryEnqueueCustomer();
         this.scheduleNextSpawn();
       },
       callbackScope: this,
@@ -498,41 +512,93 @@ export class GameScene extends Phaser.Scene {
     return DIFFICULTY_TIERS[DIFFICULTY_TIERS.length - 1];
   }
 
-  private trySpawnCustomer() {
-    // Keep at least 1 table free
-    const emptyTables = this.tables.filter(t => t.state === 'empty');
-    if (emptyTables.length === 0) return;
+  private tryEnqueueCustomer() {
+    const MAX_QUEUE = 2;
+    if (this.waitingQueue.length >= MAX_QUEUE) return;
     if (this.tutorialActive && this.customers.size >= 1) return;
 
-    const table = emptyTables[Math.floor(Math.random() * emptyTables.length)];
     const elapsed = (this.time.now - this.gameStartMs) / 1000;
     const tier = this.getDifficultyTier(elapsed);
     const patience = Phaser.Math.Between(tier.patienceMin, tier.patienceMax);
 
     const id = this.nextCustomerId++;
+    const qIdx = this.waitingQueue.length;
+    const qPos = this.getQueuePosition(qIdx);
     const customer = new Customer(this, GAME_WIDTH / 2, GAME_HEIGHT + 30, id % 7, patience);
     this.customers.set(id, customer);
-
-    table.setOccupied(id);
-    customer.tableId = table.id;
+    this.waitingQueue.push(customer);
     customer.state = 'entering';
 
     this.tweens.add({
       targets: customer,
-      x: table.x, y: table.y - 20,
-      duration: 800, ease: 'Quad.easeOut',
+      x: qPos.x, y: qPos.y,
+      duration: 600, ease: 'Quad.easeOut',
       onComplete: () => {
-        customer.state = 'requesting';
-        customer.startPatience();
-        customer.showRequestBubble();
         customer.seatBounce();
         customer.showNameBanner();
-        table.setPriority('requesting');
-
-        if (this.tutorialActive && this.tutorialStep === 0) {
-          this.advanceTutorial();
-        }
+        this.updateSeatingArrows();
       },
+    });
+  }
+
+  private getQueuePosition(idx: number): { x: number; y: number } {
+    const slots = [
+      { x: 175, y: 760 },
+      { x: 315, y: 760 },
+    ];
+    return slots[Math.min(idx, slots.length - 1)];
+  }
+
+  private repositionQueue() {
+    this.waitingQueue.forEach((c, idx) => {
+      const pos = this.getQueuePosition(idx);
+      this.tweens.add({ targets: c, x: pos.x, y: pos.y, duration: 280, ease: 'Quad.easeOut' });
+    });
+  }
+
+  private updateSeatingArrows() {
+    const showSeating = this.waitingQueue.length > 0 && !this.carryingDirty;
+    for (const table of this.tables) {
+      if (table.state === 'empty') {
+        if (showSeating) table.setPriority('seating');
+        else table.clearPulse();
+      }
+    }
+  }
+
+  private seatNextCustomer(table: Table) {
+    if (this.waitingQueue.length === 0) return;
+    this.playerBusy = true;
+    table.clearPulse();
+
+    const customer = this.waitingQueue.shift()!;
+    this.repositionQueue();
+    this.updateSeatingArrows();
+
+    const customerId = this.getCustomerIdByInstance(customer);
+    table.setOccupied(customerId);
+    customer.tableId = table.id;
+    customer.state = 'entering';
+
+    let arrivals = 0;
+    const onBothArrived = () => {
+      arrivals++;
+      if (arrivals < 2) return;
+      customer.state = 'requesting';
+      customer.startPatience();
+      customer.showRequestBubble();
+      customer.seatBounce();
+      table.setPriority('requesting');
+      this.playerBusy = false;
+
+      if (this.tutorialActive && this.tutorialStep === 0) this.advanceTutorial();
+    };
+
+    this.player.walkTo(table.x, table.y + 40, onBothArrived);
+    this.tweens.add({
+      targets: customer, x: table.x, y: table.y - 20,
+      duration: 700, ease: 'Quad.easeOut',
+      onComplete: onBothArrived,
     });
   }
 
@@ -575,11 +641,22 @@ export class GameScene extends Phaser.Scene {
       return;
     }
 
+    // While carrying dirty dishes only dishwasher is actionable
+    if (this.carryingDirty) {
+      this.showFloating('→ DISHWASHER!', this.player.x, this.player.y - 60, COLORS.TEXT_ORANGE);
+      return;
+    }
+
     const table = this.tables[tableId];
     const customer = this.getCustomerAtTable(tableId);
 
     if (table.state === 'dirty') {
-      this.cleanTable(table);
+      this.collectDirtyDishes(table);
+      return;
+    }
+
+    if (table.state === 'empty' && this.waitingQueue.length > 0) {
+      this.seatNextCustomer(table);
       return;
     }
 
@@ -592,7 +669,6 @@ export class GameScene extends Phaser.Scene {
 
     if (customer.state === 'waiting_food' && this.carryingOrderId !== -1) {
       const order = this.kitchenOrders.find(o => o.id === this.carryingOrderId);
-      // Inventory model: any food of the matching type satisfies any matching order
       if (order && order.item.itemId === (customer.order?.itemId ?? -1)) {
         this.deliverFood(table, customer, order);
         return;
@@ -609,6 +685,10 @@ export class GameScene extends Phaser.Scene {
     if (this.playerBusy) {
       this.player.showBusy();
       this.showFloating('BUSY!', this.player.x, this.player.y - 60, COLORS.TEXT_RED);
+      return;
+    }
+    if (this.carryingDirty) {
+      this.showFloating('→ DISHWASHER!', this.player.x, this.player.y - 60, COLORS.TEXT_ORANGE);
       return;
     }
     if (this.carryingOrderId !== -1) return;
@@ -824,20 +904,61 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
-  private cleanTable(table: Table) {
+  private collectDirtyDishes(table: Table) {
     this.playerBusy = true;
     table.clearPulse();
     this.player.walkTo(table.x, table.y + 40, () => {
       this.player.bounce();
-      // Table opens immediately — player picks up dishes, new customer can sit at once
       table.setEmpty();
       table.flashClean();
-      this.showFloating('✨ Clean!', table.x, table.y - 30, COLORS.TEXT_GREEN);
+      this.updateSeatingArrows();
+
+      this.carryingDirty = true;
+      this.player.carryDishes();
+      this.setDishwasherGlowPrimary(true);
+      this.showFloating('→ DISHWASHER', table.x, table.y - 30, COLORS.TEXT_ORANGE);
       this.playerBusy = false;
 
       if (this.tutorialActive && this.tutorialStep === 5) {
         this.advanceTutorial();
       }
+    });
+  }
+
+  private onDishwasherClick() {
+    if (!this.carryingDirty) return;
+    if (this.playerBusy) {
+      this.player.showBusy();
+      return;
+    }
+
+    this.playerBusy = true;
+    // Dishwasher center x=36, y=196
+    this.player.walkTo(80, 210, () => {
+      this.player.bounce();
+      this.carryingDirty = false;
+      this.player.clearCarry();
+      this.setDishwasherGlowPrimary(false);
+      this.updateSeatingArrows();
+      this.showFloating('✨ Clean!', 80, 180, COLORS.TEXT_GREEN);
+      this.playerBusy = false;
+
+      if (this.tutorialActive && this.tutorialStep === 6) {
+        this.advanceTutorial();
+      }
+    });
+  }
+
+  private setDishwasherGlowPrimary(active: boolean) {
+    if (this.dishwasherGlowTween) { this.dishwasherGlowTween.stop(); this.dishwasherGlowTween = null; }
+    if (!active) {
+      this.dishwasherGlow.setAlpha(0);
+      return;
+    }
+    this.dishwasherGlowTween = this.tweens.add({
+      targets: this.dishwasherGlow,
+      alpha: { from: 0.12, to: 0.40 },
+      duration: 380, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
     });
   }
 
@@ -1088,6 +1209,13 @@ export class GameScene extends Phaser.Scene {
     if (this.time.now - this.priorityLastUpdate < 150) return;
     this.priorityLastUpdate = this.time.now;
 
+    // Carrying dirty dishes: only dishwasher matters
+    if (this.carryingDirty) {
+      for (const table of this.tables) table.setUrgencyLevel(false);
+      this.setKitchenGlowPrimary(false);
+      return;
+    }
+
     let primaryTableId = -1;
     let primaryKitchen = false;
 
@@ -1122,7 +1250,7 @@ export class GameScene extends Phaser.Scene {
             break;
           }
         }
-        if (primaryTableId === -1) primaryTableId = order.tableId; // fallback
+        if (primaryTableId === -1) primaryTableId = order.tableId;
       }
     }
 
@@ -1139,14 +1267,20 @@ export class GameScene extends Phaser.Scene {
       }
     }
 
-    // 6. Dirty tables
+    // 6. Seating: queue waiting + empty tables available
+    if (primaryTableId === -1 && !primaryKitchen && this.waitingQueue.length > 0) {
+      for (const table of this.tables) {
+        if (table.state === 'empty') { primaryTableId = table.id; break; }
+      }
+    }
+
+    // 7. Dirty tables
     if (primaryTableId === -1 && !primaryKitchen) {
       for (const table of this.tables) {
         if (table.state === 'dirty') { primaryTableId = table.id; break; }
       }
     }
 
-    // Apply urgency levels
     for (const table of this.tables) {
       table.setUrgencyLevel(table.id === primaryTableId);
     }
@@ -1195,7 +1329,10 @@ export class GameScene extends Phaser.Scene {
 
     // Angry customer → table goes straight to EMPTY (not dirty)
     const table = this.tables[customer.tableId];
-    if (table) table.setEmpty();
+    if (table) {
+      table.setEmpty();
+      this.updateSeatingArrows();
+    }
 
     this.time.delayedCall(400, () => {
       this.tweens.add({
@@ -1223,13 +1360,12 @@ export class GameScene extends Phaser.Scene {
     this.tutorialOverlay.add(bg);
 
     this.startGameTimer();
-    this.time.delayedCall(1000, () => this.trySpawnCustomer());
+    this.time.delayedCall(1000, () => this.tryEnqueueCustomer());
 
-    this.showTutorialStep(0, 'A customer arrived!\nTap the TABLE to take their order.');
+    this.showTutorialStep(0, 'A guest is at the entrance!\nTap an empty TABLE to seat them.');
   }
 
   private showTutorialStep(step: number, text: string) {
-    // Remove old text
     this.tutorialOverlay.getAll().slice(1).forEach(o => o.destroy());
 
     const txt = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 100, text, {
@@ -1237,7 +1373,7 @@ export class GameScene extends Phaser.Scene {
       align: 'center', wordWrap: { width: GAME_WIDTH - 40 },
     }).setOrigin(0.5);
 
-    const stepTxt = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 150, `Tip ${step + 1}/6`, {
+    const stepTxt = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 150, `Tip ${step + 1}/7`, {
       fontSize: '12px', color: COLORS.TEXT_GOLD,
     }).setOrigin(0.5);
 
@@ -1246,20 +1382,21 @@ export class GameScene extends Phaser.Scene {
 
   private advanceTutorial() {
     this.tutorialStep++;
-    const steps: [string, string][] = [
-      [/* step 0 done, show 1 */ '', 'Order taken! It\'s cooking in the kitchen.\nWhen it\'s ready, tap the KITCHEN to pick it up.'],
-      [/* 1 done, show 2 */ '', 'Food picked up! Now tap the TABLE to deliver it.'],
-      [/* 2 done, show 3 */ '', 'Delivered! Customer is eating.\nWhen they\'re done, tap the table to COLLECT PAYMENT.'],
-      [/* 3 done, show 4 */ '', 'Payment collected! Great service!\nNow clean the DIRTY TABLE.'],
-      [/* 4 done, show 5 */ '', 'Table cleaned! You\'re a natural!\nServe more customers to earn combos and stars!'],
+    const steps: string[] = [
+      'Customer seated! Tap the TABLE to take their order.',
+      'Order in! Tap the KITCHEN when food is ready.',
+      'Food ready! Tap TABLE to deliver it.',
+      'Delivered! Collect payment when eating is done.',
+      'Table dirty! Tap TABLE to pick up the dishes.',
+      'Now tap the DISHWASHER to deposit the dishes!',
     ];
 
-    if (this.tutorialStep <= 5) {
-      const [, msg] = steps[this.tutorialStep - 1] ?? ['', ''];
+    if (this.tutorialStep <= 6) {
+      const msg = steps[this.tutorialStep - 1] ?? '';
       if (msg) this.showTutorialStep(this.tutorialStep, msg);
     }
 
-    if (this.tutorialStep >= 6) {
+    if (this.tutorialStep >= 7) {
       this.endTutorial();
     }
   }

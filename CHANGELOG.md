@@ -1,5 +1,23 @@
 # CHANGELOG
 
+## v0.9.2 — Patience Timer Pressure Calibration (2026-06-03)
+
+### The Root Cause Fix
+- Customer patience was 5-13× the service cycle — zero urgency possible
+- Tier 1 (0-60s):   90k-120k ms → 48k-58k ms
+- Tier 2 (60-120s): 60k-90k ms  → 30k-38k ms
+- Tier 3 (120-180s):45k-65k ms  → 20k-26k ms
+
+### Validated Results (5 sessions, optimal bot)
+- All angry events occur in tier 3 only (120-180s) — learning phase preserved
+- Average 2.0 angry per session (was 0.0) — pressure without frustration
+- Score variance 12k-21.5k creates natural replay motivation
+- Session 5 demonstrated "cascade" failure mode: combo break in tier 3 snowballs
+- Bot serves 22.6 happy customers avg (was 21.4) — angry customers free tables faster
+
+### Analysis Document
+- PRESSURE_ANALYSIS.md: full diagnosis, 5 gameplay questions, top 10 pressure improvements
+
 ## v0.9.1 — Score Visibility + Scaled Rewards (2026-06-03)
 
 ### Score Now Visible

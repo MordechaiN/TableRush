@@ -1,12 +1,17 @@
 # PROJECT STATUS
 
 **Last Updated:** 2026-06-03
-**Current Version:** v0.9.1
+**Current Version:** v0.9.2
 
 ---
 
 ## Current Focus
-Playtest Round 1 complete. Score visibility fixed (depth + size). Reward floats scale with combo tier. See PLAYTEST_ROUND_1.md for full analysis and top 10 problem/opportunity lists.
+Pressure calibration complete. Customer patience reduced 3-5× to create genuine urgency in tier 3. Validated: all angry events occur in tier 3 only, avg 2.0/session. See PRESSURE_ANALYSIS.md for full analysis.
+
+## Next Candidates (from PRESSURE_ANALYSIS.md Top 10)
+- #2: Table-level patience glow (priority signal at a glance)
+- #3: Kitchen queue cap (2 simultaneous orders max)
+- #6: Requesting-phase timeout (20s to acknowledge customer)
 
 ## Design Documents Status (all approved)
 - [x] VISUAL_REBOOT_PLAN.md — approved, in progress

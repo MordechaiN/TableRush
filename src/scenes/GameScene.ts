@@ -56,6 +56,7 @@ export class GameScene extends Phaser.Scene {
   private timeTxt!: Phaser.GameObjects.Text;
   private comboProgressGfx!: Phaser.GameObjects.Graphics;
   private hudTimerPill!: Phaser.GameObjects.Graphics;
+  private hudComboPill!: Phaser.GameObjects.Graphics;
 
   private gameTimeMs = GAME_DURATION * 1000;
   private gameStartMs = 0;
@@ -565,7 +566,10 @@ export class GameScene extends Phaser.Scene {
       pauseBtn.on('pointerdown', () => { SoundManager.uiClick(); this.pauseGame(); });
     }
 
-    // Combo display — centered on cream panel, no pill (changes color/size per tier)
+    // Combo pill — centered, color changes with tier
+    this.hudComboPill = this.add.graphics().setDepth(3.5);
+    this.drawComboPill(0x888888, 0.20);
+
     this.comboTxt = this.add.text(GAME_WIDTH / 2, 28, '×1.0', {
       fontSize: '14px', fontFamily: 'Arial Black', color: '#AAAAAA',
     }).setOrigin(0.5, 0.5).setDepth(4);
@@ -1292,28 +1296,39 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
+  private drawComboPill(color: number, alpha: number) {
+    this.hudComboPill.clear();
+    this.hudComboPill.fillStyle(color, alpha);
+    this.hudComboPill.fillRoundedRect(166, 7, 148, 42, 10);
+  }
+
   private updateComboDisplay() {
     const m = this.comboMultiplier;
     const n = this.comboCount;
     if (n === 0) {
       this.comboTxt.setText('×1.0');
       this.comboTxt.setStyle({ color: '#AAAAAA', fontSize: '14px', fontFamily: 'Arial Black' });
+      this.drawComboPill(0x888888, 0.20);
     } else if (n <= 2) {
-      // Building to first milestone — show anticipation
       this.comboTxt.setText(`↑${n}`);
       this.comboTxt.setStyle({ color: '#D4A85A', fontSize: '15px', fontFamily: 'Arial Black' });
+      this.drawComboPill(0xD4A849, 0.28);
     } else if (m <= 2.0) {
       this.comboTxt.setText('🔥 ×2.0');
       this.comboTxt.setStyle({ color: '#FF8C42', fontSize: '17px', fontFamily: 'Arial Black' });
+      this.drawComboPill(0xFF8C42, 0.35);
     } else if (m <= 3.0) {
       this.comboTxt.setText('🔥🔥 ×3.0');
       this.comboTxt.setStyle({ color: '#FF5722', fontSize: '19px', fontFamily: 'Arial Black' });
+      this.drawComboPill(0xFF5722, 0.42);
     } else if (m <= 4.0) {
       this.comboTxt.setText('⭐ ×4.0');
       this.comboTxt.setStyle({ color: '#E91E63', fontSize: '20px', fontFamily: 'Arial Black' });
+      this.drawComboPill(0xE91E63, 0.48);
     } else {
       this.comboTxt.setText('💫 ×5.0');
       this.comboTxt.setStyle({ color: '#FFD700', fontSize: '22px', fontFamily: 'Arial Black' });
+      this.drawComboPill(0xFFD700, 0.55);
     }
     this.updateComboProgress();
   }

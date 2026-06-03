@@ -30,22 +30,52 @@ export class GameOverScene extends Phaser.Scene {
     const summary = ProgressionSystem.addRound(result);
     const prog = ProgressionSystem.getData();
 
-    // Warm background
+    // ── Background (tile floor + walls, consistent visual language) ──────────
     this.add.rectangle(cx, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, COLORS.FLOOR_WARM);
-    this.add.rectangle(cx, 2, GAME_WIDTH, 4, COLORS.UI_ORANGE).setOrigin(0.5, 0);
+    for (let row = 0; row < 14; row++) {
+      for (let col = 0; col < 7; col++) {
+        if ((row + col) % 2 === 0) {
+          this.add.rectangle(col * 70 + 35, row * 70 + 35, 69, 69, COLORS.FLOOR_ALT, 0.45);
+        }
+      }
+    }
 
-    // Panel
-    this.add.image(cx, GAME_HEIGHT / 2, 'panel');
+    // Side walls
+    const wallW = 16;
+    const walls = this.add.graphics();
+    walls.fillStyle(0xC8854A);
+    walls.fillRect(0, 0, wallW, GAME_HEIGHT);
+    walls.fillRect(GAME_WIDTH - wallW, 0, wallW, GAME_HEIGHT);
+    walls.fillStyle(0x9A5C28);
+    walls.fillRect(0, Math.floor(GAME_HEIGHT * 0.58), wallW, Math.floor(GAME_HEIGHT * 0.4));
+    walls.fillRect(GAME_WIDTH - wallW, Math.floor(GAME_HEIGHT * 0.58), wallW, Math.floor(GAME_HEIGHT * 0.4));
+
+    // Amber top accent
+    this.add.rectangle(cx, 2, GAME_WIDTH, 5, COLORS.UI_ORANGE).setOrigin(0.5, 0);
+
+    // Panel (fade in on entrance)
+    const panel = this.add.image(cx, GAME_HEIGHT / 2, 'panel').setAlpha(0);
+    this.tweens.add({ targets: panel, alpha: 1, duration: 350, ease: 'Quad.easeOut' });
 
     let y = 120;
 
-    // Header
-    const headerText = summary.isNewHighScore ? '🏆 NEW RECORD!' : 'ROUND COMPLETE!';
-    const headerColor = summary.isNewHighScore ? COLORS.TEXT_GOLD : COLORS.TEXT_DARK;
-    this.add.text(cx, y, headerText, {
-      fontSize: '28px', fontFamily: 'Arial Black', color: headerColor,
-    }).setOrigin(0.5);
-    y += 50;
+    // ── Header — cinematic entrance ───────────────────────────────────────────
+    const isRecord = summary.isNewHighScore;
+    const headerText = isRecord ? '🏆 NEW RECORD!' : 'ROUND COMPLETE!';
+    const headerColor = isRecord ? COLORS.TEXT_GOLD : COLORS.TEXT_DARK;
+    const headerSize = isRecord ? '32px' : '28px';
+    const hdr = this.add.text(cx, y, headerText, {
+      fontSize: headerSize, fontFamily: 'Arial Black', color: headerColor,
+    }).setOrigin(0.5).setAlpha(0).setScale(0.7);
+    this.tweens.add({
+      targets: hdr, alpha: 1, scaleX: 1, scaleY: 1,
+      duration: 380, ease: 'Back.easeOut',
+    });
+    if (isRecord) {
+      // Gold shimmer loop on the header
+      this.tweens.add({ targets: hdr, alpha: { from: 1, to: 0.7 }, duration: 700, yoyo: true, repeat: -1, delay: 500 });
+    }
+    y += isRecord ? 54 : 50;
 
     // Stars
     this.showStars(cx, y, data.stars);

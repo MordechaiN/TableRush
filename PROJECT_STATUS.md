@@ -1,20 +1,25 @@
 # PROJECT STATUS
 
 **Last Updated:** 2026-06-03
-**Current Version:** v1.0.0 (Public Release)
+**Current Version:** v1.0.0 RC1 (Release Candidate 1 — Polish Sprint)
 
 ---
 
 ## Current Focus
-v1.0.0 PUBLIC RELEASE — complete, polished, fully playable. All scenes have consistent visual language (tile floor, side walls, amber top bar, card panels). Full game loop tested end-to-end. Zero console errors. No placeholder art or stale version numbers. Full playable loop validated: queue → seat → order → cook → deliver → eat → pay → dirty → clean. All table states now have on-table visual objects (menu booklet, ticket slip, plate with food, bill/check folder). Kitchen COOKING/READY zones clearly differentiated. Restaurant has host stand, queue zone, recipe strip, dining area tint. Tutorial compact card non-intrusive. Zero console errors.
+RC1 Polish Sprint — transforming functional game into commercial-quality product. 4 of 5 phases complete:
+- ✅ Phase 1: UI/UX Redesign — HUD tri-badge pills, main menu logo card + animations, game over cinematic
+- ✅ Phase 2: Art Direction — consistent visual language across all 6 scenes (tile floors, walls, cream panels)
+- ✅ Phase 3: Animation — customer food reaction, happy exit, main menu entrance, game over header
+- ✅ Phase 4: Audio — SoundManager.ts (Web Audio API, 12 sound types), all events wired, SFX toggle works
+- ✅ Phase 5: Release Quality — zero console errors, full loop tested, docs updated
 
 ## Next Candidates
-- Sound effects (order taken, food delivered, payment, dishwasher burst, rush hour siren)
-- Customer eating animation (head nod, fork motion)
-- Customer happy/satisfied reaction on payment
-- Menu scene polish (animated chalkboard)
-- More customer variant idle personalities
+- Music: background restaurant ambiance (currently "coming in future update")
+- Customer eating animation (visible fork motion / head nod while eating bar fills)
+- More customer variant idle personalities (distinct per variant)
 - End-of-shift tip screen with customer name callouts
+- Menu scene polish (animated chalkboard)
+- Multi-item carry (expand CarrySystem.ts to 2-3 items)
 
 ## Design Documents Status (all approved)
 - [x] VISUAL_REBOOT_PLAN.md — approved, in progress
@@ -34,8 +39,9 @@ v1.0.0 PUBLIC RELEASE — complete, polished, fully playable. All scenes have co
 - [x] v1.3 Visual Clarity — dirty table orange tint, arrows 33% larger, ready ticket pop, kitchen UI cleaner, customer seated 4px higher ← COMPLETE
 - [x] v1.4 Alpha — table state visuals (menu/ticket/plate/bill), kitchen COOKING/READY zones, host stand, queue zone, recipe strip, compact tutorial, menu board fix ← COMPLETE
 - [x] v1.0.0 Release — Settings/Credits scene polish, tile backgrounds, card panels, version numbers, food emoji row, RELEASE_CHECKLIST.md ← COMPLETE
-- [ ] v1.1 — Sound effects (order, delivery, payment, combo)
-- [ ] Customer eating/happy animations
+- [x] RC1 Polish Sprint — Audio (SoundManager, 12 sounds), HUD tri-badge pills, main menu logo card/animations, game over cinematic, customer food/exit reactions ← COMPLETE
+- [ ] v1.1 — Music system (background restaurant ambiance)
+- [ ] Customer eating/happy animations (more visible fork motion)
 - [ ] Animated entrance customers
 - [ ] P4: Table redesign (clean cloth, numbered)
 - [ ] P5: Kitchen redesign (readable tickets, bold ready zone)

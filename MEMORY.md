@@ -38,12 +38,24 @@ Fast-paced restaurant management game. Premium casual — think Overcooked/Good 
 
 ---
 
-## Current State: v1.2 LIVING RESTAURANT COMPLETE
+## Current State: v1.0.0 Release Candidate 1 (RC1 Polish Sprint)
 
-**v1.2: Living restaurant — idle customer behaviors, rush hour waves, VIP customers, queue patience, player 1.25×, dishwasher steam.**
-**v1.1: Entrance queue, dirty dish carry to dishwasher, 7-step tutorial. The game now has real restaurant simulation flow.**
-**v1.0 Restaurant Immersion: side walls, proper chairs, kitchen zone badges, double-door entrance, candle flicker, table numbers, gold coin burst, main menu restaurant context.**
-**v0.9.3 + Restaurant Immersion complete. The game reads as a commercial mobile product.**
+**RC1 Sprint (2026-06-03): Audio system, HUD redesign, main menu visual upgrade, animation pass, game over cinematic.**
+**v1.0.0 public release: All scenes consistent visual language (tile floors, side walls, amber top bar, card panels). Zero console errors. Full playable loop tested.**
+**v1.4 Alpha: table state visuals (menu/ticket/plate/bill), kitchen zones, host stand, queue zone, recipe strip, compact tutorial.**
+**v1.2 Living restaurant — idle customer behaviors, rush hour waves, VIP customers, queue patience, player 1.25×, dishwasher steam.**
+**v1.1: Entrance queue, dirty dish carry to dishwasher, 7-step tutorial.**
+**v1.0 Restaurant Immersion: side walls, chairs, kitchen zone badges, entrance door, candle flicker, table numbers, gold coins, main menu.**
+
+### RC1 Sprint Changes
+- **SoundManager.ts**: Web Audio API synthesis, 12 sound types: uiClick, seatCustomer, orderTaken, foodReady, deliverFood, paymentCollected, comboUp(tier 1-4), comboLost, customerAngry, dishwasher, rushHour, roundEnd, timerWarning
+- **Audio toggle**: SettingsScene SFX toggle now actually controls SoundManager (reads localStorage)
+- **HUD redesign**: 3 dark mahogany pill badges on cream panel — score (left), combo (center, changes color with tier), timer (right). Timer pill turns danger-red at 30s.
+- **Combo tier pill colors**: gray→amber→orange→red/orange→magenta→gold (×1→2→3→4→5)
+- **Main menu**: Dark logo card backdrop + staggered entrance animations + hover scale on buttons
+- **Game Over**: Tile floor + side walls, cinematic header entrance, NEW RECORD pulsates
+- **Customer animations**: showFoodReaction() on food delivery, showHappyExit() on payment
+- **uiClick** on every button across all 6 scenes
 
 ### v1.1 Restaurant Simulation Changes
 - **Entrance queue**: customers walk to entrance, wait in slots (max 2). Player taps empty table to seat them — simultaneous walk animations.
@@ -321,6 +333,14 @@ Shows: Score | Best Score | Stars (1-3) | XP earned | Level progress bar | Combo
 └── README.md
 ```
 
-## Known Issues (v0.2.0)
-- No audio (Settings toggles are UI-only placeholders)
+## Known Issues / Limitations
+- Music: SFX toggle works; music toggle saves to localStorage but no music system implemented (Settings shows "Music coming in a future update")
+- Single-item carry only (CarrySystem.ts stub exists for multi-carry expansion)
 - Phaser bundle ~1.5MB (expected for game engine)
+
+## Audio System (SoundManager.ts)
+- Static class, Web Audio API synthesis (no external files needed)
+- Checks `localStorage.getItem('tablerush_sfx') !== 'off'` before playing
+- Sounds: uiClick, seatCustomer, orderTaken, foodReady, deliverFood, paymentCollected, comboUp(tier), comboLost, customerAngry, dishwasher, rushHour, roundEnd, timerWarning
+- `comboUp(tier)` takes tier 1-4, produces escalating fanfares
+- All UI buttons call `SoundManager.uiClick()` before their callback

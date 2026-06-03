@@ -1,5 +1,40 @@
 # CHANGELOG
 
+## RC1 — Release Candidate 1 Polish Sprint (2026-06-03)
+
+### Audio System (Phase 4 — NOT optional)
+- New `src/systems/SoundManager.ts` — Web Audio API synthesis, zero external files
+- 12 synthesized sound types: uiClick, seatCustomer, orderTaken, foodReady, deliverFood, paymentCollected, comboUp (4 tiers of escalating fanfare), comboLost, customerAngry, dishwasher, rushHour, roundEnd, timerWarning
+- Sounds wired to all key game events in GameScene (seat, order, food ready, deliver, payment, combo up/lost, angry customer, dishwasher, rush hour, round end, 30s warning)
+- `uiClick` on every interactive button across all 6 scenes (MainMenu, Game, Pause, GameOver, Settings, Credits)
+- SFX toggle in Settings now actually controls audio (reads `localStorage.getItem('tablerush_sfx')`)
+- Settings note updated: "Music coming in a future update" (Music toggle saved but no music system yet)
+
+### HUD Redesign (Phase 1 — UI/UX)
+- Three dark mahogany pill badges replace plain text on cream panel
+- **Score pill** (left, x=8–156): dark background, white "🍽️ 0" text
+- **Combo pill** (center, x=166–314): color shifts with combo tier — gray(×1) → amber(building) → orange(×2) → deep orange(×3) → magenta(×4) → gold(×5)
+- **Timer pill** (right, x=324–472): dark background, turns danger-red at 30 seconds remaining
+- Pause button integrated into right pill area on desktop
+
+### Main Menu Visual Identity (Phase 1)
+- Dark semi-transparent logo card backdrop with gold border behind title words
+- Staggered entrance animations: card fade → badge icon → TABLE word → RUSH word → tagline → stats → buttons
+- PLAY button slightly larger (scale 1.12) for clear hierarchy
+- All buttons have hover scale effect (1.04× scale on hover)
+- Button entrance animations (fade + slide up from below)
+
+### Animation Pass (Phase 3)
+- `Customer.showFoodReaction()`: green flash + scale pop + upward bob when food arrives at table
+- `Customer.showHappyExit()`: gold flash + bounce before customer leaves after payment
+- Both wired at correct points in GameScene (deliverFood, collectPayment)
+
+### Game Over Cinematic (Phase 1/3)
+- Tile floor + side walls for visual consistency with all other scenes
+- Panel fades in on scene entrance (was instant)
+- Header entrance: scale-in from 0.7 → 1.0 + fade-in (Back.easeOut)
+- "NEW RECORD!" header pulsates with gold shimmer loop after entrance
+
 ## v1.0.0 — Public Release (2026-06-03)
 
 ### Scene Polish: Settings

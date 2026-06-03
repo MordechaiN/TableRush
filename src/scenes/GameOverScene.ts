@@ -103,7 +103,7 @@ export class GameOverScene extends Phaser.Scene {
     if (allHappy) {
       addStat(`✓  All ${total} guests left happy`, COLORS.TEXT_GREEN);
     } else {
-      addStat(`👥  ${total} guests served — ${data.customersHappy} happy · ${data.customersAngry} left`, '#888888');
+      addStat(`👥  ${total} guests — ${data.customersHappy} happy · ${data.customersAngry} walked out`, '#888888');
     }
 
     // Best combo — always shown

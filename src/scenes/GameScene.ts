@@ -155,6 +155,17 @@ export class GameScene extends Phaser.Scene {
       }
     }
 
+    // ── Zone floor tints — kitchen (cooler) vs dining (warmer) ───────────────
+    const kitchenFloor = this.add.graphics().setDepth(0);
+    kitchenFloor.fillStyle(0x553300, 0.07);
+    kitchenFloor.fillRect(0, 88, GAME_WIDTH, 100);
+
+    const diningArea = this.add.graphics().setDepth(0);
+    diningArea.fillStyle(0xCC8833, 0.06);
+    diningArea.fillRoundedRect(18, 188, GAME_WIDTH - 36, 450, 8);
+    diningArea.lineStyle(1.5, 0xAA7030, 0.1);
+    diningArea.strokeRoundedRect(18, 188, GAME_WIDTH - 36, 450, 8);
+
     // ── Walls ─────────────────────────────────────────────────────────────────
     this.add.rectangle(GAME_WIDTH / 2, 0, GAME_WIDTH, 90, COLORS.WALL_ACCENT);
     // Wainscoting detail
@@ -241,48 +252,70 @@ export class GameScene extends Phaser.Scene {
       pool.fillStyle(0xFFFF88, 0.085); pool.fillCircle(lx, 320, 80);
     });
 
-    // ── Menu board (chalkboard on wall above kitchen) ─────────────────────────
-    if (this.textures.exists('menu_board')) {
-      this.add.image(KITCHEN_X, KITCHEN_Y - 54, 'menu_board').setOrigin(0.5).setDepth(2);
-      this.add.text(KITCHEN_X, KITCHEN_Y - 61, "TODAY'S MENU", {
-        fontSize: '8px', fontFamily: 'Arial Black', color: '#FFFFFFBB', fontStyle: 'bold',
-      }).setOrigin(0.5).setDepth(3);
-      this.add.text(KITCHEN_X, KITCHEN_Y - 46, '🥗  🍔  🍝  🍣  🍕', {
-        fontSize: '13px',
-      }).setOrigin(0.5).setDepth(3);
-    }
+    // ── Menu board — always-visible chalkboard on wall between frames ─────────
+    const mb = this.add.graphics().setDepth(2);
+    mb.fillStyle(0x0C2810, 1);
+    mb.fillRoundedRect(KITCHEN_X - 112, 4, 224, 52, 5);
+    mb.lineStyle(2.5, 0x2E6618, 0.9);
+    mb.strokeRoundedRect(KITCHEN_X - 112, 4, 224, 52, 5);
+    mb.lineStyle(1, 0x77CC77, 0.28);
+    mb.strokeRoundedRect(KITCHEN_X - 108, 8, 216, 44, 3);
+    this.add.text(KITCHEN_X, 13, "TODAY'S MENU", {
+      fontSize: '8px', fontFamily: 'Arial Black', color: '#88FF88', letterSpacing: 2,
+    }).setOrigin(0.5, 0).setDepth(3).setAlpha(0.88);
+    this.add.text(KITCHEN_X, 28, '🥗 🍔 🍝 🍣 🍕', {
+      fontSize: '16px',
+    }).setOrigin(0.5, 0).setDepth(3);
 
     // ── Kitchen ───────────────────────────────────────────────────────────────
     this.add.image(KITCHEN_X, KITCHEN_Y, 'kitchen').setOrigin(0.5, 0.5).setDepth(2);
 
-    // Zone labels — bold color badges, readable at a glance
+    // Zone backgrounds — visual separation between COOKING (left) and READY (right)
+    const cookZoneBg = this.add.graphics().setDepth(2.5);
+    cookZoneBg.fillStyle(0xCC4400, 0.09);
+    cookZoneBg.fillRoundedRect(10, KITCHEN_Y - 36, KITCHEN_X - 18, 72, 4);
+
+    const readyZoneBg = this.add.graphics().setDepth(2.5);
+    readyZoneBg.fillStyle(0x009933, 0.09);
+    readyZoneBg.fillRoundedRect(KITCHEN_X + 8, KITCHEN_Y - 36, GAME_WIDTH - KITCHEN_X - 18, 72, 4);
+
+    // Vertical zone divider
+    const zoneDivider = this.add.graphics().setDepth(4);
+    zoneDivider.lineStyle(2, 0x222222, 0.22);
+    zoneDivider.lineBetween(KITCHEN_X + 4, KITCHEN_Y - 34, KITCHEN_X + 4, KITCHEN_Y + 34);
+
+    // COOKING zone badge — centered at left-zone center (x ≈ KITCHEN_X/2 = 120)
     const cookBadge = this.add.graphics().setDepth(3);
-    cookBadge.fillStyle(0xD4760A, 1);
-    cookBadge.fillRoundedRect(KITCHEN_X - 140, KITCHEN_Y - 36, 100, 22, 11);
-    this.add.text(KITCHEN_X - 90, KITCHEN_Y - 25, '🔥 COOKING', {
-      fontSize: '12px', fontFamily: 'Arial Black', color: '#FFFFFF',
+    cookBadge.fillStyle(0xCC5500, 1);
+    cookBadge.fillRoundedRect(14, KITCHEN_Y - 38, 128, 24, 12);
+    this.add.text(78, KITCHEN_Y - 26, '🔥 COOKING', {
+      fontSize: '11px', fontFamily: 'Arial Black', color: '#FFFFFF',
     }).setOrigin(0.5).setDepth(4);
 
+    // READY zone badge — centered at right-zone center (x ≈ KITCHEN_X + (GAME_WIDTH-KITCHEN_X)/2 = 360)
     const readyBadge = this.add.graphics().setDepth(3);
-    readyBadge.fillStyle(0x229954, 1);
-    readyBadge.fillRoundedRect(KITCHEN_X + 42, KITCHEN_Y - 36, 96, 22, 11);
-    this.add.text(KITCHEN_X + 90, KITCHEN_Y - 25, '✓ READY', {
-      fontSize: '12px', fontFamily: 'Arial Black', color: '#FFFFFF',
+    readyBadge.fillStyle(0x1A9944, 1);
+    readyBadge.fillRoundedRect(KITCHEN_X + 14, KITCHEN_Y - 38, 128, 24, 12);
+    this.add.text(KITCHEN_X + 78, KITCHEN_Y - 26, '✅ READY', {
+      fontSize: '11px', fontFamily: 'Arial Black', color: '#FFFFFF',
     }).setOrigin(0.5).setDepth(4);
 
-    // Kitchen glow — solid bold fill over the READY zone (right side of counter)
+    // Kitchen glow — over the READY zone (right half of counter)
     this.kitchenGlow = this.add.graphics().setDepth(3);
-    const _kw = GAME_WIDTH - 20;
     this.kitchenGlow.fillStyle(0x27AE60, 1.0);
-    this.kitchenGlow.fillRoundedRect(KITCHEN_X + 6, KITCHEN_Y - 36, _kw * 0.46, 72, 6);
+    this.kitchenGlow.fillRoundedRect(KITCHEN_X + 8, KITCHEN_Y - 36, GAME_WIDTH - KITCHEN_X - 18, 72, 6);
     this.kitchenGlow.setAlpha(0);
 
-    // Kitchen pickup counter ledge — front edge of counter, depth 3
+    // Kitchen pickup counter ledge — front edge, bold and readable
     const ledge = this.add.graphics().setDepth(3);
-    ledge.fillStyle(0x5A3010, 1);
+    ledge.fillStyle(0x4A2808, 1);
     ledge.fillRoundedRect(10, KITCHEN_Y + 40, GAME_WIDTH - 20, 10, 3);
-    ledge.fillStyle(0x8A5828, 1);
-    ledge.fillRoundedRect(10, KITCHEN_Y + 38, GAME_WIDTH - 20, 5, 2);
+    ledge.fillStyle(0x7A4820, 1);
+    ledge.fillRoundedRect(10, KITCHEN_Y + 38, GAME_WIDTH - 20, 6, 2);
+    // "PICK UP" label on ledge
+    this.add.text(KITCHEN_X, KITCHEN_Y + 48, '▲ PICK UP ▲', {
+      fontSize: '7px', fontFamily: 'Arial Black', color: '#CC8840', letterSpacing: 3,
+    }).setOrigin(0.5).setDepth(4).setAlpha(0.65);
 
     // Ticket rail
     this.ticketRail = this.add.container(KITCHEN_X, KITCHEN_Y + 10);
@@ -445,6 +478,31 @@ export class GameScene extends Phaser.Scene {
     for (let mi = 0; mi < 5; mi++) {
       matGfx.fillRect(dcx - 52 + mi * 20, GAME_HEIGHT - 12, 14, 9);
     }
+
+    // Host stand — small mahogany podium right of the entrance
+    const hs = this.add.graphics().setDepth(2);
+    // Podium base
+    hs.fillStyle(0x7A4018, 1);
+    hs.fillRoundedRect(GAME_WIDTH - 95, GAME_HEIGHT - 98, 56, 44, 5);
+    // Podium top
+    hs.fillStyle(0xA0581E, 1);
+    hs.fillRoundedRect(GAME_WIDTH - 98, GAME_HEIGHT - 102, 62, 12, 4);
+    // Clipboard / reservation book
+    hs.fillStyle(0xFFF5E8, 0.95);
+    hs.fillRoundedRect(GAME_WIDTH - 90, GAME_HEIGHT - 99, 38, 42, 3);
+    hs.lineStyle(1, 0xCCBBA8, 0.5);
+    hs.strokeRoundedRect(GAME_WIDTH - 90, GAME_HEIGHT - 99, 38, 42, 3);
+    // Lines on clipboard
+    hs.fillStyle(0x999080, 0.45);
+    for (let li = 0; li < 6; li++) {
+      hs.fillRect(GAME_WIDTH - 87, GAME_HEIGHT - 95 + li * 6, 32, 1.5);
+    }
+    // Gold pen
+    hs.fillStyle(0xFFCC22, 1);
+    hs.fillRoundedRect(GAME_WIDTH - 58, GAME_HEIGHT - 100, 3, 14, 1);
+    this.add.text(GAME_WIDTH - 67, GAME_HEIGHT - 108, 'HOST', {
+      fontSize: '8px', fontFamily: 'Arial Black', color: '#9A5820',
+    }).setOrigin(0.5).setDepth(3);
 
     // Rush hour overlay (hidden by default — subtle full-screen red warmth during rush)
     this.rushHourOverlay = this.add.graphics().setDepth(1).setAlpha(0);

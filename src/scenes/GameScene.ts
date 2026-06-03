@@ -971,6 +971,7 @@ export class GameScene extends Phaser.Scene {
       customer.patienceAtDelivery = customer.getPatienceFraction();
       customer.hideBubble();
       customer.state = 'eating';
+      customer.showFoodReaction();
       customer.stopPatience();
       customer.refillPatience();
       table.setStateVisual('plate');
@@ -1059,6 +1060,7 @@ export class GameScene extends Phaser.Scene {
 
       customer.stopIdleBehavior();
       customer.hideBubble();
+      customer.showHappyExit();
       customer.state = 'leaving';
       customer.stopPatience();
 

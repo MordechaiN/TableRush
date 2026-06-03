@@ -67,68 +67,87 @@ export class MainMenuScene extends Phaser.Scene {
       bgTables.fillRoundedRect(tx + 8, ty - 48, 20, 20, 3);
     });
 
-    // Logo
-    const logoY = 180;
-    this.add.text(cx, logoY, 'TABLE', {
-      fontSize: '72px', fontFamily: 'Arial Black',
+    // ── Logo card backdrop ────────────────────────────────────────────────────
+    const logoY = 155;
+    const logoBg = this.add.graphics();
+    logoBg.fillStyle(0x1A0E08, 0.72);
+    logoBg.fillRoundedRect(cx - 210, logoY - 30, 420, 240, 20);
+    logoBg.lineStyle(1.5, 0xD4A849, 0.45);
+    logoBg.strokeRoundedRect(cx - 210, logoY - 30, 420, 240, 20);
+    logoBg.setAlpha(0);
+    this.tweens.add({ targets: logoBg, alpha: 1, duration: 500, ease: 'Quad.easeOut' });
+
+    // Restaurant badge icon
+    const badge = this.add.text(cx, logoY + 12, '🍽️', { fontSize: '36px' })
+      .setOrigin(0.5).setAlpha(0);
+    this.tweens.add({ targets: badge, alpha: 1, y: logoY + 6, duration: 400, delay: 150, ease: 'Back.easeOut' });
+
+    // "TABLE" word
+    const tableWord = this.add.text(cx, logoY + 68, 'TABLE', {
+      fontSize: '74px', fontFamily: 'Arial Black',
       color: COLORS.TEXT_LIGHT, fontStyle: 'bold',
-    }).setOrigin(0.5);
+    }).setOrigin(0.5).setAlpha(0);
+    this.tweens.add({ targets: tableWord, alpha: 1, y: tableWord.y - 10, duration: 380, delay: 200, ease: 'Quad.easeOut' });
 
-    this.add.text(cx, logoY + 74, 'RUSH', {
-      fontSize: '72px', fontFamily: 'Arial Black',
+    // "RUSH" word
+    const rushWord = this.add.text(cx, logoY + 140, 'RUSH', {
+      fontSize: '74px', fontFamily: 'Arial Black',
       color: COLORS.TEXT_GOLD, fontStyle: 'bold',
-    }).setOrigin(0.5);
+    }).setOrigin(0.5).setAlpha(0);
+    this.tweens.add({ targets: rushWord, alpha: 1, y: rushWord.y - 10, duration: 380, delay: 340, ease: 'Quad.easeOut' });
 
-    this.add.text(cx, logoY + 146, 'Fast-Paced Restaurant Service', {
-      fontSize: '16px', fontFamily: 'Arial', color: COLORS.TEXT_LIGHT,
-    }).setOrigin(0.5);
+    // Tagline
+    const tagline = this.add.text(cx, logoY + 200, 'Fast-Paced Restaurant Service', {
+      fontSize: '15px', fontFamily: 'Arial', color: '#DDCCAA',
+    }).setOrigin(0.5).setAlpha(0);
+    this.tweens.add({ targets: tagline, alpha: 0.8, duration: 380, delay: 480, ease: 'Quad.easeOut' });
 
-    // Decorative food icons
-    const d1 = this.add.text(cx - 150, logoY + 74, '🍔', { fontSize: '34px' }).setOrigin(0.5);
-    const d2 = this.add.text(cx + 150, logoY + 74, '🍕', { fontSize: '34px' }).setOrigin(0.5);
-    this.tweens.add({ targets: d1, y: logoY + 64, duration: 1200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
-    this.tweens.add({ targets: d2, y: logoY + 84, duration: 1400, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    // Floating side food emojis
+    const d1 = this.add.text(cx - 178, logoY + 105, '🍔', { fontSize: '30px' }).setOrigin(0.5).setAlpha(0.7);
+    const d2 = this.add.text(cx + 178, logoY + 105, '🍕', { fontSize: '30px' }).setOrigin(0.5).setAlpha(0.7);
+    this.tweens.add({ targets: d1, y: logoY + 95, duration: 1300, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    this.tweens.add({ targets: d2, y: logoY + 115, duration: 1500, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
 
-    // Level / high score display
-    const statsY = 400;
-    const statBg = this.add.graphics();
-    statBg.fillStyle(0x00000020, 0.25);
-    statBg.fillRoundedRect(cx - 170, statsY - 20, 340, 50, 12);
+    // ── Stats row ─────────────────────────────────────────────────────────────
+    const statsY = 424;
+    const statBg = this.add.graphics().setAlpha(0);
+    statBg.fillStyle(0x000000, 0.28);
+    statBg.fillRoundedRect(cx - 180, statsY - 22, 360, 52, 12);
+    this.tweens.add({ targets: statBg, alpha: 1, duration: 350, delay: 550 });
 
-    this.add.text(cx - 80, statsY + 5, `🏆 ${prog.highScore}`, {
-      fontSize: '18px', fontFamily: 'Arial Black', color: COLORS.TEXT_GOLD,
-    }).setOrigin(0.5);
-
-    this.add.text(cx, statsY + 5, '|', { fontSize: '16px', color: '#DDDDDD' }).setOrigin(0.5);
-
-    this.add.text(cx + 80, statsY + 5, `Level ${prog.level}`, {
-      fontSize: '18px', fontFamily: 'Arial Black', color: COLORS.TEXT_LIGHT,
-    }).setOrigin(0.5);
+    const statsGrp = [
+      this.add.text(cx - 86, statsY + 4, `🏆 ${prog.highScore}`, {
+        fontSize: '18px', fontFamily: 'Arial Black', color: COLORS.TEXT_GOLD,
+      }).setOrigin(0.5).setAlpha(0),
+      this.add.text(cx, statsY + 4, '|', { fontSize: '16px', color: '#CCBBAA' }).setOrigin(0.5).setAlpha(0),
+      this.add.text(cx + 86, statsY + 4, `Level ${prog.level}`, {
+        fontSize: '18px', fontFamily: 'Arial Black', color: COLORS.TEXT_LIGHT,
+      }).setOrigin(0.5).setAlpha(0),
+    ];
+    this.tweens.add({ targets: statsGrp, alpha: 1, duration: 350, delay: 580 });
 
     if (prog.bestStars > 0) {
       let starsStr = '';
       for (let i = 0; i < prog.bestStars; i++) starsStr += '⭐';
-      this.add.text(cx, statsY + 32, `Best: ${starsStr}`, {
-        fontSize: '14px', color: COLORS.TEXT_GOLD,
-      }).setOrigin(0.5);
+      this.add.text(cx, statsY + 28, `Best: ${starsStr}`, {
+        fontSize: '13px', color: COLORS.TEXT_GOLD,
+      }).setOrigin(0.5).setAlpha(0.85);
     }
 
-    // Buttons
-    const btnY = 490;
-    this.makeBtn(cx, btnY, '▶  PLAY', 'btn_orange', () => this.scene.start('GameScene'));
-    this.makeBtn(cx, btnY + 68, 'SETTINGS', 'btn_green', () => this.scene.start('SettingsScene'));
-    this.makeBtn(cx, btnY + 136, 'CREDITS', 'btn_green', () => this.scene.start('CreditsScene'));
+    // ── Buttons (staggered entrance) ──────────────────────────────────────────
+    const btnY = 510;
+    const playBtn = this.makeBtnAnimated(cx, btnY, '▶  PLAY', 'btn_orange', () => this.scene.start('GameScene'), 650, 1.12);
+    this.makeBtnAnimated(cx, btnY + 72, 'SETTINGS', 'btn_green', () => this.scene.start('SettingsScene'), 730);
+    this.makeBtnAnimated(cx, btnY + 144, 'CREDITS', 'btn_green', () => this.scene.start('CreditsScene'), 800);
+    void playBtn;
 
-    // Decorative food row below buttons — fills lower empty space
+    // ── Bottom food row ───────────────────────────────────────────────────────
     const foodRow = ['🥗', '🍔', '🍝', '🍣', '🍕'];
     foodRow.forEach((emoji, i) => {
       const ex = 52 + i * 92;
-      const ey = 710 + (i % 2 === 0 ? 0 : 14);
-      const fe = this.add.text(ex, ey, emoji, { fontSize: '28px' }).setOrigin(0.5).setAlpha(0.55);
-      this.tweens.add({
-        targets: fe, y: ey - 8,
-        duration: 1200 + i * 150, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
-      });
+      const ey = 726 + (i % 2 === 0 ? 0 : 14);
+      const fe = this.add.text(ex, ey, emoji, { fontSize: '26px' }).setOrigin(0.5).setAlpha(0.5);
+      this.tweens.add({ targets: fe, y: ey - 8, duration: 1200 + i * 150, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     });
 
     // Version watermark
@@ -137,13 +156,20 @@ export class MainMenuScene extends Phaser.Scene {
     }).setOrigin(0.5).setAlpha(0.6);
   }
 
-  private makeBtn(x: number, y: number, label: string, tex: string, cb: () => void) {
-    const btn = this.add.image(x, y, tex).setInteractive({ useHandCursor: true });
-    btn.on('pointerdown', () => { SoundManager.uiClick(); cb(); });
-    btn.on('pointerover', () => btn.setAlpha(0.85));
-    btn.on('pointerout', () => btn.setAlpha(1));
-    this.add.text(x, y, label, {
+  private makeBtnAnimated(
+    x: number, y: number, label: string, tex: string,
+    cb: () => void, delay = 0, scale = 1.0,
+  ) {
+    const btn = this.add.image(x, y, tex).setScale(scale).setAlpha(0).setInteractive({ useHandCursor: true });
+    const txt = this.add.text(x, y, label, {
       fontSize: '22px', fontFamily: 'Arial Black', color: '#FFFFFF', fontStyle: 'bold',
-    }).setOrigin(0.5).setDepth(1);
+    }).setOrigin(0.5).setDepth(1).setAlpha(0);
+
+    this.tweens.add({ targets: [btn, txt], alpha: 1, y: y - 6, duration: 320, delay, ease: 'Back.easeOut' });
+
+    btn.on('pointerdown', () => { SoundManager.uiClick(); cb(); });
+    btn.on('pointerover', () => { btn.setAlpha(0.88); btn.setScale(scale * 1.04); });
+    btn.on('pointerout', () => { btn.setAlpha(1); btn.setScale(scale); });
+    return btn;
   }
 }

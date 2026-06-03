@@ -153,6 +153,32 @@ export class Customer extends Phaser.GameObjects.Container {
     this.bubble.setVisible(false);
   }
 
+  showFoodReaction() {
+    // Quick happy bob when food arrives at the table
+    this.bodySprite.setTint(0xAAEEAA);
+    this.scene.tweens.add({
+      targets: this, y: this.y - 10,
+      duration: 150, yoyo: true, ease: 'Back.easeOut',
+      onComplete: () => {
+        this.scene.time.delayedCall(80, () => this.bodySprite.clearTint());
+      },
+    });
+    this.scene.tweens.add({
+      targets: this.bodySprite, scaleX: { from: 1, to: 1.15 }, scaleY: { from: 1, to: 1.15 },
+      duration: 120, yoyo: true, ease: 'Quad.easeOut',
+    });
+  }
+
+  showHappyExit() {
+    // Gold flash + bounce before walking out after payment
+    this.bodySprite.setTint(0xFFDD44);
+    this.scene.tweens.add({
+      targets: this, y: this.y - 16,
+      duration: 180, yoyo: true, ease: 'Back.easeOut',
+      onComplete: () => this.bodySprite.clearTint(),
+    });
+  }
+
   seatBounce() {
     this.scene.tweens.add({
       targets: this, y: this.y - 12,

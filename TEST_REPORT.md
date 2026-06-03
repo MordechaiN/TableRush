@@ -1,5 +1,30 @@
 # TEST REPORT
 
+## v0.9.3 — Restaurant Reboot — 2026-06-03
+
+### Build & Type Check
+| Check | Result | Notes |
+|-------|--------|-------|
+| `tsc` (TypeScript strict) | ✅ PASS | 0 errors (per-corner radius object syntax fixed) |
+| `vite build` | ✅ PASS | No new bundle regressions |
+
+### Visual Validation (Playwright screenshots)
+| Feature | Result | Evidence |
+|---------|--------|----------|
+| Customers seated behind table | ✅ PASS | Head + upper body visible, feet hidden by overlay |
+| Front face overlay (depth 16) | ✅ PASS | Tablecloth pattern visible at front edge |
+| Back chairs visible | ✅ PASS | Brown square visible above each table |
+| Front chairs visible | ✅ PASS | Brown square visible below each table |
+| Dirty table mess graphics | ✅ PASS | Plates, glass, crumbs clearly visible on tablecloth |
+| Dirty graphics above overlay | ✅ PASS | All coords at local y ≤ -10, not hidden by depth-16 overlay |
+| Player above overlay (depth 17) | ✅ PASS | Player fully visible at serving position |
+| Dishwasher station | ✅ PASS | "DISHES" label + machine body visible top-left |
+| Instant clean (no progress bar) | ✅ PASS | `startCleaningProgress()` removed; setEmpty() immediate |
+| Food inventory model | ✅ PASS | itemId match logic reviewed; compatible table highlights work |
+
+### TypeScript Fix Applied
+- `fillRoundedRect` per-corner radius: changed `[0, 0, 12, 12]` array → `{ tl: 0, tr: 0, bl: 12, br: 12 }` object (3 call sites in GameScene.ts)
+
 ## v0.9.0 — P2 Retention HUD — 2026-06-02
 
 ### Build & Type Check

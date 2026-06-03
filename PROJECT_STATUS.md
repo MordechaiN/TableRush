@@ -1,17 +1,17 @@
 # PROJECT STATUS
 
 **Last Updated:** 2026-06-03
-**Current Version:** v0.9.2
+**Current Version:** v0.9.3
 
 ---
 
 ## Current Focus
-Pressure calibration complete. Customer patience reduced 3-5× to create genuine urgency in tier 3. Validated: all angry events occur in tier 3 only, avg 2.0/session. See PRESSURE_ANALYSIS.md for full analysis.
+Restaurant Reboot (v0.9.3) complete. Customers now look seated, tables show real mess, cleaning is instant, environment feels alive. Next: kitchen full redesign (Problem #2 from RESTAURANT_REBOOT_PLAN.md).
 
-## Next Candidates (from PRESSURE_ANALYSIS.md Top 10)
-- #2: Table-level patience glow (priority signal at a glance)
-- #3: Kitchen queue cap (2 simultaneous orders max)
-- #6: Requesting-phase timeout (20s to acknowledge customer)
+## Next Candidates
+- Kitchen full redesign: Cooking Queue / Ready Queue / Tray Area visual hierarchy (P5 from VISUAL_REBOOT_PLAN.md)
+- Table-level patience glow (#2 from PRESSURE_ANALYSIS.md)
+- Kitchen queue cap, 2 simultaneous orders max (#3 from PRESSURE_ANALYSIS.md)
 
 ## Design Documents Status (all approved)
 - [x] VISUAL_REBOOT_PLAN.md — approved, in progress
@@ -23,8 +23,10 @@ Pressure calibration complete. Customer patience reduced 3-5× to create genuine
 - [x] P1: Customer redesign — 48×72px, r=14 head, 2.5px outlines, r=3 eyes+highlight, 44×8 patience bar, name banners
 - [x] Quality Gate: P0_P1_REVIEW.md complete — 6/10 pass, 2 marginal, mobile unconfirmed
 - [x] P0.5 Hotfix: Urgent strobe, dirty amber, secondary 0.35, Elegant earrings+collar, Casual stripes, mobile confirmed
-- [x] P2: Retention HUD — combo visible, 5-stage escalation, progress bar, streak loss feedback, shift report ← COMPLETE (pending approval)
-- [ ] P3: Waiter redesign (larger, emotion visible) ← NEXT
+- [x] P2: Retention HUD — combo visible, 5-stage escalation, progress bar, streak loss feedback, shift report ← COMPLETE
+- [x] Restaurant Reboot (v0.9.3) — seating overlay, chairs, mess graphics, instant clean, dishwasher, food inventory model ← COMPLETE
+- [ ] P3: Waiter redesign (larger, emotion visible)
+- [ ] P5: Kitchen redesign (Cooking Queue / Ready Queue / Tray Area) ← NEXT
 - [ ] P4: Table redesign (clean cloth, numbered)
 - [ ] P5: Kitchen redesign (readable tickets, bold ready zone)
 - [ ] P6: Speech bubbles (state-specific shapes)

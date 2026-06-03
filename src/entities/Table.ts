@@ -12,12 +12,9 @@ export class Table extends Phaser.GameObjects.Container {
   private tableBody!: Phaser.GameObjects.Image;
   // Arrow is a SCENE-LEVEL object (not a container child) so it renders above customers
   private actionArrow!: Phaser.GameObjects.Graphics;
-  private dirtIcon!: Phaser.GameObjects.Text;
-  private cleanBarTrack!: Phaser.GameObjects.Graphics;
-  private cleanBarFill!: Phaser.GameObjects.Graphics;
+  private dirtOverlay!: Phaser.GameObjects.Graphics;
   private arrowTween: Phaser.Tweens.Tween | null = null;
   private urgentAlphaTween: Phaser.Tweens.Tween | null = null;
-  private cleanTween: Phaser.Tweens.Tween | null = null;
   private currentPriority: TablePriority = 'none';
   private arrowBaseScale = 1.0; // 1.0 = primary, 0.35 = secondary
 
@@ -42,18 +39,9 @@ export class Table extends Phaser.GameObjects.Container {
     this.tableBody = scene.add.image(0, 0, 'table');
     this.add(this.tableBody);
 
-    this.dirtIcon = scene.add.text(38, -26, '🧹', { fontSize: '20px' }).setOrigin(0.5).setVisible(false);
-    this.add(this.dirtIcon);
-
-    this.cleanBarTrack = scene.add.graphics();
-    this.cleanBarTrack.fillStyle(0x888888, 0.3);
-    this.cleanBarTrack.fillRoundedRect(-30, 28, 60, 7, 3);
-    this.cleanBarTrack.setVisible(false);
-    this.add(this.cleanBarTrack);
-
-    this.cleanBarFill = scene.add.graphics();
-    this.cleanBarFill.setVisible(false);
-    this.add(this.cleanBarFill);
+    // Dirty overlay — plates, glass, crumbs drawn procedurally
+    this.dirtOverlay = scene.add.graphics().setVisible(false);
+    this.add(this.dirtOverlay);
 
     // Action arrow: scene-level graphics at depth 15 — renders above everything
     this.actionArrow = scene.add.graphics().setDepth(15);
@@ -67,22 +55,89 @@ export class Table extends Phaser.GameObjects.Container {
   setEmpty() {
     this.state = 'empty';
     this.customerId = -1;
-    this.dirtIcon.setVisible(false);
+    this.dirtOverlay.setVisible(false);
     this.clearPulse();
   }
 
   setOccupied(customerId: number) {
     this.state = 'occupied';
     this.customerId = customerId;
-    this.dirtIcon.setVisible(false);
+    this.dirtOverlay.setVisible(false);
     this.clearPulse();
   }
 
   setDirty() {
     this.state = 'dirty';
     this.customerId = -1;
-    this.dirtIcon.setVisible(true);
+    this.drawDirtOverlay();
+    this.dirtOverlay.setVisible(true);
     this.setPriority('dirty');
+  }
+
+  private drawDirtOverlay() {
+    const g = this.dirtOverlay;
+    g.clear();
+
+    // ALL graphics use y < -7 (container local space).
+    // The front face overlay covers y ≥ -5 in local space, so these stay fully visible.
+    // Table tablecloth occupies local y = -32 to +32 — all graphics are on the cloth surface.
+
+    // Left plate (large, prominent dirty dish)
+    g.fillStyle(0xF0EBE0, 1);
+    g.fillCircle(-20, -20, 14);
+    g.fillStyle(0xDED4C4, 1);
+    g.fillCircle(-20, -20, 11);
+    g.fillStyle(0xA8784A, 0.9);
+    g.fillCircle(-22, -21, 7);
+    g.fillCircle(-18, -18, 4);
+    g.lineStyle(1.5, 0xB8B0A0, 0.8);
+    g.strokeCircle(-20, -20, 13);
+
+    // Right plate (smaller, also dirty)
+    g.fillStyle(0xF0EBE0, 1);
+    g.fillCircle(18, -18, 12);
+    g.fillStyle(0xDED4C4, 1);
+    g.fillCircle(18, -18, 9);
+    g.fillStyle(0xC0905A, 0.8);
+    g.fillCircle(17, -19, 5);
+    g.lineStyle(1, 0xB8B0A0, 0.7);
+    g.strokeCircle(18, -18, 11);
+
+    // Glass (knocked slightly sideways)
+    g.fillStyle(0xD8EEF4, 0.8);
+    g.fillRoundedRect(-5, -32, 10, 14, 2);
+    g.lineStyle(1.5, 0xA8CCD8, 0.9);
+    g.strokeRoundedRect(-5, -32, 10, 14, 2);
+    // Drink level inside
+    g.fillStyle(0xFF8833, 0.5);
+    g.fillRoundedRect(-4, -26, 8, 7, 1);
+
+    // Fork (vertical, right side)
+    g.lineStyle(1.5, 0xA09080, 0.7);
+    g.lineBetween(34, -30, 34, -12);
+    g.lineBetween(37, -30, 37, -12);
+    // Knife
+    g.lineStyle(1, 0xA09080, 0.6);
+    g.lineBetween(35.5, -30, 35.5, -22);
+
+    // Used napkin (crumpled rectangle)
+    g.fillStyle(0xF5F0E8, 0.9);
+    g.fillRoundedRect(-38, -28, 14, 11, 3);
+    g.lineStyle(1, 0xDDD5C5, 0.6);
+    g.strokeRoundedRect(-38, -28, 14, 11, 3);
+    g.lineStyle(0.8, 0xCCC4B4, 0.4);
+    g.lineBetween(-35, -25, -28, -25);
+    g.lineBetween(-36, -21, -29, -21);
+
+    // Crumbs (scattered across upper table surface)
+    g.fillStyle(0xC8A878, 0.95);
+    g.fillCircle(-6, -10, 2.5);
+    g.fillCircle(6, -12, 2);
+    g.fillCircle(10, -9, 1.5);
+    g.fillCircle(-14, -11, 2);
+    g.fillCircle(0, -15, 1.5);
+    g.fillCircle(-25, -10, 1.5);
+    g.fillCircle(28, -10, 2);
   }
 
   setPriority(priority: TablePriority) {
@@ -172,31 +227,6 @@ export class Table extends Phaser.GameObjects.Container {
     // Bold black outline
     this.actionArrow.lineStyle(2.5, 0x1A1A1A, 1.0);
     this.actionArrow.strokeTriangle(-w, -10, w, -10, 0, h);
-  }
-
-  startCleaningProgress(duration: number, onComplete: () => void) {
-    this.cleanBarTrack.setVisible(true);
-    this.cleanBarFill.setVisible(true);
-
-    const prog = { value: 0 };
-    this.cleanTween = this.scene.tweens.add({
-      targets: prog,
-      value: 1,
-      duration,
-      ease: 'Linear',
-      onUpdate: () => {
-        this.cleanBarFill.clear();
-        this.cleanBarFill.fillStyle(0x4CAF50);
-        this.cleanBarFill.fillRoundedRect(-30, 28, 60 * prog.value, 7, 3);
-      },
-      onComplete: () => {
-        this.cleanBarTrack.setVisible(false);
-        this.cleanBarFill.setVisible(false);
-        this.cleanBarFill.clear();
-        this.cleanTween = null;
-        onComplete();
-      },
-    });
   }
 
   flashClean() {

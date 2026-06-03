@@ -38,13 +38,12 @@ Fast-paced restaurant management game. Premium casual — think Overcooked/Good 
 
 ---
 
-## Current State: P2 RETENTION HUD COMPLETE — AWAITING APPROVAL
+## Current State: v0.9.3 RESTAURANT REBOOT COMPLETE
 
-**v0.9.0 implemented: P2 Retention HUD — combo visible, escalation system, shift report redesign.**
-**P0 + P1 + P0.5 + P2 complete. Awaiting owner approval for next phase.**
-**VISUAL_REBOOT_PLAN.md approved — implementation underway.**
-**ADDICTION_AND_RETENTION_PLAN.md approved — post-visual-reboot.**
-**GAME_IDENTITY.md approved — strategic reference.**
+**v0.9.3 Restaurant Reboot: customers seated behind tables, chairs, rich dirty-table graphics, instant clean, dishwasher station, food inventory model.**
+**P0 + P1 + P0.5 + P2 + Restaurant Reboot complete.**
+**RESTAURANT_REBOOT_PLAN.md implemented — all 6 high-impact fixes done.**
+**Kitchen full redesign (Problem #2) remains scheduled.**
 
 ### P2 Retention HUD Changes (v0.9.0)
 - **Combo always visible**: initializes as `×1.0` (gray, 14px) — never invisible again

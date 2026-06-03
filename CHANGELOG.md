@@ -1,5 +1,34 @@
 # CHANGELOG
 
+## v0.9.3 — Restaurant Reboot (2026-06-03)
+
+### Customer Seating Illusion
+- Front face overlay (depth 16) per table: pixel-accurate tablecloth replication from `pos.y-5` downward, hides customer feet
+- Player depth raised 10→17: waiter now renders above the front face overlay
+- Back chair added behind each table (depth 0): seats the customer visually
+- Front chair added in front of each table (depth 5): completes the spatial framing
+
+### Dirty Table — Procedural Mess Graphics
+- Replaced single 🧹 emoji with full procedural `dirtOverlay` Graphics object
+- Two plates with food remnants, a glass with liquid, fork/knife, crumpled napkin, scattered crumbs
+- All graphics positioned at container local y ≤ -10 (upper table half), safely above the front face overlay spatial coverage
+- Rich brown/cream/tan palette — unmistakably "this table needs cleaning"
+
+### Instant Clean
+- Removed 1500ms progress bar + `startCleaningProgress()` method entirely
+- Table opens IMMEDIATELY when player arrives: `table.setEmpty()` fires on player bounce
+- `✨ Clean!` float replaces progress bar fill — zero dead time, next customer can sit instantly
+
+### Food Inventory Model
+- Delivery match changed: `order.tableId === tableId` → `order.item.itemId === customer.order.itemId`
+- Any food of the matching type satisfies any matching-type order (inventory, not table-locked)
+- `onKitchenClick()` highlights ALL tables whose customers can accept the picked-up item type
+- `updateActionPriority()` finds first compatible destination when carrying
+
+### Restaurant Environment
+- Dishwasher station added (left wall, depth 2): machine body, panel, door handle, status light, water drip detail
+- "DISHES" label at depth 3
+
 ## v0.9.2 — Patience Timer Pressure Calibration (2026-06-03)
 
 ### The Root Cause Fix

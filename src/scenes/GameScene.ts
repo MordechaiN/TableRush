@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import {
   GAME_WIDTH, GAME_HEIGHT, COLORS,
   MENU_ITEMS, DIFFICULTY_TIERS, COMBO_MILESTONES, SPEED_MULTIPLIERS,
-  GAME_DURATION, CLEAN_TIME,
+  GAME_DURATION,
 } from '../config/GameConfig';
 import { Table } from '../entities/Table';
 import { Customer, OrderItem } from '../entities/Customer';
@@ -219,9 +219,54 @@ export class GameScene extends Phaser.Scene {
 
     // ── Tables ────────────────────────────────────────────────────────────────
     TABLE_POSITIONS.forEach((pos, i) => {
+      // Back chair (customer side, behind table) — depth 0, partially occluded by table
+      this.add.image(pos.x, pos.y - 54, 'chair').setOrigin(0.5).setDepth(0);
+
       const t = new Table(this, pos.x, pos.y, i);
       t.on('pointerdown', () => this.onTableClick(i));
       this.tables.push(t);
+
+      // Front face overlay — depth 16 (above customers at 15, below player at 17)
+      // Replicates the BOTTOM HALF of the table texture to create a "seated behind table" illusion.
+      // Covers from pos.y-5 (5px above table center) to pos.y+38 (table bottom).
+      // Customer at pos.y-20 has: head+upper body visible (pos.y-42 → pos.y-5),
+      // lower torso+feet hidden (pos.y-5 → pos.y+15). Reads as: person seated at table.
+      const overlay = this.add.graphics().setDepth(16);
+      // tx/ty map world coords back to texture origin so we can replicate pixel-accurate texture rows
+      const tx = pos.x - 55, ty = pos.y - 38;
+      // Mahogany outer (texture rows 33–76 → world pos.y-5 to pos.y+38)
+      overlay.fillStyle(COLORS.TABLE_BODY, 1);
+      overlay.fillRoundedRect(tx, ty + 33, 110, 43, { tl: 0, tr: 0, bl: 12, br: 12 });
+      // Table top inner bevel
+      overlay.fillStyle(COLORS.TABLE_TOP, 1);
+      overlay.fillRoundedRect(tx + 2, ty + 33, 106, 41, { tl: 0, tr: 0, bl: 10, br: 10 });
+      // Tablecloth (texture rows 33–70 → world pos.y-5 to pos.y+32)
+      overlay.fillStyle(COLORS.TABLE_CLOTH, 1);
+      overlay.fillRoundedRect(tx + 8, ty + 33, 94, 35, { tl: 0, tr: 0, bl: 8, br: 8 });
+      // Checkered linen pattern (rows 3–7 of the 8-row grid)
+      const cSize = 8;
+      for (let row = 3; row < 8; row++) {
+        for (let col = 0; col < 12; col++) {
+          if ((row + col) % 2 === 0) {
+            overlay.fillStyle(0xEEE8DF, 0.5);
+            overlay.fillRect(tx + 9 + col * cSize, ty + 7 + row * cSize, cSize, cSize);
+          }
+        }
+      }
+      // Place setting circles — lower half (centers at ty+38 = pos.y, same as table texture)
+      overlay.fillStyle(0xF0EDE8, 0.3);
+      overlay.fillCircle(tx + 32, ty + 38, 17);
+      overlay.fillCircle(tx + 78, ty + 38, 17);
+      overlay.lineStyle(1, 0xDDD8D0, 0.45);
+      overlay.strokeCircle(tx + 32, ty + 38, 17);
+      overlay.strokeCircle(tx + 78, ty + 38, 17);
+      // Center crease
+      overlay.lineStyle(0.5, 0xE0DAD4, 0.3);
+      overlay.lineBetween(tx + 55, ty + 38, tx + 55, ty + 66);
+
+      // Front chair (waiter approach side) — depth 5, fully visible below table
+      this.add.image(pos.x, pos.y + 62, 'chair').setOrigin(0.5).setDepth(5);
+
       // Candle on each table
       const candleKey = this.textures.exists('candle') ? 'candle' : null;
       if (candleKey) {
@@ -230,6 +275,35 @@ export class GameScene extends Phaser.Scene {
         this.add.text(pos.x + 34, pos.y - 16, '🕯️', { fontSize: '11px' }).setOrigin(0.5).setDepth(3);
       }
     });
+
+    // ── Dishwasher station (left wall, below kitchen) ─────────────────────────
+    const dw = this.add.graphics().setDepth(2);
+    // Machine body (brushed steel)
+    dw.fillStyle(0x8A8A8A, 1);
+    dw.fillRoundedRect(8, 172, 56, 48, 5);
+    // Panel face
+    dw.fillStyle(0x6E6E6E, 1);
+    dw.fillRoundedRect(10, 174, 52, 42, 4);
+    // Door handle bar
+    dw.fillStyle(0xB0B0B0, 1);
+    dw.fillRoundedRect(12, 191, 48, 6, 3);
+    dw.lineStyle(1, 0xCCCCCC, 0.5);
+    dw.strokeRoundedRect(12, 191, 48, 6, 3);
+    // Control panel strip at top
+    dw.fillStyle(0x555555, 1);
+    dw.fillRoundedRect(10, 174, 52, 14, { tl: 4, tr: 4, bl: 0, br: 0 });
+    // Status light (green = ready)
+    dw.fillStyle(0x22DD44, 1);
+    dw.fillCircle(54, 181, 4);
+    dw.lineStyle(1, 0x009922);
+    dw.strokeCircle(54, 181, 4);
+    // Water drip detail
+    dw.fillStyle(0xAACCDD, 0.4);
+    dw.fillCircle(36, 195, 3);
+    dw.fillCircle(28, 202, 2);
+    this.add.text(36, 226, 'DISHES', {
+      fontSize: '7px', fontFamily: 'Arial Black', color: '#777777',
+    }).setOrigin(0.5).setDepth(3);
 
     // ── Entrance & Plants ─────────────────────────────────────────────────────
     this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT - 30, 80, 16, COLORS.WALL_ACCENT);
@@ -398,7 +472,8 @@ export class GameScene extends Phaser.Scene {
 
     if (customer.state === 'waiting_food' && this.carryingOrderId !== -1) {
       const order = this.kitchenOrders.find(o => o.id === this.carryingOrderId);
-      if (order && order.tableId === tableId) {
+      // Inventory model: any food of the matching type satisfies any matching order
+      if (order && order.item.itemId === (customer.order?.itemId ?? -1)) {
         this.deliverFood(table, customer, order);
         return;
       }
@@ -429,9 +504,13 @@ export class GameScene extends Phaser.Scene {
       this.player.carryItem(readyOrder.item.emoji);
       this.playerBusy = false;
 
-      // Highlight destination table
-      const table = this.tables[readyOrder.tableId];
-      if (table) table.setPriority('kitchen_ready');
+      // Highlight all tables whose customers can accept this item type (inventory model)
+      for (const table of this.tables) {
+        const cust = this.getCustomerAtTable(table.id);
+        if (cust?.state === 'waiting_food' && cust.order?.itemId === readyOrder.item.itemId) {
+          table.setPriority('kitchen_ready');
+        }
+      }
 
       this.removeTicket(readyOrder.id);
       this.updateKitchenGlow();
@@ -630,16 +709,15 @@ export class GameScene extends Phaser.Scene {
     table.clearPulse();
     this.player.walkTo(table.x, table.y + 40, () => {
       this.player.bounce();
-      table.startCleaningProgress(CLEAN_TIME, () => {
-        table.setEmpty();
-        table.flashClean();
-        this.playerBusy = false;
-        this.showFloating('✨ Clean!', table.x, table.y - 30, COLORS.TEXT_GREEN);
+      // Table opens immediately — player picks up dishes, new customer can sit at once
+      table.setEmpty();
+      table.flashClean();
+      this.showFloating('✨ Clean!', table.x, table.y - 30, COLORS.TEXT_GREEN);
+      this.playerBusy = false;
 
-        if (this.tutorialActive && this.tutorialStep === 5) {
-          this.advanceTutorial();
-        }
-      });
+      if (this.tutorialActive && this.tutorialStep === 5) {
+        this.advanceTutorial();
+      }
     });
   }
 
@@ -913,10 +991,19 @@ export class GameScene extends Phaser.Scene {
       }
     }
 
-    // 3. Carrying food: destination table is primary
+    // 3. Carrying food: highlight the first table whose customer can accept what we're holding
     if (primaryTableId === -1 && this.carryingOrderId !== -1) {
       const order = this.kitchenOrders.find(o => o.id === this.carryingOrderId);
-      if (order) primaryTableId = order.tableId;
+      if (order) {
+        for (const table of this.tables) {
+          const cust = this.getCustomerAtTable(table.id);
+          if (cust?.state === 'waiting_food' && cust.order?.itemId === order.item.itemId) {
+            primaryTableId = table.id;
+            break;
+          }
+        }
+        if (primaryTableId === -1) primaryTableId = order.tableId; // fallback
+      }
     }
 
     // 4. Kitchen has ready order to pick up

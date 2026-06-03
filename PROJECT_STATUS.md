@@ -1,19 +1,19 @@
 # PROJECT STATUS
 
 **Last Updated:** 2026-06-03
-**Current Version:** v1.1
+**Current Version:** v1.2
 
 ---
 
 ## Current Focus
-Restaurant Simulation v1.1 complete. Customers queue at entrance, player seats them, dirty dishes must be carried to dishwasher. Core restaurant fantasy is now real. Game loop is: enter → seat → order → cook → deliver → eat → pay → dishes → dishwasher → repeat.
+Living Restaurant v1.2 complete. The restaurant now breathes: customers shuffle, tap, chew, and wave based on their state. Rush hour waves at 60s and 150s. VIP customers glow gold. Queued customers leave if ignored. The player is the visual hero at 1.25×.
 
 ## Next Candidates
-- Customer eating/happy animations (emotional reactions during eating)
-- Sound effects (order taken, food delivered, payment, dishwasher)
-- Queue patience (guests leave if waiting too long at entrance)
-- Seating animation (customer waving/excited when seated)
-- Host stand at entrance (decorative)
+- Sound effects (order taken, food delivered, payment, dishwasher burst, rush hour siren)
+- Customer arriving/happy/satisfied reactions on payment
+- Host stand visual at entrance
+- Menu scene polish
+- More customer variant idle personalities
 
 ## Design Documents Status (all approved)
 - [x] VISUAL_REBOOT_PLAN.md — approved, in progress
@@ -29,6 +29,7 @@ Restaurant Simulation v1.1 complete. Customers queue at entrance, player seats t
 - [x] Restaurant Reboot (v0.9.3) — seating overlay, chairs, mess graphics, instant clean, dishwasher, food inventory model ← COMPLETE
 - [x] v1.0 Restaurant Immersion — side walls, zone badges, entrance door, table numbers, candle flicker, gold coins, main menu scene ← COMPLETE
 - [x] v1.1 Restaurant Simulation — entrance queue, dirty dish carry, dishwasher station interactive, purple seating arrows, 7-step tutorial ← COMPLETE
+- [x] v1.2 Living Restaurant — idle behaviors, rush hour, VIP customer, queue patience, player 1.25×, dishwasher steam ← COMPLETE
 - [ ] Sound effects (order, delivery, payment, combo)
 - [ ] Customer eating/happy animations
 - [ ] Animated entrance customers

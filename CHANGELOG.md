@@ -1,5 +1,46 @@
 # CHANGELOG
 
+## v1.2 — Living Restaurant (2026-06-03)
+
+### Waiter Rework
+- Player container scaled to 1.25× — visually dominant character in the restaurant
+- Tray emoji enlarged to 24px (up from 18px) — food clearly readable from distance
+- `deliverAnim()`: player extends forward+up when placing food (scale punch)
+- `collectAnim()`: player dips to pick up dishes (downward scoop)
+
+### Customer Idle Behaviors
+- Each seated customer self-manages idle animations via periodic timer (1.8–4.6s intervals)
+- `requesting`: horizontal shuffle to indicate impatience
+- `waiting_food`: lean forward (tap table gesture)
+- `eating`: rapid chewing bob
+- `paying`: energetic wave for attention
+- `cleanup()` cancels all timers on destroy (prevents timer leaks)
+
+### Rush Hour System
+- Two waves per game: at 60s elapsed and at 150s elapsed, each lasting 25s
+- Spawn interval × 0.5 (twice as fast) during rush
+- Queue max grows from 2 to 3 during rush
+- "⚡ RUSH HOUR! ⚡" announcement with camera shake
+- Subtle red screen overlay (alpha 0.045) during rush
+- "😌 Rush is over" message at recovery
+
+### VIP Customer
+- 10% chance per spawn (disabled during rush hour and tutorial)
+- Gold body tint + floating 👑 crown with bob animation
+- 70% of normal patience (impatient)
+- 2.5× payment score multiplier
+- "⭐ VIP! ×2.5" float + camera flash on payment
+
+### Queue Life
+- Queued customers leave after 18s if not seated
+- 50% tier penalty on queue abandonment + combo reset
+- `queueTimeout` cancelled when customer is successfully seated
+
+### Dishwasher Steam
+- 6 steam puffs burst from dishwasher top when dishes are deposited
+
+---
+
 ## v1.1 — Restaurant Simulation Flow (2026-06-03)
 
 ### Entrance Queue

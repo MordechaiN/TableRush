@@ -38,8 +38,9 @@ Fast-paced restaurant management game. Premium casual — think Overcooked/Good 
 
 ---
 
-## Current State: v1.1 RESTAURANT SIMULATION COMPLETE
+## Current State: v1.2 LIVING RESTAURANT COMPLETE
 
+**v1.2: Living restaurant — idle customer behaviors, rush hour waves, VIP customers, queue patience, player 1.25×, dishwasher steam.**
 **v1.1: Entrance queue, dirty dish carry to dishwasher, 7-step tutorial. The game now has real restaurant simulation flow.**
 **v1.0 Restaurant Immersion: side walls, proper chairs, kitchen zone badges, double-door entrance, candle flicker, table numbers, gold coin burst, main menu restaurant context.**
 **v0.9.3 + Restaurant Immersion complete. The game reads as a commercial mobile product.**

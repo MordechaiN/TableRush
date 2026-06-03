@@ -59,9 +59,9 @@ export const MENU_ITEMS = [
 
 // Time-based difficulty tiers (0–60s, 60–120s, 120–180s)
 export const DIFFICULTY_TIERS = [
-  { maxTime: 60,  patienceMin: 90000, patienceMax: 120000, spawnStart: 8000, spawnEnd: 7000, penalty: 50 },
-  { maxTime: 120, patienceMin: 60000, patienceMax:  90000, spawnStart: 5500, spawnEnd: 4500, penalty: 100 },
-  { maxTime: 180, patienceMin: 45000, patienceMax:  65000, spawnStart: 4000, spawnEnd: 3500, penalty: 150 },
+  { maxTime: 60,  patienceMin: 48000, patienceMax: 58000, spawnStart: 8000, spawnEnd: 7000, penalty: 50 },
+  { maxTime: 120, patienceMin: 30000, patienceMax: 38000, spawnStart: 5500, spawnEnd: 4500, penalty: 100 },
+  { maxTime: 180, patienceMin: 20000, patienceMax: 26000, spawnStart: 4000, spawnEnd: 3500, penalty: 150 },
 ];
 
 // Combo milestones — five escalating stages

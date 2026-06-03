@@ -428,8 +428,9 @@ export class GameScene extends Phaser.Scene {
     dw.fillStyle(0xAACCDD, 0.4);
     dw.fillCircle(36, 195, 3);
     dw.fillCircle(28, 202, 2);
-    this.add.text(36, 226, 'DISHES', {
-      fontSize: '7px', fontFamily: 'Arial Black', color: '#777777',
+    // Label below dishwasher
+    this.add.text(36, 228, 'DISHWASHER', {
+      fontSize: '7px', fontFamily: 'Arial Black', color: '#666666', letterSpacing: 1,
     }).setOrigin(0.5).setDepth(3);
 
     // Dishwasher glow (amber, shown when player carries dirty dishes)
@@ -503,6 +504,22 @@ export class GameScene extends Phaser.Scene {
     this.add.text(GAME_WIDTH - 67, GAME_HEIGHT - 108, 'HOST', {
       fontSize: '8px', fontFamily: 'Arial Black', color: '#9A5820',
     }).setOrigin(0.5).setDepth(3);
+
+    // ── Queue zone — "WAIT HERE" floor marking for arriving guests ───────────
+    const queueZone = this.add.graphics().setDepth(0);
+    queueZone.fillStyle(0xDDCC88, 0.18);
+    queueZone.fillRoundedRect(100, GAME_HEIGHT - 115, 240, 50, 8);
+    queueZone.lineStyle(1.5, 0xBBAA66, 0.3);
+    queueZone.strokeRoundedRect(100, GAME_HEIGHT - 115, 240, 50, 8);
+    // Footprint icons
+    ['👣', '👣'].forEach((icon, i) => {
+      this.add.text(175 + i * 90, GAME_HEIGHT - 98, icon, {
+        fontSize: '14px',
+      }).setOrigin(0.5).setDepth(0).setAlpha(0.22);
+    });
+    this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 120, 'WAIT HERE', {
+      fontSize: '8px', fontFamily: 'Arial Black', color: '#AA9933', letterSpacing: 3,
+    }).setOrigin(0.5).setDepth(1).setAlpha(0.55);
 
     // Rush hour overlay (hidden by default — subtle full-screen red warmth during rush)
     this.rushHourOverlay = this.add.graphics().setDepth(1).setAlpha(0);
@@ -1544,41 +1561,54 @@ export class GameScene extends Phaser.Scene {
     this.tutorialStep = 0;
 
     this.tutorialOverlay = this.add.container(0, 0).setDepth(50);
-    const bg = this.add.graphics();
-    bg.fillStyle(0x000000, 0.55);
-    bg.fillRect(0, GAME_HEIGHT - 160, GAME_WIDTH, 160);
-    this.tutorialOverlay.add(bg);
 
     this.startGameTimer();
-    this.time.delayedCall(1000, () => this.tryEnqueueCustomer());
+    this.time.delayedCall(800, () => this.tryEnqueueCustomer());
 
-    this.showTutorialStep(0, 'A guest is at the entrance!\nTap an empty TABLE to seat them.');
+    this.showTutorialStep(0, 'Guest at the door! Tap a TABLE to seat them.');
   }
 
   private showTutorialStep(step: number, text: string) {
-    this.tutorialOverlay.getAll().slice(1).forEach(o => o.destroy());
+    this.tutorialOverlay.removeAll(true);
 
-    const txt = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 100, text, {
-      fontSize: '16px', fontFamily: 'Arial', color: '#FFFFFF',
-      align: 'center', wordWrap: { width: GAME_WIDTH - 40 },
+    // Compact floating card — not a full-screen overlay
+    const cardY = GAME_HEIGHT - 60;
+    const bg = this.add.graphics();
+    bg.fillStyle(0x120804, 0.92);
+    bg.fillRoundedRect(16, cardY - 26, GAME_WIDTH - 32, 54, 10);
+    bg.lineStyle(2, 0xCC8833, 0.65);
+    bg.strokeRoundedRect(16, cardY - 26, GAME_WIDTH - 32, 54, 10);
+
+    const txt = this.add.text(GAME_WIDTH / 2, cardY - 6, text, {
+      fontSize: '14px', fontFamily: 'Arial Black', color: '#FFFFFF',
+      align: 'center', wordWrap: { width: GAME_WIDTH - 56 },
     }).setOrigin(0.5);
 
-    const stepTxt = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 150, `Tip ${step + 1}/7`, {
-      fontSize: '12px', color: COLORS.TEXT_GOLD,
-    }).setOrigin(0.5);
+    // Progress dots
+    const total = 7;
+    const gap = 14;
+    const dotsX = GAME_WIDTH / 2 - (total - 1) * gap / 2;
+    for (let d = 0; d < total; d++) {
+      const dot = this.add.graphics();
+      dot.fillStyle(d < step ? 0xFF9900 : d === step ? 0xFFCC44 : 0x555555, 1);
+      dot.fillCircle(dotsX + d * gap, cardY + 18, d === step ? 4.5 : 3);
+      this.tutorialOverlay.add(dot);
+    }
 
-    this.tutorialOverlay.add([txt, stepTxt]);
+    this.tutorialOverlay.add([bg, txt]);
+    this.tutorialOverlay.setAlpha(0);
+    this.tweens.add({ targets: this.tutorialOverlay, alpha: 1, duration: 240, ease: 'Quad.easeOut' });
   }
 
   private advanceTutorial() {
     this.tutorialStep++;
     const steps: string[] = [
-      'Customer seated! Tap the TABLE to take their order.',
-      'Order in! Tap the KITCHEN when food is ready.',
-      'Food ready! Tap TABLE to deliver it.',
-      'Delivered! Collect payment when eating is done.',
-      'Table dirty! Tap TABLE to pick up the dishes.',
-      'Now tap the DISHWASHER to deposit the dishes!',
+      'Tap the TABLE to take their order.',
+      'Food cooking! Tap the KITCHEN when it\'s ready.',
+      'Pick up the food and tap the TABLE to deliver.',
+      'Customer eating... Tap TABLE to collect payment.',
+      'Table dirty! Tap TABLE to pick up dishes.',
+      'Carry dishes to the DISHWASHER.',
     ];
 
     if (this.tutorialStep <= 6) {

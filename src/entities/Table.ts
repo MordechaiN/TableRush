@@ -13,6 +13,7 @@ export class Table extends Phaser.GameObjects.Container {
   // Arrow is a SCENE-LEVEL object (not a container child) so it renders above customers
   private actionArrow!: Phaser.GameObjects.Graphics;
   private dirtOverlay!: Phaser.GameObjects.Graphics;
+  private stateVisual!: Phaser.GameObjects.Graphics;
   private arrowTween: Phaser.Tweens.Tween | null = null;
   private urgentAlphaTween: Phaser.Tweens.Tween | null = null;
   private currentPriority: TablePriority = 'none';
@@ -43,6 +44,15 @@ export class Table extends Phaser.GameObjects.Container {
     this.dirtOverlay = scene.add.graphics().setVisible(false);
     this.add(this.dirtOverlay);
 
+    // State visual — small object drawn on table surface to communicate current state
+    // Positioned at upper-left (container x: -40 to -22, y: -30 to -8) — clear of:
+    //   • customer sprite (center x:-24 to +24)
+    //   • front-face overlay (starts at container y = -5)
+    //   • candle (container x=34, y=-18)
+    //   • table number badge (container x=33, y=-44)
+    this.stateVisual = scene.add.graphics();
+    this.add(this.stateVisual);
+
     // Action arrow: scene-level graphics at depth 15 — renders above everything
     this.actionArrow = scene.add.graphics().setDepth(15);
     this.actionArrow.setPosition(this.arrowWorldX, this.arrowWorldY);
@@ -56,6 +66,7 @@ export class Table extends Phaser.GameObjects.Container {
     this.state = 'empty';
     this.customerId = -1;
     this.dirtOverlay.setVisible(false);
+    this.stateVisual.clear();
     this.tableBody.clearTint();
     this.clearPulse();
   }
@@ -64,6 +75,7 @@ export class Table extends Phaser.GameObjects.Container {
     this.state = 'occupied';
     this.customerId = customerId;
     this.dirtOverlay.setVisible(false);
+    this.stateVisual.clear();
     this.tableBody.clearTint();
     this.clearPulse();
   }
@@ -71,10 +83,90 @@ export class Table extends Phaser.GameObjects.Container {
   setDirty() {
     this.state = 'dirty';
     this.customerId = -1;
+    this.stateVisual.clear();
     this.drawDirtOverlay();
     this.dirtOverlay.setVisible(true);
     this.tableBody.setTint(0xFF6622);
     this.setPriority('dirty');
+  }
+
+  // Draw a small contextual object on the table surface to communicate state.
+  // All drawings at container x: -40 to -20, y: -30 to -8 — above overlay, left of customer.
+  setStateVisual(type: 'none' | 'menu' | 'ticket' | 'plate' | 'bill') {
+    const g = this.stateVisual;
+    g.clear();
+    if (type === 'none') return;
+
+    if (type === 'menu') {
+      // Open menu booklet — dark green cover, cream pages
+      g.fillStyle(0x1B5E20, 1);
+      g.fillRoundedRect(-40, -29, 16, 20, 2);
+      g.fillStyle(0xFFF8F0, 1);
+      g.fillRoundedRect(-39, -28, 12, 17, 1);
+      // Spine
+      g.fillStyle(0x0A3D0A, 1);
+      g.fillRect(-40, -29, 2, 20);
+      // Text lines
+      g.fillStyle(0x555555, 0.55);
+      g.fillRect(-36, -25, 8, 1.5);
+      g.fillRect(-36, -22, 8, 1.5);
+      g.fillRect(-36, -19, 6, 1.5);
+      g.fillRect(-36, -16, 7, 1.5);
+      g.fillRect(-36, -13, 5, 1.5);
+    } else if (type === 'ticket') {
+      // Order ticket slip — white paper with printed lines and a warm stamp
+      g.fillStyle(0xFFFFFF, 0.97);
+      g.fillRoundedRect(-40, -31, 18, 25, 2);
+      // Tear perforation
+      g.lineStyle(0.8, 0xCCCCCC, 0.7);
+      g.lineBetween(-40, -23, -22, -23);
+      // Heading line
+      g.fillStyle(0x222222, 0.5);
+      g.fillRect(-38, -29, 14, 2);
+      // Text lines
+      g.fillStyle(0x444444, 0.35);
+      g.fillRect(-38, -20, 12, 1.5);
+      g.fillRect(-38, -17, 10, 1.5);
+      g.fillRect(-38, -14, 12, 1.5);
+      g.fillRect(-38, -11, 8, 1.5);
+      // Stamp circle
+      g.lineStyle(1.5, 0xFF6B35, 0.75);
+      g.strokeCircle(-30, -9, 5);
+      g.fillStyle(0xFF6B35, 0.18);
+      g.fillCircle(-30, -9, 5);
+    } else if (type === 'plate') {
+      // Plate with food — rim, inner plate, food blob, garnish
+      g.fillStyle(0xEDE8DC, 1);      // rim
+      g.fillCircle(-30, -20, 16);
+      g.fillStyle(0xFAF8F4, 1);      // inner
+      g.fillCircle(-30, -20, 12);
+      g.fillStyle(0xE07820, 0.95);   // main food
+      g.fillCircle(-30, -20, 8);
+      g.fillStyle(0x5A9920, 0.88);   // garnish
+      g.fillCircle(-36, -23, 3);
+      g.fillCircle(-24, -25, 2.5);
+      g.lineStyle(1.5, 0xD0C8BA, 0.9);
+      g.strokeCircle(-30, -20, 16);
+    } else if (type === 'bill') {
+      // Check presenter — dark leather folder with gold clasp
+      g.fillStyle(0x3E1C02, 1);      // dark leather
+      g.fillRoundedRect(-42, -29, 24, 17, 3);
+      g.fillStyle(0x2A1002, 0.7);    // fold shadow
+      g.fillRect(-31, -29, 2, 17);
+      // Gold corner ornaments
+      g.fillStyle(0xFFCC22, 0.9);
+      g.fillRoundedRect(-41, -28, 3, 3, 0.5);
+      g.fillRoundedRect(-20, -28, 3, 3, 0.5);
+      // $ amount lines
+      g.fillStyle(0xFFE0A0, 0.7);
+      g.fillRect(-39, -22, 10, 1.5);
+      g.fillRect(-39, -19, 8, 1.5);
+      // Gold clasp
+      g.fillStyle(0xFFCC22, 1);
+      g.fillRoundedRect(-33, -22, 5, 7, 1.5);
+      g.fillStyle(0xAA8800, 0.6);
+      g.fillRoundedRect(-32, -21, 3, 5, 1);
+    }
   }
 
   private drawDirtOverlay() {

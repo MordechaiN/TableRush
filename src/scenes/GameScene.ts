@@ -644,6 +644,7 @@ export class GameScene extends Phaser.Scene {
       customer.showRequestBubble();
       customer.seatBounce();
       customer.startIdleBehavior();
+      table.setStateVisual('menu');
       table.setPriority('requesting');
       this.playerBusy = false;
 
@@ -807,6 +808,7 @@ export class GameScene extends Phaser.Scene {
       customer.state = 'waiting_food';
       customer.showOrderBubble(order);
       customer.showOrderFlash();
+      table.setStateVisual('ticket');
       this.showFloating('✓ ORDER!', table.x, table.y - 70, '#4CAF50');
 
       this.playerBusy = false;
@@ -874,6 +876,7 @@ export class GameScene extends Phaser.Scene {
       customer.state = 'eating';
       customer.stopPatience();
       customer.refillPatience();
+      table.setStateVisual('plate');
 
       this.player.clearCarry();
       this.carryingOrderId = -1;
@@ -913,6 +916,7 @@ export class GameScene extends Phaser.Scene {
         customer.state = 'paying';
         customer.startPatience();
         customer.showPayBubble(customer.order!.price);
+        table.setStateVisual('bill');
         table.setPriority('paying');
 
         if (this.tutorialActive && this.tutorialStep === 3) {

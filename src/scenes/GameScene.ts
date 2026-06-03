@@ -252,20 +252,18 @@ export class GameScene extends Phaser.Scene {
       pool.fillStyle(0xFFFF88, 0.085); pool.fillCircle(lx, 320, 80);
     });
 
-    // ── Menu board — always-visible chalkboard on wall between frames ─────────
-    const mb = this.add.graphics().setDepth(2);
-    mb.fillStyle(0x0C2810, 1);
-    mb.fillRoundedRect(KITCHEN_X - 112, 4, 224, 52, 5);
-    mb.lineStyle(2.5, 0x2E6618, 0.9);
-    mb.strokeRoundedRect(KITCHEN_X - 112, 4, 224, 52, 5);
-    mb.lineStyle(1, 0x77CC77, 0.28);
-    mb.strokeRoundedRect(KITCHEN_X - 108, 8, 216, 44, 3);
-    this.add.text(KITCHEN_X, 13, "TODAY'S MENU", {
-      fontSize: '8px', fontFamily: 'Arial Black', color: '#88FF88', letterSpacing: 2,
-    }).setOrigin(0.5, 0).setDepth(3).setAlpha(0.88);
-    this.add.text(KITCHEN_X, 28, '🥗 🍔 🍝 🍣 🍕', {
-      fontSize: '16px',
-    }).setOrigin(0.5, 0).setDepth(3);
+    // ── Recipe strip — thin visible strip in the kitchen zone (wall is behind HUD) ─
+    const menuStrip = this.add.graphics().setDepth(2);
+    menuStrip.fillStyle(0x0A1E0A, 0.85);
+    menuStrip.fillRoundedRect(KITCHEN_X - 120, 62, 240, 26, 4);
+    menuStrip.lineStyle(1, 0x336633, 0.5);
+    menuStrip.strokeRoundedRect(KITCHEN_X - 120, 62, 240, 26, 4);
+    this.add.text(KITCHEN_X, 66, 'MENU:', {
+      fontSize: '7px', fontFamily: 'Arial Black', color: '#88DD88', letterSpacing: 1,
+    }).setOrigin(1, 0).setDepth(3).setAlpha(0.85);
+    this.add.text(KITCHEN_X + 2, 64, '🥗 🍔 🍝 🍣 🍕', {
+      fontSize: '13px',
+    }).setOrigin(0, 0).setDepth(3);
 
     // ── Kitchen ───────────────────────────────────────────────────────────────
     this.add.image(KITCHEN_X, KITCHEN_Y, 'kitchen').setOrigin(0.5, 0.5).setDepth(2);

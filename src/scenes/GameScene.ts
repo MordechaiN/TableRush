@@ -248,19 +248,19 @@ export class GameScene extends Phaser.Scene {
   // ─── UI ───────────────────────────────────────────────────────────────────
 
   private buildUI() {
-    this.add.image(GAME_WIDTH / 2, 28, 'hud_panel').setOrigin(0.5, 0.5);
+    this.add.image(GAME_WIDTH / 2, 28, 'hud_panel').setOrigin(0.5, 0.5).setDepth(3);
 
     this.scoreTxt = this.add.text(14, 28, '🍽️  0', {
-      fontSize: '17px', fontFamily: 'Arial Black', color: COLORS.TEXT_DARK, fontStyle: 'bold',
-    }).setOrigin(0, 0.5);
+      fontSize: '21px', fontFamily: 'Arial Black', color: COLORS.TEXT_DARK, fontStyle: 'bold',
+    }).setOrigin(0, 0.5).setDepth(4);
 
     this.comboTxt = this.add.text(GAME_WIDTH / 2, 28, '×1.0', {
       fontSize: '14px', fontFamily: 'Arial Black', color: '#AAAAAA',
-    }).setOrigin(0.5, 0.5);
+    }).setOrigin(0.5, 0.5).setDepth(4);
 
     this.timeTxt = this.add.text(GAME_WIDTH - 14, 28, '3:00', {
       fontSize: '17px', fontFamily: 'Arial Black', color: COLORS.TEXT_DARK, fontStyle: 'bold',
-    }).setOrigin(1, 0.5);
+    }).setOrigin(1, 0.5).setDepth(4);
 
     if (!this.sys.game.device.input.touch) {
       const pauseBtn = this.add.text(GAME_WIDTH - 14, 28, '⏸', { fontSize: '20px' })
@@ -269,7 +269,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     // Combo progress strip — bottom 4px of HUD panel shows path to next multiplier
-    this.comboProgressGfx = this.add.graphics().setDepth(2);
+    this.comboProgressGfx = this.add.graphics().setDepth(4);
     this.updateComboProgress();
   }
 
@@ -553,8 +553,9 @@ export class GameScene extends Phaser.Scene {
         const label = SPEED_MULTIPLIERS.find(s => customer.patienceAtDelivery >= s.minPct)?.label ?? '';
         if (label) this.showFloating(label, table.x, table.y - 60, COLORS.TEXT_GOLD);
       }
+      const deliverSize = this.comboMultiplier >= 5 ? 1.6 : this.comboMultiplier >= 4 ? 1.35 : this.comboMultiplier >= 3 ? 1.15 : 1;
       this.showFloating('✓ SERVED!', table.x, table.y - 55, '#4CAF50');
-      this.showFloating(`+${deliveryScore}`, table.x, table.y - 35, COLORS.TEXT_ORANGE);
+      this.showFloating(`+${deliveryScore}`, table.x, table.y - 35, COLORS.TEXT_ORANGE, deliverSize);
       this.playerBusy = false;
 
       const eatTime = 2000 + Math.random() * 2000;
@@ -586,7 +587,8 @@ export class GameScene extends Phaser.Scene {
       const tip = Math.floor(customer.order!.price * customer.patienceAtDelivery * 0.3);
       const payScore = Math.floor((customer.order!.price + tip) * 5 * this.comboMultiplier);
       this.addScore(payScore);
-      this.showFloating(`💰 $${payScore}`, table.x, table.y - 50, COLORS.TEXT_GOLD);
+      const paySize = this.comboMultiplier >= 5 ? 1.8 : this.comboMultiplier >= 4 ? 1.5 : this.comboMultiplier >= 3 ? 1.25 : 1;
+      this.showFloating(`💰 $${payScore}`, table.x, table.y - 50, COLORS.TEXT_GOLD, paySize);
       this.spawnCoins(table.x, table.y);
 
       this.customersHappy++;
@@ -646,7 +648,12 @@ export class GameScene extends Phaser.Scene {
   private addScore(amount: number) {
     this.score = Math.max(0, this.score + amount);
     this.scoreTxt.setText(`🍽️  ${this.score}`);
-    this.tweens.add({ targets: this.scoreTxt, scaleX: 1.1, scaleY: 1.1, duration: 80, yoyo: true });
+    this.scoreTxt.setColor(COLORS.TEXT_GOLD);
+    this.tweens.add({
+      targets: this.scoreTxt, scaleX: 1.3, scaleY: 1.3,
+      duration: 130, yoyo: true, ease: 'Back.easeOut',
+      onComplete: () => this.scoreTxt.setColor(COLORS.TEXT_DARK),
+    });
   }
 
   private getSpeedMultiplier(patienceFrac: number): number {
@@ -1065,9 +1072,10 @@ export class GameScene extends Phaser.Scene {
 
   // ─── Helpers ──────────────────────────────────────────────────────────────
 
-  private showFloating(text: string, x: number, y: number, color: string) {
+  private showFloating(text: string, x: number, y: number, color: string, sizeMult = 1) {
+    const px = Math.round(20 * sizeMult);
     const t = this.add.text(x, y, text, {
-      fontSize: '20px', fontFamily: 'Arial Black', color,
+      fontSize: `${px}px`, fontFamily: 'Arial Black', color,
     }).setOrigin(0.5).setDepth(25).setScale(0);
     this.tweens.add({
       targets: t, scale: 1.25,

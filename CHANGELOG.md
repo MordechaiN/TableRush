@@ -1,5 +1,22 @@
 # CHANGELOG
 
+## v0.9.1 — Score Visibility + Scaled Rewards (2026-06-03)
+
+### Score Now Visible
+- HUD panel and all HUD text elevated to depth 3-4 (was depth 0, rendering behind wall at depth 1)
+- Score font size: 17px → 21px
+- Score flashes gold and scales 1.3× on every increment (was 1.1×)
+
+### Reward Floats Scale with Combo Tier
+- `showFloating()` accepts optional `sizeMult` parameter
+- Payment floats: 20px at ×1-×2 | 25px at ×3 | 30px at ×4 | 36px at ×5
+- Delivery floats: 20px at ×1-×2 | 23px at ×3 | 27px at ×4 | 32px at ×5
+- A ×5.0 payout now LOOKS as big as it is
+
+### Playtest Round 1 Complete
+- 5 sessions: avg 23,276 score | 21.4 best combo | 0 angry customers
+- Full analysis in PLAYTEST_ROUND_1.md
+
 ## v0.9.0 — P2 Retention HUD (2026-06-02)
 
 ### Combo Visibility — Always Present

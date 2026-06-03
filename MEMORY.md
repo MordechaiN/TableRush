@@ -4,6 +4,24 @@ _A new Claude session must understand the entire project by reading this file._
 
 ---
 
+## GOVERNANCE — READ THIS FIRST
+
+### Branch Rule — PERMANENT
+- **main is the ONLY branch.** No feature branches. No draft PRs. No pull requests.
+- After every completed task: `git add -A && git commit && git push origin main`
+- If the environment creates a branch automatically: merge to main immediately, delete the branch.
+- Never discuss branch management. Just push to main.
+
+### Project Phase — PERMANENT
+- Design phase: COMPLETE.
+- Visual Reboot: COMPLETE (P0, P1, P0.5, P2 done).
+- We are now making the game **genuinely fun**.
+- No more design documents. No more planning phases. No more research phases.
+- Every decision answers one question: **Does this make TableRush more fun to play?**
+- If not → do not do it.
+
+---
+
 ## Project Vision
 Fast-paced restaurant management game. Premium casual — think Overcooked/Good Pizza Great Pizza. Player serves customers through a complete lifecycle. Short 3-minute sessions. The core question for every mechanic: **"Will this make players want one more round?"**
 

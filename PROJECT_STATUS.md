@@ -1,12 +1,12 @@
 # PROJECT STATUS
 
-**Last Updated:** 2026-06-02
-**Current Version:** v0.9.0
+**Last Updated:** 2026-06-03
+**Current Version:** v0.9.1
 
 ---
 
 ## Current Focus
-P2 RETENTION HUD complete — combo visible, escalation works, shift report redesigned. Awaiting owner approval.
+Playtest Round 1 complete. Score visibility fixed (depth + size). Reward floats scale with combo tier. See PLAYTEST_ROUND_1.md for full analysis and top 10 problem/opportunity lists.
 
 ## Design Documents Status (all approved)
 - [x] VISUAL_REBOOT_PLAN.md — approved, in progress

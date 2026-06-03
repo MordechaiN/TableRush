@@ -1,4 +1,5 @@
-// playtest.mjs — 5-session gameplay simulation for PLAYTEST_ROUND_1
+// playtest.mjs — 5-session gameplay simulation
+// Reads live Phaser state via window.game (set in main.ts)
 import { chromium } from '/opt/node22/lib/node_modules/playwright/index.mjs';
 import { mkdirSync, writeFileSync } from 'fs';
 
@@ -14,14 +15,12 @@ const TABLES = [
   { x: 240, y: 570 },
 ];
 const KITCHEN = { x: 240, y: 120 };
-const PLAY_BTN       = { x: 240, y: 440 };
-const PLAY_AGAIN_BTN = { x: 240, y: GAME_H - 160 };
 
 let shotNum = 0;
 async function shot(page, label) {
   const p = `${DIR}/${String(++shotNum).padStart(3,'0')}_${label}.png`;
   await page.screenshot({ path: p });
-  return p;
+  console.log(`    📸 ${p}`);
 }
 
 async function gc(page, canvas, gx, gy) {
@@ -29,24 +28,15 @@ async function gc(page, canvas, gx, gy) {
   await page.mouse.click(box.x + gx * (box.width / GAME_W), box.y + gy * (box.height / GAME_H));
 }
 
-// Read live game state from Phaser scene via window.game
 async function readState(page) {
   return page.evaluate(() => {
     const g = window.game;
     if (!g) return { scene: 'none' };
-
-    const isActive = s => s.sys?.isActive?.();
-
-    const go = g.scene.scenes.find(s => s.sys?.settings?.key === 'GameOverScene' && isActive(s));
-    if (go) return { scene: 'GameOver' };
-
-    const gs = g.scene.scenes.find(s => s.sys?.settings?.key === 'GameScene' && isActive(s));
-    if (!gs) {
-      const mm = g.scene.scenes.find(s => s.sys?.settings?.key === 'MainMenuScene' && isActive(s));
-      return { scene: mm ? 'MainMenu' : 'other' };
-    }
-
-    const elapsed = gs.gameStartMs ? (gs.time.now - gs.gameStartMs) / 1000 : 0;
+    const active = s => s.sys?.isActive?.();
+    if (g.scene.scenes.find(s => s.sys?.settings?.key === 'GameOverScene' && active(s)))
+      return { scene: 'GameOver' };
+    const gs = g.scene.scenes.find(s => s.sys?.settings?.key === 'GameScene' && active(s));
+    if (!gs) return { scene: 'other' };
     return {
       scene: 'GameScene',
       score: gs.score || 0,
@@ -57,208 +47,183 @@ async function readState(page) {
       customersAngry: gs.customersAngry || 0,
       fastestDeliveryMs: gs.fastestDeliveryMs === Infinity ? null : gs.fastestDeliveryMs,
       nearMissSaves: gs.nearMissSaves || 0,
-      elapsed: Math.round(elapsed),
-      remaining: Math.max(0, 180 - elapsed),
+      elapsed: gs.gameStartMs != null ? Math.round((gs.time.now - gs.gameStartMs) / 1000) : 0,
+      remaining: gs.gameStartMs != null ? Math.max(0, 180 - (gs.time.now - gs.gameStartMs) / 1000) : 180,
       playerBusy: !!gs.playerBusy,
-      carrying: gs.carryingOrderId !== -1,
+      carrying: (gs.carryingOrderId ?? -1) !== -1,
       kitchenReady: (gs.kitchenOrders || []).some(o => o.ready),
-      // Table states summary
       tableStates: (gs.tables || []).map(t => t.state),
-      // Customer states summary
-      customerStates: [...(gs.customers || new Map()).values()].map(c => c.state),
       tutorialActive: !!gs.tutorialActive,
     };
   });
 }
 
-// Find best action given current state
-function chooseBestTable(state) {
-  const priorities = ['paying', 'dirty', 'requesting'];
-  for (const s of priorities) {
-    const idx = state.tableStates.indexOf(s);
-    if (idx !== -1) return TABLES[idx];
-  }
-  // Also try to deliver if carrying
-  if (state.carrying) {
-    const idx = state.tableStates.indexOf('occupied');
-    if (idx !== -1) return TABLES[idx];
-  }
-  return null;
+async function readFinalFromGameScene(page) {
+  return page.evaluate(() => {
+    const gs = window.game?.scene.scenes.find(s => s.sys?.settings?.key === 'GameScene');
+    if (!gs) return null;
+    return {
+      score: gs.score || 0,
+      comboRecord: gs.comboRecord || 0,
+      customersHappy: gs.customersHappy || 0,
+      customersAngry: gs.customersAngry || 0,
+      fastestDeliveryMs: gs.fastestDeliveryMs === Infinity ? null : gs.fastestDeliveryMs,
+      nearMissSaves: gs.nearMissSaves || 0,
+    };
+  });
 }
 
-const allSessions = [];
-const consoleErrors = [];
-
+// ─── browser setup ────────────────────────────────────────────────────────────
 const browser = await chromium.launch({ args: ['--no-sandbox', '--disable-gpu'] });
 const ctx = await browser.newContext({ viewport: { width: 540, height: 960 } });
 const page = await ctx.newPage();
+const consoleErrors = [];
 page.on('console', m => { if (m.type() === 'error') consoleErrors.push(m.text()); });
 
+// ─── mark tutorial done before first session ──────────────────────────────────
 await page.goto('http://localhost:3000', { waitUntil: 'networkidle' });
-await page.waitForTimeout(2500);
+await page.waitForTimeout(2000);
+// Set tutorial done in localStorage so every session skips it
+await page.evaluate(() => localStorage.setItem('tablerush_tutorial_done', '1')); // must be '1' per ProgressionSystem
+await page.reload({ waitUntil: 'networkidle' });
+await page.waitForTimeout(2000);
+
 const canvas = page.locator('canvas').first();
+const allSessions = [];
 
-// ─── SESSIONS ─────────────────────────────────────────────────────────────────
-
+// ─── play 5 sessions ──────────────────────────────────────────────────────────
 for (let sn = 1; sn <= 5; sn++) {
   console.log(`\n${'═'.repeat(64)}`);
-  console.log(`  SESSION ${sn}`);
-  console.log('═'.repeat(64));
+  console.log(`  SESSION ${sn} / 5`);
+  console.log(`${'═'.repeat(64)}`);
 
-  const obs = [];
-  const note = (msg) => {
-    const state = obs.length > 0 ? obs[obs.length-1].state : null;
-    const entry = { t: elapsed, msg };
-    obs.push(entry);
-    console.log(`  [${String(elapsed).padStart(3)}s] ${msg}`);
-  };
-
-  let elapsed = 0;
+  const wallStart = Date.now();
+  const events = [];
+  let prevScore = 0;
+  let prevCombo = 0;
+  let prevAngry = 0;
+  let prevHappy = 0;
   let peakCombo = 0;
   let firstComboAt = null;
+  let firstMultAt = null;
   let firstAngryAt = null;
-  let firstMultiplierAt = null;
-  let urgencyFelt = false;
   let snapshots = [];
-  let sessionFinalState = null;
 
-  // ── Start game ────────────────────────────────────────────────────────────
-  let curState = await readState(page);
-  if (sn === 1) {
-    if (curState.scene === 'MainMenu') {
-      await gc(page, canvas, PLAY_BTN.x, PLAY_BTN.y);
-    }
+  const log = (msg, state) => {
+    const wall = Math.round((Date.now() - wallStart) / 1000);
+    const game = state?.elapsed ?? '?';
+    console.log(`  [w${String(wall).padStart(3)}s g${String(game).padStart(3)}s] ${msg}`);
+    events.push({ wall, game, msg });
+  };
+
+  // Start game
+  const curState0 = await readState(page);
+  if (curState0.scene === 'GameOver' && sn > 1) {
+    await gc(page, canvas, 240, GAME_H - 160); // PLAY AGAIN
   } else {
-    // We should be on GameOver screen from previous session
-    await gc(page, canvas, PLAY_AGAIN_BTN.x, PLAY_AGAIN_BTN.y);
+    await gc(page, canvas, 240, 490); // PLAY button — MainMenuScene btnY=490
   }
-  await page.waitForTimeout(1000);
-  await shot(page, `s${sn}_00_start`);
-  console.log(`  [  0s] Session ${sn} started`);
+  await page.waitForTimeout(1500);
+  log('Game started', await readState(page));
+  await shot(page, `s${sn}_start`);
 
-  // ── Game loop ─────────────────────────────────────────────────────────────
-  const POLL = 500; // ms between action polls
-  const gameStartWall = Date.now();
-  let lastSnapTime = -10;
+  // game loop
   let gameEnded = false;
+  let lastSnapAt = -35;
+  const POLL = 450;
 
   while (!gameEnded) {
     await page.waitForTimeout(POLL);
-    elapsed = Math.round((Date.now() - gameStartWall) / 1000);
+    const wall = Math.round((Date.now() - wallStart) / 1000);
+    const st = await readState(page);
 
-    curState = await readState(page);
+    if (st.scene === 'GameOver') { gameEnded = true; break; }
+    if (st.scene !== 'GameScene') continue;
 
-    if (curState.scene === 'GameOver') {
-      gameEnded = true;
-      break;
+    // Track events
+    if (st.comboCount > peakCombo) {
+      peakCombo = st.comboCount;
+      if (peakCombo === 1 && firstComboAt === null) firstComboAt = st.elapsed;
     }
-    if (curState.scene !== 'GameScene') continue;
-
-    // Record peaks
-    if (curState.comboCount > peakCombo) {
-      peakCombo = curState.comboCount;
-      if (peakCombo === 1 && firstComboAt === null) firstComboAt = curState.elapsed;
+    if (st.comboMultiplier > 1.5 && firstMultAt === null) firstMultAt = st.elapsed;
+    if (st.customersAngry > prevAngry) {
+      prevAngry = st.customersAngry;
+      firstAngryAt = firstAngryAt ?? st.elapsed;
+      log(`😠 Customer left angry (total: ${st.customersAngry}) — combo=${st.comboCount}, score=${st.score}`, st);
     }
-    if (curState.comboMultiplier > 1.0 && firstMultiplierAt === null) {
-      firstMultiplierAt = curState.elapsed;
+    if (st.customersHappy > prevHappy) {
+      prevHappy = st.customersHappy;
+      log(`✓ Payment collected (happy: ${st.customersHappy}) — score=${st.score} combo=${st.comboCount}×${st.comboMultiplier.toFixed(1)}`, st);
     }
-    if (curState.customersAngry > 0 && firstAngryAt === null) {
-      firstAngryAt = curState.elapsed;
+    if (st.score !== prevScore) {
+      prevScore = st.score;
     }
-    if (curState.remaining <= 30 && !urgencyFelt) {
-      urgencyFelt = true;
-      console.log(`  [${String(elapsed).padStart(3)}s] URGENCY — 30s left, score=${curState.score}`);
-    }
-
-    // Periodic snapshots
-    if (curState.elapsed - lastSnapTime >= 30) {
-      lastSnapTime = curState.elapsed;
-      const label = `s${sn}_${String(curState.elapsed).padStart(3,'0')}s`;
-      await shot(page, label);
-      snapshots.push({ gameElapsed: curState.elapsed, wallElapsed: elapsed, state: { ...curState } });
-      console.log(`  [${String(elapsed).padStart(3)}s] SNAP @${curState.elapsed}s — score=${curState.score} combo=${curState.comboCount}(×${curState.comboMultiplier}) happy=${curState.customersHappy} angry=${curState.customersAngry} kit=${curState.kitchenReady}`);
+    if (st.comboCount !== prevCombo) {
+      prevCombo = st.comboCount;
     }
 
-    // ── Choose action ─────────────────────────────────────────────────────
-    if (!curState.playerBusy) {
-      if (curState.kitchenReady && !curState.carrying) {
-        // Pick up from kitchen
+    // Snapshots every 30s of game time
+    if (st.elapsed - lastSnapAt >= 30) {
+      lastSnapAt = st.elapsed;
+      await shot(page, `s${sn}_${String(st.elapsed).padStart(3,'0')}s`);
+      log(`SNAPSHOT — score=${st.score} combo=${st.comboCount}×${st.comboMultiplier.toFixed(1)} happy=${st.customersHappy} angry=${st.customersAngry} carrying=${st.carrying} kitReady=${st.kitchenReady}`, st);
+      snapshots.push({ gameElapsed: st.elapsed, ...st });
+    }
+
+    // Urgency marker
+    if (st.remaining <= 30 && st.remaining > 28) {
+      log(`⚡ LAST 30 SECONDS — score=${st.score}, combo record=${st.comboRecord}`, st);
+    }
+
+    // Act: click kitchen if ready, then try all tables.
+    // TABLE states are 'empty'|'occupied'|'dirty' — NOT 'requesting'/'paying'.
+    // Customer states live on customer objects, not table objects.
+    // Simplest correct approach: click everything, game handles wrong-state clicks gracefully.
+    if (!st.playerBusy) {
+      if (st.kitchenReady && !st.carrying) {
         await gc(page, canvas, KITCHEN.x, KITCHEN.y);
-      } else if (curState.carrying) {
-        // Deliver: find the table needing food
-        const idx = curState.tableStates.findIndex(s => s === 'occupied' || s === 'waiting_food');
-        if (idx !== -1) await gc(page, canvas, TABLES[idx].x, TABLES[idx].y);
-        else {
-          // Try all tables
-          for (const t of TABLES) { await gc(page, canvas, t.x, t.y); await page.waitForTimeout(40); }
-        }
       } else {
-        // No kitchen, not carrying — service tables
-        // Priority: paying > dirty > requesting
-        const payIdx = curState.tableStates.indexOf('paying');
-        const dirtyIdx = curState.tableStates.indexOf('dirty');
-        const reqIdx = curState.tableStates.indexOf('requesting');
-        const target = payIdx !== -1 ? TABLES[payIdx]
-          : reqIdx !== -1 ? TABLES[reqIdx]
-          : dirtyIdx !== -1 ? TABLES[dirtyIdx]
-          : null;
-        if (target) await gc(page, canvas, target.x, target.y);
+        // Click all tables — game ignores invalid actions silently.
+        // This covers 'requesting', 'paying', 'dirty' customer/table states.
+        for (const t of TABLES) {
+          await gc(page, canvas, t.x, t.y);
+          await page.waitForTimeout(60);
+        }
       }
     }
 
-    // Hard cutoff at 200s wall time
-    if (elapsed > 200) {
-      console.log(`  [${elapsed}s] Hard cutoff — ending session`);
-      // Trigger game end by reading final state
-      sessionFinalState = curState;
+    // Hard cap per session — game is 180s, allow 210s wall time
+    if (wall > 210) {
+      log('Wall time cap reached — ending session', st);
       gameEnded = true;
     }
   }
 
-  // ── Game over screen ─────────────────────────────────────────────────────
-  await page.waitForTimeout(1200); // let GameOver scene animate in
+  // Game over — collect data
+  await page.waitForTimeout(1500);
   await shot(page, `s${sn}_gameover`);
-  curState = await readState(page);
-  console.log(`  [END] Scene: ${curState.scene}`);
-
-  // Read data from GameScene (it holds the round data even after transitioning)
-  const finalData = await page.evaluate(() => {
-    const g = window.game;
-    // Try GameScene first (data persists briefly after scene change)
-    const gs = g.scene.scenes.find(s => s.sys?.settings?.key === 'GameScene');
-    if (gs && gs.score !== undefined) {
-      return {
-        score: gs.score,
-        comboRecord: gs.comboRecord,
-        customersHappy: gs.customersHappy,
-        customersAngry: gs.customersAngry,
-        fastestDeliveryMs: gs.fastestDeliveryMs === Infinity ? null : gs.fastestDeliveryMs,
-        nearMissSaves: gs.nearMissSaves,
-      };
-    }
-    return null;
-  });
-
+  const finalData = await readFinalFromGameScene(page);
   const total = (finalData?.customersHappy || 0) + (finalData?.customersAngry || 0);
-  console.log(`\n  ── SESSION ${sn} RESULTS ──`);
-  console.log(`  Score:     ${finalData?.score ?? 'n/a'}`);
-  console.log(`  Combo:     Peak ${peakCombo} (×${snapshots.at(-1)?.state?.comboMultiplier ?? '?'})`);
-  console.log(`  Served:    ${total} total (${finalData?.customersHappy ?? '?'} happy, ${finalData?.customersAngry ?? '?'} angry)`);
-  console.log(`  Fastest:   ${finalData?.fastestDeliveryMs ? (finalData.fastestDeliveryMs/1000).toFixed(1)+'s' : 'n/a'}`);
-  console.log(`  Near saves:${finalData?.nearMissSaves ?? 0}`);
-  console.log(`  First combo at: ${firstComboAt ?? 'n/a'}s`);
-  console.log(`  First ×2 at:    ${firstMultiplierAt ?? 'n/a'}s`);
-  console.log(`  First angry at: ${firstAngryAt ?? 'n/a'}s`);
+
+  console.log(`\n  ── SESSION ${sn} RESULTS ──────────────────────────────────`);
+  console.log(`  Score:          ${finalData?.score ?? 'n/a'}`);
+  console.log(`  Best combo:     ${peakCombo} (record: ${finalData?.comboRecord ?? '?'})`);
+  console.log(`  Guests served:  ${total} (${finalData?.customersHappy ?? '?'} happy, ${finalData?.customersAngry ?? '?'} angry)`);
+  console.log(`  Fastest serve:  ${finalData?.fastestDeliveryMs ? (finalData.fastestDeliveryMs/1000).toFixed(1)+'s' : 'none'}`);
+  console.log(`  Near-miss saves:${finalData?.nearMissSaves ?? 0}`);
+  console.log(`  First combo at: ${firstComboAt ?? 'never'}s`);
+  console.log(`  First ×2 at:    ${firstMultAt ?? 'never'}s`);
+  console.log(`  First angry at: ${firstAngryAt ?? 'never'}s`);
+  console.log(`  Wall duration:  ${Math.round((Date.now()-wallStart)/1000)}s`);
 
   allSessions.push({
-    sn, finalData, peakCombo, snapshots,
-    firstComboAt, firstMultiplierAt, firstAngryAt, urgencyFelt,
-    wallDuration: elapsed,
+    sn, finalData, peakCombo, firstComboAt, firstMultAt, firstAngryAt,
+    snapshots, events, wallDuration: Math.round((Date.now()-wallStart)/1000),
   });
-
-  await page.waitForTimeout(1000);
 }
 
 await browser.close();
 writeFileSync('/tmp/playtest_data.json', JSON.stringify({ sessions: allSessions, consoleErrors }, null, 2));
-console.log('\n\n✅ All sessions complete. Data: /tmp/playtest_data.json');
+console.log('\n\n✅ ALL SESSIONS COMPLETE');
+console.log(`Console errors: ${consoleErrors.length}`);
+if (consoleErrors.length) consoleErrors.forEach(e => console.log('  ⚠', e));

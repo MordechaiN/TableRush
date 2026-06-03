@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { COLORS, GAME_WIDTH, GAME_HEIGHT, COMBO_MILESTONES } from '../config/GameConfig';
 import { ProgressionSystem, RoundResult } from '../systems/ProgressionSystem';
+import { SoundManager } from '../systems/SoundManager';
 
 interface GameOverData {
   score: number;
@@ -264,7 +265,7 @@ export class GameOverScene extends Phaser.Scene {
 
   private makeBtn(x: number, y: number, label: string, tex: string, cb: () => void) {
     const btn = this.add.image(x, y, tex).setInteractive({ useHandCursor: true });
-    btn.on('pointerdown', cb);
+    btn.on('pointerdown', () => { SoundManager.uiClick(); cb(); });
     btn.on('pointerover', () => btn.setAlpha(0.85));
     btn.on('pointerout', () => btn.setAlpha(1));
     this.add.text(x, y, label, {

@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { COLORS, GAME_WIDTH, GAME_HEIGHT } from '../config/GameConfig';
+import { SoundManager } from '../systems/SoundManager';
 
 export class PauseScene extends Phaser.Scene {
   constructor() { super({ key: 'PauseScene' }); }
@@ -51,6 +52,6 @@ export class PauseScene extends Phaser.Scene {
       fontSize: '20px', fontFamily: 'Arial Black', color: '#FFFFFF',
     }).setOrigin(0.5);
     const zone = this.add.zone(x, y, 240, 44).setInteractive({ useHandCursor: true });
-    zone.on('pointerdown', cb);
+    zone.on('pointerdown', () => { SoundManager.uiClick(); cb(); });
   }
 }

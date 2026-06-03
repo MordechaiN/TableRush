@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { COLORS, GAME_WIDTH, GAME_HEIGHT } from '../config/GameConfig';
 import { ProgressionSystem } from '../systems/ProgressionSystem';
+import { SoundManager } from '../systems/SoundManager';
 
 export class SettingsScene extends Phaser.Scene {
   private sfxOn = true;
@@ -75,8 +76,7 @@ export class SettingsScene extends Phaser.Scene {
       localStorage.setItem('tablerush_music', val ? 'on' : 'off');
     });
 
-    // Honest note about audio status
-    this.add.text(cx, 338, '🎵 Audio coming in a future update', {
+    this.add.text(cx, 338, '🎵 Music coming in a future update', {
       fontSize: '13px', fontFamily: 'Arial', color: '#BBAA88',
     }).setOrigin(0.5);
 
@@ -101,6 +101,7 @@ export class SettingsScene extends Phaser.Scene {
     resetTxt.on('pointerover', () => resetTxt.setAlpha(0.7));
     resetTxt.on('pointerout', () => resetTxt.setAlpha(1));
     resetTxt.on('pointerdown', () => {
+      SoundManager.uiClick();
       ProgressionSystem.resetHighScore();
       this.showToast('Progress reset!');
     });
@@ -127,6 +128,7 @@ export class SettingsScene extends Phaser.Scene {
       value = !value;
       onChange(value);
       this.drawToggle(bg, knob, x + 80, y, value);
+      SoundManager.uiClick();
     });
   }
 
@@ -153,6 +155,6 @@ export class SettingsScene extends Phaser.Scene {
       fontSize: '20px', fontFamily: 'Arial Black', color: '#FFFFFF',
     }).setOrigin(0.5);
     const zone = this.add.zone(x, y, 240, 44).setInteractive({ useHandCursor: true });
-    zone.on('pointerdown', cb);
+    zone.on('pointerdown', () => { SoundManager.uiClick(); cb(); });
   }
 }

@@ -8,6 +8,7 @@ import { Table } from '../entities/Table';
 import { Customer, OrderItem } from '../entities/Customer';
 import { Player } from '../entities/Player';
 import { ProgressionSystem } from '../systems/ProgressionSystem';
+import { SoundManager } from '../systems/SoundManager';
 
 const TABLE_POSITIONS = [
   { x: 120, y: 290 },
@@ -54,6 +55,7 @@ export class GameScene extends Phaser.Scene {
   private comboTxt!: Phaser.GameObjects.Text;
   private timeTxt!: Phaser.GameObjects.Text;
   private comboProgressGfx!: Phaser.GameObjects.Graphics;
+  private hudTimerPill!: Phaser.GameObjects.Graphics;
 
   private gameTimeMs = GAME_DURATION * 1000;
   private gameStartMs = 0;
@@ -535,27 +537,40 @@ export class GameScene extends Phaser.Scene {
   // ─── UI ───────────────────────────────────────────────────────────────────
 
   private buildUI() {
+    // Cream panel background
     this.add.image(GAME_WIDTH / 2, 28, 'hud_panel').setOrigin(0.5, 0.5).setDepth(3);
 
-    this.scoreTxt = this.add.text(14, 28, '🍽️  0', {
-      fontSize: '21px', fontFamily: 'Arial Black', color: COLORS.TEXT_DARK, fontStyle: 'bold',
-    }).setOrigin(0, 0.5).setDepth(4);
+    // Score badge — left dark pill
+    const scorePill = this.add.graphics().setDepth(3.5);
+    scorePill.fillStyle(0x2D1810, 0.92);
+    scorePill.fillRoundedRect(8, 7, 148, 42, 10);
 
+    this.scoreTxt = this.add.text(82, 28, '🍽️  0', {
+      fontSize: '19px', fontFamily: 'Arial Black', color: '#FFFFFF',
+    }).setOrigin(0.5, 0.5).setDepth(4);
+
+    // Timer badge — right dark pill
+    this.hudTimerPill = this.add.graphics().setDepth(3.5);
+    this.hudTimerPill.fillStyle(0x2D1810, 0.92);
+    this.hudTimerPill.fillRoundedRect(GAME_WIDTH - 156, 7, 148, 42, 10);
+
+    this.timeTxt = this.add.text(GAME_WIDTH - 90, 28, '3:00', {
+      fontSize: '19px', fontFamily: 'Arial Black', color: '#FFFFFF',
+    }).setOrigin(0.5, 0.5).setDepth(4);
+
+    if (!this.sys.game.device.input.touch) {
+      const pauseBtn = this.add.text(GAME_WIDTH - 16, 28, '⏸', {
+        fontSize: '17px', color: 'rgba(255,255,255,0.75)',
+      }).setOrigin(1, 0.5).setInteractive({ useHandCursor: true }).setDepth(5);
+      pauseBtn.on('pointerdown', () => { SoundManager.uiClick(); this.pauseGame(); });
+    }
+
+    // Combo display — centered on cream panel, no pill (changes color/size per tier)
     this.comboTxt = this.add.text(GAME_WIDTH / 2, 28, '×1.0', {
       fontSize: '14px', fontFamily: 'Arial Black', color: '#AAAAAA',
     }).setOrigin(0.5, 0.5).setDepth(4);
 
-    this.timeTxt = this.add.text(GAME_WIDTH - 14, 28, '3:00', {
-      fontSize: '17px', fontFamily: 'Arial Black', color: COLORS.TEXT_DARK, fontStyle: 'bold',
-    }).setOrigin(1, 0.5).setDepth(4);
-
-    if (!this.sys.game.device.input.touch) {
-      const pauseBtn = this.add.text(GAME_WIDTH - 14, 28, '⏸', { fontSize: '20px' })
-        .setOrigin(1.6, 0.5).setInteractive({ useHandCursor: true }).setDepth(5);
-      pauseBtn.on('pointerdown', () => this.pauseGame());
-    }
-
-    // Combo progress strip — bottom 4px of HUD panel shows path to next multiplier
+    // Combo progress strip — bottom 4px of HUD panel
     this.comboProgressGfx = this.add.graphics().setDepth(4);
     this.updateComboProgress();
   }
@@ -643,6 +658,7 @@ export class GameScene extends Phaser.Scene {
     customer.state = 'leaving';
     customer.showAngryBubble();
     this.customersAngry++;
+    SoundManager.customerAngry();
 
     const elapsed = (this.time.now - this.gameStartMs) / 1000;
     const tier = this.getDifficultyTier(elapsed);
@@ -719,6 +735,7 @@ export class GameScene extends Phaser.Scene {
       customer.startIdleBehavior();
       table.setStateVisual('menu');
       table.setPriority('requesting');
+      SoundManager.seatCustomer();
       this.playerBusy = false;
 
       if (this.tutorialActive && this.tutorialStep === 0) this.advanceTutorial();
@@ -748,10 +765,14 @@ export class GameScene extends Phaser.Scene {
         const s = Math.floor(remaining % 60);
         this.timeTxt.setText(`${m}:${s.toString().padStart(2, '0')}`);
         if (remaining <= 30) {
-          this.timeTxt.setColor(COLORS.TEXT_RED);
           if (remaining <= 30 && remaining > 29) {
+            // Switch timer pill to danger red
+            this.hudTimerPill.clear();
+            this.hudTimerPill.fillStyle(0x8B1010, 0.95);
+            this.hudTimerPill.fillRoundedRect(GAME_WIDTH - 156, 7, 148, 42, 10);
             this.showFloating('⏰ 30s LEFT!', GAME_WIDTH / 2, GAME_HEIGHT / 2 - 40, COLORS.TEXT_RED);
             this.cameras.main.shake(150, 0.003);
+            SoundManager.timerWarning();
           }
         }
         if (remaining <= 10 && remaining > 0) {
@@ -883,6 +904,7 @@ export class GameScene extends Phaser.Scene {
       customer.showOrderFlash();
       table.setStateVisual('ticket');
       this.showFloating('✓ ORDER!', table.x, table.y - 70, '#4CAF50');
+      SoundManager.orderTaken();
 
       this.playerBusy = false;
 
@@ -924,6 +946,7 @@ export class GameScene extends Phaser.Scene {
         scaleX: { from: 1.0, to: 1.38 }, scaleY: { from: 1.0, to: 1.38 },
         duration: 160, ease: 'Back.easeOut', yoyo: true,
       });
+      SoundManager.foodReady();
     }
     this.updateKitchenGlow();
   }
@@ -944,6 +967,7 @@ export class GameScene extends Phaser.Scene {
       }
 
       this.player.deliverAnim();
+      SoundManager.deliverFood();
       customer.patienceAtDelivery = customer.getPatienceFraction();
       customer.hideBubble();
       customer.state = 'eating';
@@ -1011,6 +1035,7 @@ export class GameScene extends Phaser.Scene {
       const vipMult = customer.isVIP ? 2.5 : 1.0;
       const payScore = Math.floor((customer.order!.price + tip) * 5 * this.comboMultiplier * vipMult);
       this.addScore(payScore);
+      SoundManager.paymentCollected();
       const paySize = this.comboMultiplier >= 5 ? 1.8 : this.comboMultiplier >= 4 ? 1.5 : this.comboMultiplier >= 3 ? 1.25 : 1;
       this.showFloating(`💰 $${payScore}`, table.x, table.y - 50, COLORS.TEXT_GOLD, paySize);
       this.spawnCoins(table.x, table.y);
@@ -1096,6 +1121,7 @@ export class GameScene extends Phaser.Scene {
       this.updateSeatingArrows();
       this.showFloating('✨ Clean!', 80, 180, COLORS.TEXT_GREEN);
       this.spawnDishwasherSteam();
+      SoundManager.dishwasher();
       this.playerBusy = false;
 
       if (this.tutorialActive && this.tutorialStep === 6) {
@@ -1120,6 +1146,7 @@ export class GameScene extends Phaser.Scene {
   private startRushHour() {
     if (this.rushHourActive) return;
     this.rushHourActive = true;
+    SoundManager.rushHour();
 
     this.triggerCelebration('⚡ RUSH HOUR! ⚡', '#FF4444');
     this.cameras.main.shake(280, 0.005);
@@ -1205,6 +1232,10 @@ export class GameScene extends Phaser.Scene {
     }
 
     const isNewMilestone = this.comboMultiplier > prev;
+    if (isNewMilestone) {
+      const tier = this.comboMultiplier >= 5 ? 4 : this.comboMultiplier >= 4 ? 3 : this.comboMultiplier >= 3 ? 2 : 1;
+      SoundManager.comboUp(tier);
+    }
     this.updateComboDisplay();
     this.tweens.add({
       targets: this.comboTxt,
@@ -1231,6 +1262,7 @@ export class GameScene extends Phaser.Scene {
     this.comboCount = 0;
     this.comboMultiplier = 1.0;
     if (wasCombo) {
+      SoundManager.comboLost();
       this.showFloating(`💔 ×${lostMult.toFixed(1)} LOST!`, GAME_WIDTH / 2, 80, '#FF4444');
       this.comboTxt.setStyle({ color: '#FF4444' });
       // Flash the progress bar red, then clear it
@@ -1516,6 +1548,7 @@ export class GameScene extends Phaser.Scene {
     customer.stopPatience();
     customer.showAngryBubble();
     this.customersAngry++;
+    SoundManager.customerAngry();
 
     const elapsed = (this.time.now - this.gameStartMs) / 1000;
     const tier = this.getDifficultyTier(elapsed);
@@ -1782,6 +1815,7 @@ export class GameScene extends Phaser.Scene {
     this.gameTimer?.remove();
     this.steamTimer?.remove();
     this.steamTimer = null;
+    SoundManager.roundEnd();
 
     const total = this.customersHappy + this.customersAngry;
     const happyRate = total > 0 ? this.customersHappy / total : 0;

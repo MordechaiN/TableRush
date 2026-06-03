@@ -1,5 +1,51 @@
 # CHANGELOG
 
+## v1.0 — Restaurant Immersion Reboot (2026-06-03)
+
+### The Room Is Now Real
+- Side walls added (left + right, 16px wide, terracotta/wainscoting/baseboard) — the restaurant is now an enclosed space
+- Wall sconces on both side walls (y=240, y=490) with warm amber glow
+- Tile depth shadows added at grout lines — tiles have visual mass
+- Ambient light pool opacity raised from 0.045 to 0.085
+
+### Kitchen — Three Zones, Zero Confusion
+- COOKING zone: bold orange pill badge with 🔥 icon — readable at a glance
+- READY zone: bold green pill badge — food destination obvious
+- "TAP TO PICK UP" counter ledge strip at front of kitchen
+- Zone labels enlarged from 10px to 12px white-on-color
+
+### Entrance — Professional Restaurant Door
+- Replaced `🚪` emoji with drawn double-door: mahogany frame, two glass-panel doors, cross window frames, gold handles
+- Striped door mat with depth effect
+- Plants repositioned to flank entrance correctly
+
+### Chairs — Actual Chairs
+- Chair texture completely redesigned (30×34px)
+- Top-down view: back corner posts, horizontal backrest bar with spindle rails, seat with surface sheen, front leg posts
+- Front chairs use setFlipY(true) so backrest faces away from table
+- Both chair types read immediately as restaurant seating
+
+### Table Numbers
+- Small gold number badge (1–5) on top-right of each table's tablecloth
+- Dark mahogany background — matches table body color palette
+
+### Candle Flicker
+- Each table's candle has unique flicker animation (scale + alpha oscillation)
+- Staggered delays so candles don't pulse in sync
+- Candles enlarged to scale 1.4 for visibility
+
+### Payment Celebration
+- Replaced 5×`💰` emoji scatter with 8 drawn gold coin Graphics
+- Each coin: 8px radius, gold fill, highlight shimmer, gold outline
+- Gold burst flash radiates outward at payment
+- Coins arc in alternating radii for organic feel
+
+### Main Menu
+- Side walls (terracotta + wainscoting) match game scene language
+- Window light shafts from top edges (warm amber triangles)
+- Background table silhouettes (very subtle, adds depth)
+- Version text replaced with "TABLE RUSH" brand watermark
+
 ## v0.9.3 — Restaurant Reboot (2026-06-03)
 
 ### Customer Seating Illusion

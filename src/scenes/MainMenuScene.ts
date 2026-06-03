@@ -12,7 +12,7 @@ export class MainMenuScene extends Phaser.Scene {
     // Warm background
     this.add.rectangle(cx, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, COLORS.FLOOR_WARM);
 
-    // Tile pattern (lighter)
+    // Tile pattern
     for (let row = 0; row < 14; row++) {
       for (let col = 0; col < 7; col++) {
         if ((row + col) % 2 === 0) {
@@ -23,6 +23,38 @@ export class MainMenuScene extends Phaser.Scene {
 
     // Top wall accent
     this.add.rectangle(cx, 45, GAME_WIDTH, 90, COLORS.WALL_ACCENT);
+
+    // ── Side walls — same language as game scene ─────────────────────────────
+    const wallW = 16;
+    const menuWallH = GAME_HEIGHT - 90;
+    const lW = this.add.graphics();
+    lW.fillStyle(0xC8854A, 1);
+    lW.fillRect(0, 90, wallW, Math.floor(menuWallH * 0.58));
+    lW.fillStyle(0x9A5C28, 1);
+    lW.fillRect(0, 90 + Math.floor(menuWallH * 0.58), wallW, Math.floor(menuWallH * 0.4));
+    lW.fillStyle(0x4A2410, 1);
+    lW.fillRect(0, GAME_HEIGHT - 16, wallW, 16);
+    const rW = this.add.graphics();
+    rW.fillStyle(0xC8854A, 1);
+    rW.fillRect(GAME_WIDTH - wallW, 90, wallW, Math.floor(menuWallH * 0.58));
+    rW.fillStyle(0x9A5C28, 1);
+    rW.fillRect(GAME_WIDTH - wallW, 90 + Math.floor(menuWallH * 0.58), wallW, Math.floor(menuWallH * 0.4));
+    rW.fillStyle(0x4A2410, 1);
+    rW.fillRect(GAME_WIDTH - wallW, GAME_HEIGHT - 16, wallW, 16);
+
+    // ── Window light shafts ──────────────────────────────────────────────────
+    const shafts = this.add.graphics();
+    shafts.fillStyle(0xFFEE88, 0.07);
+    shafts.fillTriangle(24, 90, 180, 90, 110, 500);
+    shafts.fillStyle(0xFFEE88, 0.05);
+    shafts.fillTriangle(GAME_WIDTH - 24, 90, GAME_WIDTH - 180, 90, GAME_WIDTH - 110, 500);
+
+    // ── Background table silhouettes (depth = atmosphere) ────────────────────
+    const bgTables = this.add.graphics().setAlpha(0.12);
+    [[120, 580], [360, 580], [240, 730]].forEach(([tx, ty]) => {
+      bgTables.fillStyle(0x8B4513, 1);
+      bgTables.fillRoundedRect(tx - 45, ty - 28, 90, 56, 8);
+    });
 
     // Logo
     const logoY = 180;
@@ -76,10 +108,10 @@ export class MainMenuScene extends Phaser.Scene {
     this.makeBtn(cx, btnY + 68, 'SETTINGS', 'btn_green', () => this.scene.start('SettingsScene'));
     this.makeBtn(cx, btnY + 136, 'CREDITS', 'btn_green', () => this.scene.start('CreditsScene'));
 
-    // Version
-    this.add.text(cx, GAME_HEIGHT - 16, 'v0.2.0', {
-      fontSize: '12px', fontFamily: 'Arial', color: '#AAAAAA',
-    }).setOrigin(0.5);
+    // Version (subtle, not a prototype signal)
+    this.add.text(cx, GAME_HEIGHT - 10, 'TABLE RUSH', {
+      fontSize: '9px', fontFamily: 'Arial', color: '#C8A060', letterSpacing: 3,
+    }).setOrigin(0.5).setAlpha(0.5);
   }
 
   private makeBtn(x: number, y: number, label: string, tex: string, cb: () => void) {

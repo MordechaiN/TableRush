@@ -1,17 +1,18 @@
 # PROJECT STATUS
 
 **Last Updated:** 2026-06-03
-**Current Version:** v0.9.3
+**Current Version:** v1.0
 
 ---
 
 ## Current Focus
-Restaurant Reboot (v0.9.3) complete. Customers now look seated, tables show real mess, cleaning is instant, environment feels alive. Next: kitchen full redesign (Problem #2 from RESTAURANT_REBOOT_PLAN.md).
+Restaurant Immersion complete. Game reads as a commercial mobile product. Side walls enclose the room, chairs look like chairs, kitchen zones are instantly readable, entrance door professional.
 
 ## Next Candidates
-- Kitchen full redesign: Cooking Queue / Ready Queue / Tray Area visual hierarchy (P5 from VISUAL_REBOOT_PLAN.md)
-- Table-level patience glow (#2 from PRESSURE_ANALYSIS.md)
-- Kitchen queue cap, 2 simultaneous orders max (#3 from PRESSURE_ANALYSIS.md)
+- Customer eating/happy animations (emotional reactions during eating)
+- Sound effects (order taken, food delivered, payment)
+- Menu scene — more restaurant illustration depth
+- Animated entrance (customers walking through door)
 
 ## Design Documents Status (all approved)
 - [x] VISUAL_REBOOT_PLAN.md — approved, in progress
@@ -25,8 +26,10 @@ Restaurant Reboot (v0.9.3) complete. Customers now look seated, tables show real
 - [x] P0.5 Hotfix: Urgent strobe, dirty amber, secondary 0.35, Elegant earrings+collar, Casual stripes, mobile confirmed
 - [x] P2: Retention HUD — combo visible, 5-stage escalation, progress bar, streak loss feedback, shift report ← COMPLETE
 - [x] Restaurant Reboot (v0.9.3) — seating overlay, chairs, mess graphics, instant clean, dishwasher, food inventory model ← COMPLETE
-- [ ] P3: Waiter redesign (larger, emotion visible)
-- [ ] P5: Kitchen redesign (Cooking Queue / Ready Queue / Tray Area) ← NEXT
+- [x] v1.0 Restaurant Immersion — side walls, zone badges, entrance door, table numbers, candle flicker, gold coins, main menu scene ← COMPLETE
+- [ ] Sound effects (order, delivery, payment, combo)
+- [ ] Customer eating/happy animations
+- [ ] Animated entrance customers
 - [ ] P4: Table redesign (clean cloth, numbered)
 - [ ] P5: Kitchen redesign (readable tickets, bold ready zone)
 - [ ] P6: Speech bubbles (state-specific shapes)

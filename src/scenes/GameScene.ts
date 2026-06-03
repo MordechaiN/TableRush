@@ -135,6 +135,15 @@ export class GameScene extends Phaser.Scene {
     grout.lineStyle(1, 0xD4C4A8, 0.45);
     for (let col = 1; col < 7; col++) grout.lineBetween(col * 70, 88, col * 70, GAME_HEIGHT);
     for (let row = 2; row < 13; row++) grout.lineBetween(0, row * 70 - 2, GAME_WIDTH, row * 70 - 2);
+    // Tile depth shadow (bottom-right edge of each tile)
+    const tileShadow = this.add.graphics().setDepth(0);
+    tileShadow.fillStyle(0x000000, 0.055);
+    for (let row = 2; row < 13; row++) {
+      for (let col = 0; col < 7; col++) {
+        tileShadow.fillRect(col * 70, row * 70 - 3, 70, 3);
+        tileShadow.fillRect(col * 70 + 67, row * 70 - 70, 3, 70);
+      }
+    }
 
     // ── Walls ─────────────────────────────────────────────────────────────────
     this.add.rectangle(GAME_WIDTH / 2, 0, GAME_WIDTH, 90, COLORS.WALL_ACCENT);
@@ -146,6 +155,49 @@ export class GameScene extends Phaser.Scene {
     wall.lineBetween(10, 10, GAME_WIDTH - 10, 10);
     wall.lineBetween(10, 76, GAME_WIDTH - 10, 76);
     this.add.rectangle(GAME_WIDTH / 2, 88, GAME_WIDTH, 6, 0x9B6020);
+
+    // ── Side Walls ────────────────────────────────────────────────────────────
+    const wallH = GAME_HEIGHT - 88;
+    const wallW = 16;
+    // Left wall
+    const lWall = this.add.graphics().setDepth(1);
+    lWall.fillStyle(0xC8854A, 1);
+    lWall.fillRect(0, 88, wallW, Math.floor(wallH * 0.58));
+    lWall.fillStyle(0x9A5C28, 1);
+    lWall.fillRect(0, 88 + Math.floor(wallH * 0.58), wallW, Math.floor(wallH * 0.38));
+    lWall.fillStyle(0x7A3E18, 1);
+    lWall.fillRect(0, 88 + Math.floor(wallH * 0.56), wallW, 5); // chair rail
+    lWall.fillStyle(0x4A2410, 1);
+    lWall.fillRect(0, GAME_HEIGHT - 16, wallW, 16); // baseboard
+    // Left wall sconces (depth 2 so they appear above the wall strip)
+    [240, 490].forEach(sy => {
+      const sc = this.add.graphics().setDepth(2);
+      sc.fillStyle(0xC8A060, 1);
+      sc.fillRect(wallW - 4, sy - 4, 4, 8); // bracket arm
+      sc.fillStyle(0xFFEE88, 0.9);
+      sc.fillTriangle(wallW - 6, sy - 8, wallW + 4, sy - 8, wallW + 1, sy + 8); // shade
+      sc.fillStyle(0xFFFF88, 0.25);
+      sc.fillCircle(wallW, sy + 4, 18); // glow pool
+    });
+    // Right wall
+    const rWall = this.add.graphics().setDepth(1);
+    rWall.fillStyle(0xC8854A, 1);
+    rWall.fillRect(GAME_WIDTH - wallW, 88, wallW, Math.floor(wallH * 0.58));
+    rWall.fillStyle(0x9A5C28, 1);
+    rWall.fillRect(GAME_WIDTH - wallW, 88 + Math.floor(wallH * 0.58), wallW, Math.floor(wallH * 0.38));
+    rWall.fillStyle(0x7A3E18, 1);
+    rWall.fillRect(GAME_WIDTH - wallW, 88 + Math.floor(wallH * 0.56), wallW, 5);
+    rWall.fillStyle(0x4A2410, 1);
+    rWall.fillRect(GAME_WIDTH - wallW, GAME_HEIGHT - 16, wallW, 16);
+    [240, 490].forEach(sy => {
+      const sc = this.add.graphics().setDepth(2);
+      sc.fillStyle(0xC8A060, 1);
+      sc.fillRect(GAME_WIDTH - wallW, sy - 4, 4, 8);
+      sc.fillStyle(0xFFEE88, 0.9);
+      sc.fillTriangle(GAME_WIDTH - wallW - 4, sy - 8, GAME_WIDTH + 4, sy - 8, GAME_WIDTH - 1, sy + 8);
+      sc.fillStyle(0xFFFF88, 0.25);
+      sc.fillCircle(GAME_WIDTH - wallW, sy + 4, 18);
+    });
 
     // ── Wall art ──────────────────────────────────────────────────────────────
     if (this.textures.exists('wall_frame')) {
@@ -174,9 +226,9 @@ export class GameScene extends Phaser.Scene {
       lamp.fillStyle(0xFFDD66, 0.5); lamp.fillTriangle(lx - 10, 126, lx + 10, 126, lx + 4, 144);
       // Bulb glow
       lamp.fillStyle(0xFFFF99, 0.8); lamp.fillCircle(lx, 147, 3);
-      // Light pool on floor (subtle)
+      // Light pool on floor (warm glow)
       const pool = this.add.graphics().setDepth(0);
-      pool.fillStyle(0xFFFF88, 0.045); pool.fillCircle(lx, 320, 75);
+      pool.fillStyle(0xFFFF88, 0.085); pool.fillCircle(lx, 320, 80);
     });
 
     // ── Menu board (chalkboard on wall above kitchen) ─────────────────────────
@@ -193,13 +245,20 @@ export class GameScene extends Phaser.Scene {
     // ── Kitchen ───────────────────────────────────────────────────────────────
     this.add.image(KITCHEN_X, KITCHEN_Y, 'kitchen').setOrigin(0.5, 0.5).setDepth(2);
 
-    // Zone labels
-    this.add.text(KITCHEN_X - 90, KITCHEN_Y - 24, 'COOKING', {
-      fontSize: '10px', fontFamily: 'Arial Black', color: '#FF9800', fontStyle: 'bold',
-    }).setOrigin(0.5).setDepth(3);
-    this.add.text(KITCHEN_X + 90, KITCHEN_Y - 24, '✓ READY', {
-      fontSize: '10px', fontFamily: 'Arial Black', color: '#4CAF50', fontStyle: 'bold',
-    }).setOrigin(0.5).setDepth(3);
+    // Zone labels — bold color badges, readable at a glance
+    const cookBadge = this.add.graphics().setDepth(3);
+    cookBadge.fillStyle(0xD4760A, 1);
+    cookBadge.fillRoundedRect(KITCHEN_X - 140, KITCHEN_Y - 36, 100, 22, 11);
+    this.add.text(KITCHEN_X - 90, KITCHEN_Y - 25, '🔥 COOKING', {
+      fontSize: '12px', fontFamily: 'Arial Black', color: '#FFFFFF',
+    }).setOrigin(0.5).setDepth(4);
+
+    const readyBadge = this.add.graphics().setDepth(3);
+    readyBadge.fillStyle(0x229954, 1);
+    readyBadge.fillRoundedRect(KITCHEN_X + 42, KITCHEN_Y - 36, 96, 22, 11);
+    this.add.text(KITCHEN_X + 90, KITCHEN_Y - 25, '✓ READY', {
+      fontSize: '12px', fontFamily: 'Arial Black', color: '#FFFFFF',
+    }).setOrigin(0.5).setDepth(4);
 
     // Kitchen glow — solid bold fill over the READY zone (right side of counter)
     this.kitchenGlow = this.add.graphics().setDepth(3);
@@ -207,6 +266,17 @@ export class GameScene extends Phaser.Scene {
     this.kitchenGlow.fillStyle(0x27AE60, 1.0);
     this.kitchenGlow.fillRoundedRect(KITCHEN_X + 6, KITCHEN_Y - 36, _kw * 0.46, 72, 6);
     this.kitchenGlow.setAlpha(0);
+
+    // Kitchen pickup counter ledge — front edge of counter, depth 3
+    const ledge = this.add.graphics().setDepth(3);
+    ledge.fillStyle(0x5A3010, 1);
+    ledge.fillRoundedRect(10, KITCHEN_Y + 40, GAME_WIDTH - 20, 10, 3);
+    ledge.fillStyle(0x8A5828, 1);
+    ledge.fillRoundedRect(10, KITCHEN_Y + 38, GAME_WIDTH - 20, 5, 2);
+    // "ORDER WINDOW" strip label
+    this.add.text(KITCHEN_X, KITCHEN_Y + 54, 'TAP TO PICK UP', {
+      fontSize: '8px', fontFamily: 'Arial', color: '#AA8848', letterSpacing: 2,
+    }).setOrigin(0.5).setDepth(3).setAlpha(0.7);
 
     // Ticket rail
     this.ticketRail = this.add.container(KITCHEN_X, KITCHEN_Y + 10);
@@ -264,16 +334,34 @@ export class GameScene extends Phaser.Scene {
       overlay.lineStyle(0.5, 0xE0DAD4, 0.3);
       overlay.lineBetween(tx + 55, ty + 38, tx + 55, ty + 66);
 
-      // Front chair (waiter approach side) — depth 5, fully visible below table
-      this.add.image(pos.x, pos.y + 62, 'chair').setOrigin(0.5).setDepth(5);
+      // Front chair — flipped so backrest faces away from table (toward player)
+      this.add.image(pos.x, pos.y + 62, 'chair').setOrigin(0.5).setDepth(5).setFlipY(true);
 
-      // Candle on each table
+      // Table number badge (top-right corner of tablecloth)
+      const numBg = this.add.graphics().setDepth(4);
+      numBg.fillStyle(0x7A3C10, 0.88);
+      numBg.fillRoundedRect(pos.x + 33, pos.y - 44, 20, 18, 4);
+      this.add.text(pos.x + 43, pos.y - 35, `${i + 1}`, {
+        fontSize: '11px', fontFamily: 'Arial Black', color: '#FFD700',
+      }).setOrigin(0.5).setDepth(5);
+
+      // Candle — larger, with flicker animation
       const candleKey = this.textures.exists('candle') ? 'candle' : null;
-      if (candleKey) {
-        this.add.image(pos.x + 34, pos.y - 16, candleKey).setOrigin(0.5).setDepth(3);
-      } else {
-        this.add.text(pos.x + 34, pos.y - 16, '🕯️', { fontSize: '11px' }).setOrigin(0.5).setDepth(3);
-      }
+      const candleObj = candleKey
+        ? this.add.image(pos.x + 34, pos.y - 18, candleKey).setOrigin(0.5).setDepth(3).setScale(1.4)
+        : this.add.text(pos.x + 34, pos.y - 18, '🕯️', { fontSize: '14px' }).setOrigin(0.5).setDepth(3);
+      // Flicker: each candle has a unique phase so they don't all pulse in sync
+      const flickerDelay = i * 170;
+      this.tweens.add({
+        targets: candleObj,
+        scaleX: { from: candleKey ? 1.28 : 0.92, to: candleKey ? 1.52 : 1.08 },
+        scaleY: { from: candleKey ? 1.32 : 0.96, to: candleKey ? 1.48 : 1.06 },
+        alpha: { from: 0.80, to: 1.0 },
+        duration: 380 + i * 60,
+        yoyo: true, repeat: -1,
+        ease: 'Sine.easeInOut',
+        delay: flickerDelay,
+      });
     });
 
     // ── Dishwasher station (left wall, below kitchen) ─────────────────────────
@@ -305,18 +393,50 @@ export class GameScene extends Phaser.Scene {
       fontSize: '7px', fontFamily: 'Arial Black', color: '#777777',
     }).setOrigin(0.5).setDepth(3);
 
-    // ── Entrance & Plants ─────────────────────────────────────────────────────
-    this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT - 30, 80, 16, COLORS.WALL_ACCENT);
-    this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 36, '🚪', { fontSize: '22px' }).setOrigin(0.5).setDepth(2);
-    // Door mat
-    const mat = this.add.graphics().setDepth(1);
-    mat.fillStyle(0x8B4513, 0.4); mat.fillRoundedRect(GAME_WIDTH / 2 - 40, GAME_HEIGHT - 18, 80, 10, 4);
+    // ── Entrance — proper double-door with glass panels ───────────────────────
+    const dcx = GAME_WIDTH / 2;
+    const doorGfx = this.add.graphics().setDepth(3);
+    // Outer door frame (warm mahogany arch)
+    doorGfx.fillStyle(0x7A4018, 1);
+    doorGfx.fillRoundedRect(dcx - 52, GAME_HEIGHT - 56, 104, 54, { tl: 10, tr: 10, bl: 0, br: 0 });
+    // Left door panel
+    doorGfx.fillStyle(0xB87040, 1);
+    doorGfx.fillRoundedRect(dcx - 49, GAME_HEIGHT - 52, 46, 50, { tl: 5, tr: 0, bl: 0, br: 0 });
+    // Right door panel
+    doorGfx.fillStyle(0xB87040, 1);
+    doorGfx.fillRoundedRect(dcx + 3, GAME_HEIGHT - 52, 46, 50, { tl: 0, tr: 5, bl: 0, br: 0 });
+    // Glass upper panes (warm daylight tint)
+    doorGfx.fillStyle(0xCCE8F8, 0.52);
+    doorGfx.fillRoundedRect(dcx - 46, GAME_HEIGHT - 49, 38, 22, 2);
+    doorGfx.fillRoundedRect(dcx + 8, GAME_HEIGHT - 49, 38, 22, 2);
+    // Window cross frames
+    doorGfx.fillStyle(0x7A4018, 1);
+    doorGfx.fillRect(dcx - 28, GAME_HEIGHT - 49, 2, 22); // left vertical
+    doorGfx.fillRect(dcx - 46, GAME_HEIGHT - 38, 38, 2); // left horizontal
+    doorGfx.fillRect(dcx + 26, GAME_HEIGHT - 49, 2, 22); // right vertical
+    doorGfx.fillRect(dcx + 8, GAME_HEIGHT - 38, 38, 2); // right horizontal
+    // Door handles
+    doorGfx.fillStyle(0xFFCC44, 1);
+    doorGfx.fillRoundedRect(dcx - 8, GAME_HEIGHT - 28, 8, 4, 2);
+    doorGfx.fillRoundedRect(dcx + 1, GAME_HEIGHT - 28, 8, 4, 2);
+    // Center mullion between panels
+    doorGfx.fillStyle(0x7A4018, 1);
+    doorGfx.fillRect(dcx - 3, GAME_HEIGHT - 52, 6, 50);
+    // Door mat (striped welcome mat)
+    const matGfx = this.add.graphics().setDepth(2);
+    matGfx.fillStyle(0x4A2A10, 0.65);
+    matGfx.fillRoundedRect(dcx - 56, GAME_HEIGHT - 14, 112, 13, 3);
+    matGfx.fillStyle(0x6B3A18, 0.4);
+    for (let mi = 0; mi < 5; mi++) {
+      matGfx.fillRect(dcx - 52 + mi * 20, GAME_HEIGHT - 12, 14, 9);
+    }
 
-    this.add.text(24, GAME_HEIGHT - 80, '🪴', { fontSize: '36px' }).setOrigin(0.5).setDepth(2);
-    this.add.text(GAME_WIDTH - 24, GAME_HEIGHT - 80, '🪴', { fontSize: '36px' }).setOrigin(0.5).setDepth(2);
-    // Second pair of plants near kitchen
-    this.add.text(20, 170, '🌿', { fontSize: '20px' }).setOrigin(0.5).setDepth(1);
-    this.add.text(GAME_WIDTH - 20, 170, '🌿', { fontSize: '20px' }).setOrigin(0.5).setDepth(1);
+    // Plants — moved to depth 2 so they appear in front of side walls
+    this.add.text(28, GAME_HEIGHT - 80, '🪴', { fontSize: '36px' }).setOrigin(0.5).setDepth(2);
+    this.add.text(GAME_WIDTH - 28, GAME_HEIGHT - 80, '🪴', { fontSize: '36px' }).setOrigin(0.5).setDepth(2);
+    // Kitchen-side plants — moved to x=28/452 so they sit just inside the walls
+    this.add.text(28, 172, '🌿', { fontSize: '20px' }).setOrigin(0.5).setDepth(2);
+    this.add.text(GAME_WIDTH - 28, 172, '🌿', { fontSize: '20px' }).setOrigin(0.5).setDepth(2);
   }
 
   // ─── UI ───────────────────────────────────────────────────────────────────
@@ -1184,14 +1304,37 @@ export class GameScene extends Phaser.Scene {
   }
 
   private spawnCoins(x: number, y: number) {
-    for (let i = 0; i < 5; i++) {
-      const angle = (Math.PI * 2 / 5) * i - Math.PI / 2;
-      const coin = this.add.text(x, y, '💰', { fontSize: '16px' }).setOrigin(0.5).setDepth(20);
+    // Gold burst flash
+    const flash = this.add.graphics().setDepth(19);
+    flash.fillStyle(0xFFD700, 0.4);
+    flash.fillCircle(x, y, 30);
+    this.tweens.add({
+      targets: flash, alpha: 0, scaleX: 2.8, scaleY: 2.8,
+      duration: 380, ease: 'Quad.easeOut',
+      onComplete: () => flash.destroy(),
+    });
+    // 8 gold coins arc outward
+    for (let i = 0; i < 8; i++) {
+      const angle = (Math.PI * 2 / 8) * i - Math.PI / 2;
+      const dist = 52 + (i % 2) * 14; // alternating distances
+      const coin = this.add.graphics().setDepth(20);
+      coin.fillStyle(0xFFD700, 1);
+      coin.fillCircle(0, 0, 8);
+      coin.fillStyle(0xFFFF99, 0.55);
+      coin.fillCircle(-2, -2, 4);
+      coin.lineStyle(1.5, 0xCC9900, 1);
+      coin.strokeCircle(0, 0, 8);
+      coin.setPosition(x, y).setScale(0.4);
       this.tweens.add({
         targets: coin,
-        x: x + Math.cos(angle) * 44, y: y + Math.sin(angle) * 44,
-        alpha: 0, scaleX: 0, scaleY: 0,
-        duration: 600, delay: i * 60, ease: 'Quad.easeOut',
+        x: x + Math.cos(angle) * dist,
+        y: y + Math.sin(angle) * dist - 10,
+        alpha: 0,
+        scaleX: 0,
+        scaleY: 0,
+        duration: 660,
+        delay: i * 45,
+        ease: 'Quad.easeOut',
         onComplete: () => coin.destroy(),
       });
     }

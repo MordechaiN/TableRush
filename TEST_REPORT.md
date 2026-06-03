@@ -1,5 +1,38 @@
 # TEST REPORT
 
+## v1.0 — Restaurant Immersion — 2026-06-03
+
+### Build & Type Check
+| Check | Result | Notes |
+|-------|--------|-------|
+| `tsc` (TypeScript strict) | ✅ PASS | 0 errors |
+| `vite build` | ✅ PASS | No bundle regressions |
+
+### Visual Validation (Playwright screenshots — 8 shots)
+| Feature | Result | Evidence |
+|---------|--------|----------|
+| Side walls visible (left + right) | ✅ PASS | Terracotta strips both sides, room enclosed |
+| Wall sconces | ✅ PASS | Amber glow triangles visible at y=240, y=490 |
+| Kitchen zone badges | ✅ PASS | Orange 🔥 COOKING, Green ✓ READY — bold and readable |
+| Counter ledge "TAP TO PICK UP" | ✅ PASS | Text strip below kitchen counter |
+| Chair shapes (backrest + seat + legs) | ✅ PASS | Chair shape readable, not brown squares |
+| Front chair setFlipY orientation | ✅ PASS | Backrest faces away from table |
+| Table numbers (1–5) | ✅ PASS | Gold digits on mahogany badges, top-right of each table |
+| Candle objects enlarged | ✅ PASS | Warm glow visible at table corners |
+| Entrance double door | ✅ PASS | Glass panels, cross frames, door handles, door mat visible |
+| Plants repositioned (depth 2) | ✅ PASS | Flanking entrance correctly |
+| Main menu side walls | ✅ PASS | Terracotta strips match game scene |
+| Main menu background tables | ✅ PASS | Subtle silhouettes at bottom (alpha 0.12) |
+| Version text removed | ✅ PASS | Replaced with "TABLE RUSH" brand watermark |
+| Gameplay unaffected | ✅ PASS | Customers spawn/seat, kitchen functional, player moves |
+
+### Gameplay Regression Check
+No gameplay code changed. All new elements are:
+- Pure Graphics/Image objects, no setInteractive() calls
+- At depth ≤ 5 (table zones fire at any depth via Container.setInteractive)
+- spawnCoins() replaced emoji with drawn Graphics (pure visual change)
+- All table click zones unchanged
+
 ## v0.9.3 — Restaurant Reboot — 2026-06-03
 
 ### Build & Type Check

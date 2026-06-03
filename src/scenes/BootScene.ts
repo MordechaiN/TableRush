@@ -324,15 +324,38 @@ export class BootScene extends Phaser.Scene {
     g.fillRoundedRect(12, 10, 38, 5, 3);
     g.generateTexture('table', 110, 76);
 
-    // ─── CHAIR ────────────────────────────────────────────────────────────────
+    // ─── CHAIR (top-down: backrest at top, seat below, front legs at base) ────
     g.clear();
-    g.fillStyle(COLORS.CHAIR);
-    g.fillRoundedRect(0, 0, 26, 26, 5);
-    g.fillStyle(0x7A4A27);
-    g.fillRoundedRect(2, 2, 22, 22, 4);
-    g.fillStyle(0xFFFFFF, 0.1);
-    g.fillRoundedRect(4, 4, 10, 4, 2);
-    g.generateTexture('chair', 26, 26);
+    // Back leg posts (dark, visible behind backrest)
+    g.fillStyle(0x3D1E0A);
+    g.fillRoundedRect(2, 1, 7, 6, 2);
+    g.fillRoundedRect(21, 1, 7, 6, 2);
+    // Backrest bar
+    g.fillStyle(0x7A4A20);
+    g.fillRoundedRect(1, 2, 28, 11, 3);
+    g.fillStyle(0x9B6035); // lighter face
+    g.fillRoundedRect(2, 3, 26, 9, 2);
+    // Backrest detail rails (visible spindles)
+    g.fillStyle(0x7A4A20, 0.65);
+    g.fillRect(8, 3, 3, 9);
+    g.fillRect(19, 3, 3, 9);
+    // Seat body
+    g.fillStyle(0x6B3D18);
+    g.fillRoundedRect(0, 13, 30, 19, 5);
+    // Seat top (warm wood surface)
+    g.fillStyle(0x8B5228);
+    g.fillRoundedRect(2, 14, 26, 16, 4);
+    // Seat sheen highlight
+    g.fillStyle(0xFFFFFF, 0.16);
+    g.fillRoundedRect(4, 15, 11, 5, 2);
+    // Seat outline
+    g.lineStyle(1.2, 0x4A2510, 0.5);
+    g.strokeRoundedRect(0, 13, 30, 19, 5);
+    // Front leg posts (dark corners at base)
+    g.fillStyle(0x3D1E0A);
+    g.fillRoundedRect(3, 29, 6, 5, 2);
+    g.fillRoundedRect(21, 29, 6, 5, 2);
+    g.generateTexture('chair', 30, 34);
 
     // ─── TRAY ─────────────────────────────────────────────────────────────────
     g.clear();

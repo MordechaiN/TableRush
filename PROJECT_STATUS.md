@@ -1,18 +1,19 @@
 # PROJECT STATUS
 
 **Last Updated:** 2026-06-03
-**Current Version:** v1.0
+**Current Version:** v1.1
 
 ---
 
 ## Current Focus
-Restaurant Immersion complete. Game reads as a commercial mobile product. Side walls enclose the room, chairs look like chairs, kitchen zones are instantly readable, entrance door professional.
+Restaurant Simulation v1.1 complete. Customers queue at entrance, player seats them, dirty dishes must be carried to dishwasher. Core restaurant fantasy is now real. Game loop is: enter → seat → order → cook → deliver → eat → pay → dishes → dishwasher → repeat.
 
 ## Next Candidates
 - Customer eating/happy animations (emotional reactions during eating)
-- Sound effects (order taken, food delivered, payment)
-- Menu scene — more restaurant illustration depth
-- Animated entrance (customers walking through door)
+- Sound effects (order taken, food delivered, payment, dishwasher)
+- Queue patience (guests leave if waiting too long at entrance)
+- Seating animation (customer waving/excited when seated)
+- Host stand at entrance (decorative)
 
 ## Design Documents Status (all approved)
 - [x] VISUAL_REBOOT_PLAN.md — approved, in progress
@@ -27,6 +28,7 @@ Restaurant Immersion complete. Game reads as a commercial mobile product. Side w
 - [x] P2: Retention HUD — combo visible, 5-stage escalation, progress bar, streak loss feedback, shift report ← COMPLETE
 - [x] Restaurant Reboot (v0.9.3) — seating overlay, chairs, mess graphics, instant clean, dishwasher, food inventory model ← COMPLETE
 - [x] v1.0 Restaurant Immersion — side walls, zone badges, entrance door, table numbers, candle flicker, gold coins, main menu scene ← COMPLETE
+- [x] v1.1 Restaurant Simulation — entrance queue, dirty dish carry, dishwasher station interactive, purple seating arrows, 7-step tutorial ← COMPLETE
 - [ ] Sound effects (order, delivery, payment, combo)
 - [ ] Customer eating/happy animations
 - [ ] Animated entrance customers

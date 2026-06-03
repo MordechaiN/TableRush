@@ -38,11 +38,18 @@ Fast-paced restaurant management game. Premium casual — think Overcooked/Good 
 
 ---
 
-## Current State: v1.0 RESTAURANT IMMERSION REBOOT COMPLETE
+## Current State: v1.1 RESTAURANT SIMULATION COMPLETE
 
+**v1.1: Entrance queue, dirty dish carry to dishwasher, 7-step tutorial. The game now has real restaurant simulation flow.**
 **v1.0 Restaurant Immersion: side walls, proper chairs, kitchen zone badges, double-door entrance, candle flicker, table numbers, gold coin burst, main menu restaurant context.**
-**v0.9.3 + Restaurant Immersion complete. The game now reads as a commercial mobile product.**
-**FINAL_EXPERIENCE_REVIEW.md documents all 12 improvements, 10 implemented.**
+**v0.9.3 + Restaurant Immersion complete. The game reads as a commercial mobile product.**
+
+### v1.1 Restaurant Simulation Changes
+- **Entrance queue**: customers walk to entrance, wait in slots (max 2). Player taps empty table to seat them — simultaneous walk animations.
+- **Dirty dish carry**: clicking dirty table loads tray with dirty dishes. Player must walk to dishwasher station (left wall) to deposit. Dishwasher pulses amber while dishes are held.
+- **carryingDirty flag**: blocks kitchen pickup and table seating — "→ DISHWASHER!" hint shown.
+- **'seating' table priority**: purple arrow on empty tables when queue non-empty.
+- **Tutorial**: 7 steps covering full new flow (seat → order → kitchen → deliver → pay → dishes → dishwasher).
 
 ### P2 Retention HUD Changes (v0.9.0)
 - **Combo always visible**: initializes as `×1.0` (gray, 14px) — never invisible again

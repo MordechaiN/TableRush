@@ -1,5 +1,34 @@
 # CHANGELOG
 
+## v1.1 — Restaurant Simulation Flow (2026-06-03)
+
+### Entrance Queue
+- Customers no longer teleport to tables — they walk in from the entrance and queue at the door
+- Max 2 customers waiting in visible queue slots (x=175/315, y=760)
+- Empty tables show a purple 'seating' arrow when queue is non-empty
+- Player taps any empty table → player and queued customer walk simultaneously to the table
+- Queue repositions when front customer is seated
+
+### Dirty Dish Carry System
+- Clicking dirty table now picks up dishes (player walks to table, dishes appear on tray)
+- Tray shows 🍽️ with brown-tinted plate — clearly distinct from food delivery
+- `carryingDirty = true` state: all table/kitchen taps blocked with "→ DISHWASHER!" hint
+- Dishwasher station (left wall, y=172–220) pulses amber when dishes need depositing
+- Player taps dishwasher to deposit → `carryingDirty = false` → seating arrows update
+
+### Tutorial (7 Steps)
+- Updated from 6 to 7 tutorial steps to cover the full simulation flow
+- Step 0: seat waiting guest at entrance
+- Steps 1–4: take order, kitchen, deliver, pay (unchanged mechanics)
+- Step 5: pick up dirty dishes from table
+- Step 6: deposit at dishwasher
+
+### Table Priority Arrow Added
+- `'seating'`: purple (0x9B59B6), 700ms pulse — shows which empty tables can accept a queued guest
+- updateActionPriority: carryingDirty early return (dishwasher is sole priority)
+
+---
+
 ## v1.0 — Restaurant Immersion Reboot (2026-06-03)
 
 ### The Room Is Now Real

@@ -56,6 +56,7 @@ export class Table extends Phaser.GameObjects.Container {
     this.state = 'empty';
     this.customerId = -1;
     this.dirtOverlay.setVisible(false);
+    this.tableBody.clearTint();
     this.clearPulse();
   }
 
@@ -63,6 +64,7 @@ export class Table extends Phaser.GameObjects.Container {
     this.state = 'occupied';
     this.customerId = customerId;
     this.dirtOverlay.setVisible(false);
+    this.tableBody.clearTint();
     this.clearPulse();
   }
 
@@ -71,6 +73,7 @@ export class Table extends Phaser.GameObjects.Container {
     this.customerId = -1;
     this.drawDirtOverlay();
     this.dirtOverlay.setVisible(true);
+    this.tableBody.setTint(0xFF6622);
     this.setPriority('dirty');
   }
 
@@ -194,7 +197,7 @@ export class Table extends Phaser.GameObjects.Container {
   }
 
   setUrgencyLevel(isPrimary: boolean) {
-    const newBaseScale = isPrimary ? 1.0 : 0.35;
+    const newBaseScale = isPrimary ? 1.0 : 0.25;
     if (this.arrowBaseScale === newBaseScale) return;
     this.arrowBaseScale = newBaseScale;
     if (this.currentPriority !== 'none') {
@@ -214,8 +217,8 @@ export class Table extends Phaser.GameObjects.Container {
 
   private drawArrow(color: number, isUrgent = false) {
     this.actionArrow.clear();
-    const w = isUrgent ? 18 : 15;
-    const h = isUrgent ? 14 : 12;
+    const w = isUrgent ? 25 : 20;
+    const h = isUrgent ? 20 : 16;
     // Drop shadow
     this.actionArrow.fillStyle(0x000000, 0.28);
     this.actionArrow.fillTriangle(-(w - 1), -8, (w - 1), -8, 0, h + 2);

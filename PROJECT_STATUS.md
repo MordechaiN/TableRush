@@ -1,12 +1,12 @@
 # PROJECT STATUS
 
 **Last Updated:** 2026-06-03
-**Current Version:** v1.2
+**Current Version:** v1.3
 
 ---
 
 ## Current Focus
-Living Restaurant v1.2 complete. The restaurant now breathes: customers shuffle, tap, chew, and wave based on their state. Rush hour waves at 60s and 150s. VIP customers glow gold. Queued customers leave if ignored. The player is the visual hero at 1.25×.
+Visual Clarity Pass v1.3 complete. Dirty tables now flash orange — impossible to miss. Action arrows are 33-39% larger. Ready tickets pop with a scale-punch. Kitchen UI decluttered (removed noise label). Customer seats 4px higher for better table-depth illusion.
 
 ## Next Candidates
 - Sound effects (order taken, food delivered, payment, dishwasher burst, rush hour siren)
@@ -30,6 +30,7 @@ Living Restaurant v1.2 complete. The restaurant now breathes: customers shuffle,
 - [x] v1.0 Restaurant Immersion — side walls, zone badges, entrance door, table numbers, candle flicker, gold coins, main menu scene ← COMPLETE
 - [x] v1.1 Restaurant Simulation — entrance queue, dirty dish carry, dishwasher station interactive, purple seating arrows, 7-step tutorial ← COMPLETE
 - [x] v1.2 Living Restaurant — idle behaviors, rush hour, VIP customer, queue patience, player 1.25×, dishwasher steam ← COMPLETE
+- [x] v1.3 Visual Clarity — dirty table orange tint, arrows 33% larger, ready ticket pop, kitchen UI cleaner, customer seated 4px higher ← COMPLETE
 - [ ] Sound effects (order, delivery, payment, combo)
 - [ ] Customer eating/happy animations
 - [ ] Animated entrance customers

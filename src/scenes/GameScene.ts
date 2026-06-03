@@ -283,10 +283,6 @@ export class GameScene extends Phaser.Scene {
     ledge.fillRoundedRect(10, KITCHEN_Y + 40, GAME_WIDTH - 20, 10, 3);
     ledge.fillStyle(0x8A5828, 1);
     ledge.fillRoundedRect(10, KITCHEN_Y + 38, GAME_WIDTH - 20, 5, 2);
-    // "ORDER WINDOW" strip label
-    this.add.text(KITCHEN_X, KITCHEN_Y + 54, 'TAP TO PICK UP', {
-      fontSize: '8px', fontFamily: 'Arial', color: '#AA8848', letterSpacing: 2,
-    }).setOrigin(0.5).setDepth(3).setAlpha(0.7);
 
     // Ticket rail
     this.ticketRail = this.add.container(KITCHEN_X, KITCHEN_Y + 10);
@@ -656,7 +652,7 @@ export class GameScene extends Phaser.Scene {
 
     this.player.walkTo(table.x, table.y + 40, onBothArrived);
     this.tweens.add({
-      targets: customer, x: table.x, y: table.y - 20,
+      targets: customer, x: table.x, y: table.y - 24,
       duration: 700, ease: 'Quad.easeOut',
       onComplete: onBothArrived,
     });
@@ -846,6 +842,13 @@ export class GameScene extends Phaser.Scene {
         fontSize: '14px', color: COLORS.TEXT_GOLD, fontStyle: 'bold',
       }).setOrigin(0.5);
       order.ticketObj.add(badge);
+
+      // Scale-punch the ticket so the player notices it's ready
+      this.tweens.add({
+        targets: order.ticketObj,
+        scaleX: { from: 1.0, to: 1.38 }, scaleY: { from: 1.0, to: 1.38 },
+        duration: 160, ease: 'Back.easeOut', yoyo: true,
+      });
     }
     this.updateKitchenGlow();
   }

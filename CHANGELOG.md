@@ -1,5 +1,25 @@
 # CHANGELOG
 
+## v1.3 — Visual Clarity Pass (2026-06-03)
+
+### Dirty Table Readability
+- Dirty table body now receives orange tint (0xFF6622) — unmistakable at a glance
+- Tint cleared on `setEmpty()` and `setOccupied()` — clean tables always look clean
+
+### Action Arrow Size
+- Normal arrows: 15×12 → 20×16 (33% larger)
+- Urgent arrows: 18×14 → 25×20 (39% larger)
+- Secondary urgency scale: 0.35 → 0.25 (primary arrows more dominant)
+
+### Kitchen Noise Reduction
+- Removed "TAP TO PICK UP" label from kitchen counter ledge — cleaner UI
+- Ready ticket now scale-punches (1.38×) when food is done — unmissable cue
+
+### Customer Seating Position
+- Customer vertical position: table.y-20 → table.y-24 (4px higher = more "seated behind table")
+
+---
+
 ## v1.2 — Living Restaurant (2026-06-03)
 
 ### Waiter Rework

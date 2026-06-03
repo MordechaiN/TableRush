@@ -1,5 +1,39 @@
 # CHANGELOG
 
+## v1.0.0 — Public Release (2026-06-03)
+
+### Scene Polish: Settings
+- Full tile background + side walls + amber top wall bar (matches game scene)
+- White card panel with rounded corners and section dividers
+- AUDIO section header with Sound Effects + Music toggles
+- "🎵 Audio coming in a future update" — honest, clear expectation-setting
+- PROGRESS section showing current Level + High Score inline
+- `TableRush v1.0.0` label at bottom of card
+- Hover effect on Reset Progress button
+
+### Scene Polish: Credits
+- Full tile background + side walls + amber top wall bar
+- White card panel with per-entry divider lines
+- Added "🍽️ Made with care, one table at a time." closing quote
+- Version and copyright inside the card: `TableRush v1.0.0` + `© 2026 Mordechai Neeman`
+- Replaced robotics emoji 💻 with 🤖 for Implementation credit
+
+### Scene Polish: Main Menu
+- Background table silhouettes improved: show table + tablecloth + four chairs at 0.07 alpha
+- Bottom empty area filled with animated food emoji row (🥗 🍔 🍝 🍣 🍕) at y≈710
+- Version watermark "v1.0.0" replaces "TABLE RUSH" duplicate text
+
+### Version Numbers
+- `package.json` version: `0.1.0` → `1.0.0`
+- `CreditsScene.ts`: `v0.2.0` → `v1.0.0`
+- `SettingsScene.ts`: Added `v1.0.0` label
+
+### Documentation
+- Created `RELEASE_CHECKLIST.md` — full definition-of-done tracking
+- Updated `PROJECT_STATUS.md` to v1.0.0
+
+---
+
 ## v1.4 — Alpha Build (2026-06-03)
 
 ### Table State Visuals

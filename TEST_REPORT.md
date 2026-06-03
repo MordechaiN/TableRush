@@ -1,5 +1,51 @@
 # TEST REPORT
 
+## v1.0.0 — Public Release — 2026-06-03
+
+### Build & Type Check
+| Check | Result | Notes |
+|-------|--------|-------|
+| `tsc --noEmit` | ✅ PASS | 0 errors, strict mode |
+| Browser console | ✅ PASS | Zero JavaScript errors |
+| GPU warnings | ✅ EXPECTED | ReadPixels from headless Playwright only |
+
+### Scene Visual Validation (Playwright screenshots)
+| Scene | Result | Key Checks |
+|-------|--------|------------|
+| Main Menu | ✅ PASS | Logo, food emojis, level/score bar, food row at bottom, v1.0.0 watermark |
+| Settings | ✅ PASS | Tile bg + walls, card panel, AUDIO/PROGRESS sections, audio note, v1.0.0 |
+| Credits | ✅ PASS | Tile bg + walls, card panel, dividers, v1.0.0 label, copyright |
+| Game Scene | ✅ PASS | Kitchen zones, tables, chairs, host stand, dishwasher, queue zone |
+| Pause | ✅ PASS | Modal overlay, RESUME/RESTART/MAIN MENU buttons |
+| Game Over | ✅ PASS | Animated stars, confetti, score count-up, shift report, XP bar |
+
+### Gameplay Loop Validation (end-to-end)
+| Step | Result | Notes |
+|------|--------|-------|
+| Customer queue | ✅ | Customer appears in WAIT HERE zone |
+| Seat customer | ✅ | Player walks to table, customer sits, menu booklet appears |
+| Take order | ✅ | Ticket slip appears on table, order in kitchen COOKING zone |
+| Food ready | ✅ | READY zone glows green, ready tick pop animation |
+| Pick up food | ✅ | Player carries food on tray |
+| Deliver food | ✅ | Plate visual appears on table, score +points |
+| Customer eating | ✅ | Eat progress bar fills |
+| Paying | ✅ | Bill/check folder on table, gold arrow, $XX speech bubble |
+| Collect payment | ✅ | Score +points, customer leaves |
+| Dirty table | ✅ | Orange tint + full dirt overlay (plates/crumbs/glass) |
+| Clean dishes | ✅ | Player picks up, carries to dishwasher |
+| Dishwasher | ✅ | Steam animation, ✨ Clean! float |
+
+### Version Consistency Check
+| Location | Expected | Actual | Status |
+|----------|----------|--------|--------|
+| package.json | 1.0.0 | 1.0.0 | ✅ |
+| CreditsScene.ts | v1.0.0 | v1.0.0 | ✅ |
+| SettingsScene.ts | v1.0.0 | v1.0.0 | ✅ |
+| CHANGELOG.md | v1.0.0 entry | present | ✅ |
+| PROJECT_STATUS.md | v1.0.0 | v1.0.0 | ✅ |
+
+---
+
 ## v1.0 — Restaurant Immersion — 2026-06-03
 
 ### Build & Type Check

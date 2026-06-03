@@ -1,12 +1,12 @@
 # PROJECT STATUS
 
 **Last Updated:** 2026-06-03
-**Current Version:** v1.4 (Alpha)
+**Current Version:** v1.0.0 (Public Release)
 
 ---
 
 ## Current Focus
-Alpha build v1.4 complete. Full playable loop validated: queue → seat → order → cook → deliver → eat → pay → dirty → clean. All table states now have on-table visual objects (menu booklet, ticket slip, plate with food, bill/check folder). Kitchen COOKING/READY zones clearly differentiated. Restaurant has host stand, queue zone, recipe strip, dining area tint. Tutorial compact card non-intrusive. Zero console errors.
+v1.0.0 PUBLIC RELEASE — complete, polished, fully playable. All scenes have consistent visual language (tile floor, side walls, amber top bar, card panels). Full game loop tested end-to-end. Zero console errors. No placeholder art or stale version numbers. Full playable loop validated: queue → seat → order → cook → deliver → eat → pay → dirty → clean. All table states now have on-table visual objects (menu booklet, ticket slip, plate with food, bill/check folder). Kitchen COOKING/READY zones clearly differentiated. Restaurant has host stand, queue zone, recipe strip, dining area tint. Tutorial compact card non-intrusive. Zero console errors.
 
 ## Next Candidates
 - Sound effects (order taken, food delivered, payment, dishwasher burst, rush hour siren)
@@ -33,7 +33,8 @@ Alpha build v1.4 complete. Full playable loop validated: queue → seat → orde
 - [x] v1.2 Living Restaurant — idle behaviors, rush hour, VIP customer, queue patience, player 1.25×, dishwasher steam ← COMPLETE
 - [x] v1.3 Visual Clarity — dirty table orange tint, arrows 33% larger, ready ticket pop, kitchen UI cleaner, customer seated 4px higher ← COMPLETE
 - [x] v1.4 Alpha — table state visuals (menu/ticket/plate/bill), kitchen COOKING/READY zones, host stand, queue zone, recipe strip, compact tutorial, menu board fix ← COMPLETE
-- [ ] Sound effects (order, delivery, payment, combo)
+- [x] v1.0.0 Release — Settings/Credits scene polish, tile backgrounds, card panels, version numbers, food emoji row, RELEASE_CHECKLIST.md ← COMPLETE
+- [ ] v1.1 — Sound effects (order, delivery, payment, combo)
 - [ ] Customer eating/happy animations
 - [ ] Animated entrance customers
 - [ ] P4: Table redesign (clean cloth, numbered)

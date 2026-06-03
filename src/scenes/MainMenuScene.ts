@@ -49,11 +49,21 @@ export class MainMenuScene extends Phaser.Scene {
     shafts.fillStyle(0xFFEE88, 0.05);
     shafts.fillTriangle(GAME_WIDTH - 24, 90, GAME_WIDTH - 180, 90, GAME_WIDTH - 110, 500);
 
-    // ── Background table silhouettes (depth = atmosphere) ────────────────────
-    const bgTables = this.add.graphics().setAlpha(0.12);
-    [[120, 580], [360, 580], [240, 730]].forEach(([tx, ty]) => {
+    // ── Background table silhouettes — very subtle atmosphere ───────────────
+    const bgTables = this.add.graphics().setAlpha(0.07);
+    [[100, 590], [380, 590], [240, 730]].forEach(([tx, ty]) => {
+      // Table body
       bgTables.fillStyle(0x8B4513, 1);
-      bgTables.fillRoundedRect(tx - 45, ty - 28, 90, 56, 8);
+      bgTables.fillRoundedRect(tx - 52, ty - 30, 104, 60, 8);
+      // Tablecloth
+      bgTables.fillStyle(0xFDFAF6, 1);
+      bgTables.fillRoundedRect(tx - 48, ty - 28, 96, 48, 6);
+      // Chair silhouettes
+      bgTables.fillStyle(0x5C3317, 1);
+      bgTables.fillRoundedRect(tx - 28, ty + 22, 20, 22, 3);
+      bgTables.fillRoundedRect(tx + 8, ty + 22, 20, 22, 3);
+      bgTables.fillRoundedRect(tx - 28, ty - 48, 20, 20, 3);
+      bgTables.fillRoundedRect(tx + 8, ty - 48, 20, 20, 3);
     });
 
     // Logo
@@ -108,10 +118,22 @@ export class MainMenuScene extends Phaser.Scene {
     this.makeBtn(cx, btnY + 68, 'SETTINGS', 'btn_green', () => this.scene.start('SettingsScene'));
     this.makeBtn(cx, btnY + 136, 'CREDITS', 'btn_green', () => this.scene.start('CreditsScene'));
 
-    // Version (subtle, not a prototype signal)
-    this.add.text(cx, GAME_HEIGHT - 10, 'TABLE RUSH', {
-      fontSize: '9px', fontFamily: 'Arial', color: '#C8A060', letterSpacing: 3,
-    }).setOrigin(0.5).setAlpha(0.5);
+    // Decorative food row below buttons — fills lower empty space
+    const foodRow = ['🥗', '🍔', '🍝', '🍣', '🍕'];
+    foodRow.forEach((emoji, i) => {
+      const ex = 52 + i * 92;
+      const ey = 710 + (i % 2 === 0 ? 0 : 14);
+      const fe = this.add.text(ex, ey, emoji, { fontSize: '28px' }).setOrigin(0.5).setAlpha(0.55);
+      this.tweens.add({
+        targets: fe, y: ey - 8,
+        duration: 1200 + i * 150, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
+      });
+    });
+
+    // Version watermark
+    this.add.text(cx, GAME_HEIGHT - 10, 'v1.0.0', {
+      fontSize: '11px', fontFamily: 'Arial', color: '#C8A060', letterSpacing: 2,
+    }).setOrigin(0.5).setAlpha(0.6);
   }
 
   private makeBtn(x: number, y: number, label: string, tex: string, cb: () => void) {

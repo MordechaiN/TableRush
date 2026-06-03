@@ -69,6 +69,9 @@ export class GameScene extends Phaser.Scene {
   private kitchenGlowTween: Phaser.Tweens.Tween | null = null;
   private dishwasherGlow!: Phaser.GameObjects.Graphics;
   private dishwasherGlowTween: Phaser.Tweens.Tween | null = null;
+
+  private rushHourActive = false;
+  private rushHourOverlay!: Phaser.GameObjects.Graphics;
   private ticketRail!: Phaser.GameObjects.Container;
 
   private steamTimer: Phaser.Time.TimerEvent | null = null;
@@ -96,6 +99,7 @@ export class GameScene extends Phaser.Scene {
     this.carryingOrderId = -1;
     this.carryingDirty = false;
     this.waitingQueue = [];
+    this.rushHourActive = false;
     this.kitchenOrders = [];
     this.nextOrderId = 0;
     this.nextCustomerId = 0;
@@ -446,6 +450,11 @@ export class GameScene extends Phaser.Scene {
       matGfx.fillRect(dcx - 52 + mi * 20, GAME_HEIGHT - 12, 14, 9);
     }
 
+    // Rush hour overlay (hidden by default — subtle full-screen red warmth during rush)
+    this.rushHourOverlay = this.add.graphics().setDepth(1).setAlpha(0);
+    this.rushHourOverlay.fillStyle(0xFF2200, 1);
+    this.rushHourOverlay.fillRect(0, 88, GAME_WIDTH, GAME_HEIGHT - 88);
+
     // Plants — moved to depth 2 so they appear in front of side walls
     this.add.text(28, GAME_HEIGHT - 80, '🪴', { fontSize: '36px' }).setOrigin(0.5).setDepth(2);
     this.add.text(GAME_WIDTH - 28, GAME_HEIGHT - 80, '🪴', { fontSize: '36px' }).setOrigin(0.5).setDepth(2);
@@ -493,7 +502,8 @@ export class GameScene extends Phaser.Scene {
     const elapsed = (this.time.now - this.gameStartMs) / 1000;
     const tier = this.getDifficultyTier(elapsed);
     const progress = Math.min(1, elapsed / tier.maxTime);
-    const interval = Phaser.Math.Linear(tier.spawnStart, tier.spawnEnd, progress);
+    const baseInterval = Phaser.Math.Linear(tier.spawnStart, tier.spawnEnd, progress);
+    const interval = this.rushHourActive ? baseInterval * 0.5 : baseInterval;
 
     this.spawnTimer = this.time.addEvent({
       delay: interval,
@@ -513,7 +523,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private tryEnqueueCustomer() {
-    const MAX_QUEUE = 2;
+    const MAX_QUEUE = this.rushHourActive ? 3 : 2;
     if (this.waitingQueue.length >= MAX_QUEUE) return;
     if (this.tutorialActive && this.customers.size >= 1) return;
 
@@ -529,6 +539,11 @@ export class GameScene extends Phaser.Scene {
     this.waitingQueue.push(customer);
     customer.state = 'entering';
 
+    // VIP chance: 10% outside rush hour only
+    if (!this.rushHourActive && !this.tutorialActive && Math.random() < 0.10) {
+      customer.makeVIP();
+    }
+
     this.tweens.add({
       targets: customer,
       x: qPos.x, y: qPos.y,
@@ -536,15 +551,57 @@ export class GameScene extends Phaser.Scene {
       onComplete: () => {
         customer.seatBounce();
         customer.showNameBanner();
+        customer.startIdleBehavior();
+
+        // Queue patience: 18 seconds before leaving
+        customer.queueTimeout = this.time.delayedCall(18000, () => {
+          if (this.waitingQueue.includes(customer)) this.removeCustomerFromQueue(customer);
+        });
+
         this.updateSeatingArrows();
       },
     });
   }
 
+  private removeCustomerFromQueue(customer: Customer) {
+    const idx = this.waitingQueue.indexOf(customer);
+    if (idx === -1 || customer.state === 'leaving') return;
+    this.waitingQueue.splice(idx, 1);
+    this.repositionQueue();
+    this.updateSeatingArrows();
+
+    customer.stopIdleBehavior();
+    customer.state = 'leaving';
+    customer.showAngryBubble();
+    this.customersAngry++;
+
+    const elapsed = (this.time.now - this.gameStartMs) / 1000;
+    const tier = this.getDifficultyTier(elapsed);
+    this.score = Math.max(0, this.score - Math.floor(tier.penalty * 0.5));
+    this.scoreTxt.setText(`🍽️  ${this.score}`);
+    this.showFloating('Left! 😡', customer.x, customer.y - 50, COLORS.TEXT_RED);
+    this.cameras.main.shake(100, 0.002);
+    this.resetCombo();
+
+    this.time.delayedCall(400, () => {
+      const cid = this.getCustomerIdByInstance(customer);
+      this.tweens.add({
+        targets: customer, y: GAME_HEIGHT + 60, alpha: 0,
+        duration: 500, ease: 'Quad.easeIn',
+        onComplete: () => {
+          if (cid !== -1) this.customers.delete(cid);
+          customer.cleanup();
+          customer.destroy();
+        },
+      });
+    });
+  }
+
   private getQueuePosition(idx: number): { x: number; y: number } {
     const slots = [
-      { x: 175, y: 760 },
-      { x: 315, y: 760 },
+      { x: 160, y: 760 },
+      { x: 245, y: 770 },
+      { x: 330, y: 760 },
     ];
     return slots[Math.min(idx, slots.length - 1)];
   }
@@ -572,6 +629,8 @@ export class GameScene extends Phaser.Scene {
     table.clearPulse();
 
     const customer = this.waitingQueue.shift()!;
+    // Cancel queue patience timeout
+    if (customer.queueTimeout) { customer.queueTimeout.remove(); customer.queueTimeout = null; }
     this.repositionQueue();
     this.updateSeatingArrows();
 
@@ -588,6 +647,7 @@ export class GameScene extends Phaser.Scene {
       customer.startPatience();
       customer.showRequestBubble();
       customer.seatBounce();
+      customer.startIdleBehavior();
       table.setPriority('requesting');
       this.playerBusy = false;
 
@@ -605,6 +665,10 @@ export class GameScene extends Phaser.Scene {
   // ─── Game Timer ───────────────────────────────────────────────────────────
 
   private startGameTimer() {
+    // Rush hour waves at 60s and 150s into the session
+    this.time.delayedCall(60000, () => this.startRushHour());
+    this.time.delayedCall(150000, () => this.startRushHour());
+
     this.gameTimer = this.time.addEvent({
       delay: 1000,
       callback: () => {
@@ -801,7 +865,7 @@ export class GameScene extends Phaser.Scene {
         return;
       }
 
-      this.player.bounce();
+      this.player.deliverAnim();
       customer.patienceAtDelivery = customer.getPatienceFraction();
       customer.hideBubble();
       customer.state = 'eating';
@@ -861,14 +925,22 @@ export class GameScene extends Phaser.Scene {
     table.clearPulse();
 
     this.player.walkTo(table.x, table.y + 40, () => {
-      this.player.bounce();
+      this.player.deliverAnim();
 
       const tip = Math.floor(customer.order!.price * customer.patienceAtDelivery * 0.3);
-      const payScore = Math.floor((customer.order!.price + tip) * 5 * this.comboMultiplier);
+      const vipMult = customer.isVIP ? 2.5 : 1.0;
+      const payScore = Math.floor((customer.order!.price + tip) * 5 * this.comboMultiplier * vipMult);
       this.addScore(payScore);
       const paySize = this.comboMultiplier >= 5 ? 1.8 : this.comboMultiplier >= 4 ? 1.5 : this.comboMultiplier >= 3 ? 1.25 : 1;
       this.showFloating(`💰 $${payScore}`, table.x, table.y - 50, COLORS.TEXT_GOLD, paySize);
       this.spawnCoins(table.x, table.y);
+
+      if (customer.isVIP) {
+        this.time.delayedCall(200, () => {
+          this.showFloating('⭐ VIP! ×2.5', table.x, table.y - 100, COLORS.TEXT_GOLD);
+          this.cameras.main.flash(140, 255, 220, 0, false);
+        });
+      }
 
       this.customersHappy++;
       this.incrementCombo();
@@ -880,6 +952,7 @@ export class GameScene extends Phaser.Scene {
         });
       }
 
+      customer.stopIdleBehavior();
       customer.hideBubble();
       customer.state = 'leaving';
       customer.stopPatience();
@@ -891,6 +964,7 @@ export class GameScene extends Phaser.Scene {
         onComplete: () => {
           const id = this.getCustomerIdByInstance(customer);
           if (id !== -1) this.customers.delete(id);
+          customer.cleanup();
           customer.destroy();
         },
       });
@@ -908,7 +982,7 @@ export class GameScene extends Phaser.Scene {
     this.playerBusy = true;
     table.clearPulse();
     this.player.walkTo(table.x, table.y + 40, () => {
-      this.player.bounce();
+      this.player.collectAnim();
       table.setEmpty();
       table.flashClean();
       this.updateSeatingArrows();
@@ -941,6 +1015,7 @@ export class GameScene extends Phaser.Scene {
       this.setDishwasherGlowPrimary(false);
       this.updateSeatingArrows();
       this.showFloating('✨ Clean!', 80, 180, COLORS.TEXT_GREEN);
+      this.spawnDishwasherSteam();
       this.playerBusy = false;
 
       if (this.tutorialActive && this.tutorialStep === 6) {
@@ -960,6 +1035,53 @@ export class GameScene extends Phaser.Scene {
       alpha: { from: 0.12, to: 0.40 },
       duration: 380, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
     });
+  }
+
+  private startRushHour() {
+    if (this.rushHourActive) return;
+    this.rushHourActive = true;
+
+    this.triggerCelebration('⚡ RUSH HOUR! ⚡', '#FF4444');
+    this.cameras.main.shake(280, 0.005);
+
+    this.tweens.add({
+      targets: this.rushHourOverlay,
+      alpha: 0.045,
+      duration: 600, ease: 'Quad.easeOut',
+    });
+
+    this.time.delayedCall(25000, () => this.endRushHour());
+  }
+
+  private endRushHour() {
+    if (!this.rushHourActive) return;
+    this.rushHourActive = false;
+
+    this.tweens.add({
+      targets: this.rushHourOverlay, alpha: 0,
+      duration: 1000, ease: 'Quad.easeOut',
+    });
+    this.showFloating('😌 Rush is over', GAME_WIDTH / 2, GAME_HEIGHT / 2 - 30, '#88CCFF');
+  }
+
+  private spawnDishwasherSteam() {
+    for (let i = 0; i < 6; i++) {
+      const sx = 12 + Math.random() * 46;
+      const steam = this.add.graphics().setDepth(4);
+      steam.fillStyle(0xFFFFFF, 0.28 + Math.random() * 0.18);
+      steam.fillCircle(0, 0, 4 + Math.random() * 4);
+      steam.setPosition(sx, 174);
+      this.tweens.add({
+        targets: steam,
+        y: 174 - 35 - Math.random() * 30,
+        x: sx + (Math.random() - 0.5) * 22,
+        alpha: 0, scale: 2.2,
+        duration: 550 + Math.random() * 350,
+        delay: i * 70,
+        ease: 'Quad.easeOut',
+        onComplete: () => steam.destroy(),
+      });
+    }
   }
 
   // ─── Score / Combo ────────────────────────────────────────────────────────
@@ -1334,6 +1456,8 @@ export class GameScene extends Phaser.Scene {
       this.updateSeatingArrows();
     }
 
+    customer.stopIdleBehavior();
+
     this.time.delayedCall(400, () => {
       this.tweens.add({
         targets: customer,
@@ -1341,6 +1465,7 @@ export class GameScene extends Phaser.Scene {
         duration: 500, ease: 'Quad.easeIn',
         onComplete: () => {
           this.customers.delete(id);
+          customer.cleanup();
           customer.destroy();
         },
       });

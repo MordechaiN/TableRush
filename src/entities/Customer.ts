@@ -19,6 +19,8 @@ export class Customer extends Phaser.GameObjects.Container {
   public order: OrderItem | null = null;
   public readonly variantIndex: number;
   public patienceAtDelivery = 1.0;
+  public isVIP = false;
+  public queueTimeout: Phaser.Time.TimerEvent | null = null;
 
   private bodySprite!: Phaser.GameObjects.Image;
   private face!: Phaser.GameObjects.Graphics;
@@ -28,6 +30,7 @@ export class Customer extends Phaser.GameObjects.Container {
   private bubble!: Phaser.GameObjects.Container;
   private bubbleTween: Phaser.Tweens.Tween | null = null;
   private lastMood = '';
+  private idleTimer: Phaser.Time.TimerEvent | null = null;
 
   private maxPatience: number;
   private patience: number;
@@ -178,6 +181,77 @@ export class Customer extends Phaser.GameObjects.Container {
         });
       },
     });
+  }
+
+  makeVIP() {
+    this.isVIP = true;
+    this.bodySprite.setTint(0xFFBB00);
+    this.maxPatience = Math.floor(this.maxPatience * 0.7);
+    this.patience = this.maxPatience;
+
+    const crown = this.scene.add.text(0, -105, '👑', { fontSize: '18px' }).setOrigin(0.5);
+    this.add(crown);
+    this.scene.tweens.add({
+      targets: crown, y: { from: -100, to: -112 },
+      duration: 800, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
+    });
+  }
+
+  startIdleBehavior() {
+    this.stopIdleBehavior();
+    this.scheduleNextIdle();
+  }
+
+  stopIdleBehavior() {
+    if (this.idleTimer) { this.idleTimer.remove(); this.idleTimer = null; }
+  }
+
+  cleanup() {
+    this.stopIdleBehavior();
+    if (this.queueTimeout) { this.queueTimeout.remove(); this.queueTimeout = null; }
+    if (this.bubbleTween) { this.bubbleTween.stop(); this.bubbleTween = null; }
+  }
+
+  private scheduleNextIdle() {
+    const delay = 1800 + Math.random() * 2800;
+    this.idleTimer = this.scene.time.delayedCall(delay, () => {
+      this.doIdleAction();
+      if (this.state !== 'leaving') this.scheduleNextIdle();
+    });
+  }
+
+  private doIdleAction() {
+    if (this.state === 'leaving' || this.state === 'entering') return;
+
+    if (this.state === 'requesting' || this.state === 'ordering') {
+      // Shuffle: horizontal wiggle
+      this.scene.tweens.add({
+        targets: this.bodySprite,
+        x: { from: -3, to: 3 },
+        duration: 90, yoyo: true, repeat: 2, ease: 'Sine.easeInOut',
+      });
+    } else if (this.state === 'waiting_food') {
+      // Tap table: lean forward
+      this.scene.tweens.add({
+        targets: this.bodySprite,
+        y: { from: 0, to: 5 },
+        duration: 140, yoyo: true, ease: 'Quad.easeOut',
+      });
+    } else if (this.state === 'eating') {
+      // Chewing bob
+      this.scene.tweens.add({
+        targets: this.bodySprite,
+        y: { from: 0, to: -4 },
+        duration: 110, yoyo: true, repeat: 4, ease: 'Quad.easeInOut',
+      });
+    } else if (this.state === 'paying') {
+      // Wave for attention: wider wiggle
+      this.scene.tweens.add({
+        targets: this.bodySprite,
+        x: { from: -5, to: 5 },
+        duration: 75, yoyo: true, repeat: 4, ease: 'Sine.easeInOut',
+      });
+    }
   }
 
   private buildBubble(content: string, borderColor: number) {

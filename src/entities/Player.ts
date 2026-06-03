@@ -33,6 +33,7 @@ export class Player extends Phaser.GameObjects.Container {
     this.add(this.face);
 
     this.setDepth(17);
+    this.setScale(1.25);
     scene.add.existing(this);
     this.drawFace('normal');
     this.startIdleAnim();
@@ -64,14 +65,34 @@ export class Player extends Phaser.GameObjects.Container {
     this.clearCarry();
     this.trayImage = this.scene.add.image(0, -44, 'tray');
     this.add(this.trayImage);
-    // Plate background under the food emoji
     const plateKey = this.scene.textures.exists('food_plate') ? 'food_plate' : null;
     if (plateKey) {
-      this.plateImage = this.scene.add.image(0, -55, plateKey);
+      this.plateImage = this.scene.add.image(0, -56, plateKey);
       this.add(this.plateImage);
     }
-    this.trayLabel = this.scene.add.text(0, -53, emoji, { fontSize: '18px' }).setOrigin(0.5);
+    this.trayLabel = this.scene.add.text(0, -54, emoji, { fontSize: '24px' }).setOrigin(0.5);
     this.add(this.trayLabel);
+  }
+
+  // Enhanced animations for delivery and collection
+  deliverAnim() {
+    this.scene.tweens.add({
+      targets: this.sprite,
+      y: { from: 0, to: -12 },
+      scaleX: { from: 1, to: 1.18 },
+      scaleY: { from: 1, to: 1.18 },
+      duration: 160, yoyo: true, ease: 'Back.easeOut',
+    });
+  }
+
+  collectAnim() {
+    this.scene.tweens.add({
+      targets: this.sprite,
+      y: { from: 0, to: 9 },
+      scaleX: { from: 1, to: 0.88 },
+      scaleY: { from: 1, to: 0.88 },
+      duration: 140, yoyo: true, ease: 'Quad.easeIn',
+    });
   }
 
   carryDishes() {

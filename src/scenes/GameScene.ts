@@ -89,6 +89,8 @@ export class GameScene extends Phaser.Scene {
   private tutorialActive = false;
   private tutorialOverlay!: Phaser.GameObjects.Container;
   private tutorialWaitingForAction = false;
+  private tutorialSpotlight: Phaser.GameObjects.Graphics | null = null;
+  private tutorialSpotlightTween: Phaser.Tweens.Tween | null = null;
 
   constructor() { super({ key: 'GameScene' }); }
 
@@ -263,20 +265,38 @@ export class GameScene extends Phaser.Scene {
       });
     });
 
-    // ── Wall art ──────────────────────────────────────────────────────────────
-    if (this.textures.exists('wall_frame')) {
-      this.add.image(76, 45, 'wall_frame').setOrigin(0.5).setDepth(1);
-      this.add.image(GAME_WIDTH - 76, 45, 'wall_frame').setOrigin(0.5).setDepth(1);
-    } else {
-      // Fallback: simple drawn frames
-      [[76, 45], [GAME_WIDTH - 76, 45]].forEach(([fx, fy]) => {
-        const fr = this.add.graphics().setDepth(1);
-        fr.fillStyle(0x7A5214); fr.fillRoundedRect(fx - 28, fy - 20, 56, 40, 3);
-        fr.fillStyle(0xD4B896); fr.fillRect(fx - 24, fy - 16, 48, 32);
-        fr.fillStyle(0x4A90D9, 0.6); fr.fillRect(fx - 24, fy - 16, 48, 18);
-        fr.fillStyle(0xFFD700, 0.7); fr.fillCircle(fx, fy - 8, 6);
-      });
-    }
+    // ── Wall art — hung on side walls below the pendant lamps ────────────────
+    // Two landscape frames on the upper dining wall (y=185–250), visible above tables
+    [[55, 218], [GAME_WIDTH - 55, 218]].forEach(([fx, fy]) => {
+      const fr = this.add.graphics().setDepth(1.5);
+      // Frame (mahogany)
+      fr.fillStyle(0x7A5214, 1);
+      fr.fillRoundedRect(fx - 32, fy - 22, 64, 44, 3);
+      // Mat
+      fr.fillStyle(0xF0EBE0, 1);
+      fr.fillRect(fx - 28, fy - 18, 56, 36);
+      // Sky
+      fr.fillStyle(0x87BEDD, 1);
+      fr.fillRect(fx - 28, fy - 18, 56, 18);
+      // Sun disc
+      fr.fillStyle(0xFFD700, 0.9);
+      fr.fillCircle(fx + 10, fy - 12, 7);
+      // Warm horizon glow
+      fr.fillStyle(0xFF8833, 0.2);
+      fr.fillRect(fx - 28, fy - 2, 56, 5);
+      // Ground (warm amber)
+      fr.fillStyle(0x7A4018, 1);
+      fr.fillRect(fx - 28, fy, 56, 18);
+      // Two small trees silhouettes
+      fr.fillStyle(0x1A3A0A, 1);
+      fr.fillCircle(fx - 12, fy - 2, 7);
+      fr.fillRect(fx - 14, fy, 4, 12);
+      fr.fillCircle(fx + 12, fy - 4, 6);
+      fr.fillRect(fx + 10, fy, 3, 12);
+      // Frame gold highlight top-left
+      fr.lineStyle(1, 0xC8902A, 0.5);
+      fr.strokeRoundedRect(fx - 32, fy - 22, 64, 44, 3);
+    });
 
     // ── Pendant lamps ─────────────────────────────────────────────────────────
     [100, GAME_WIDTH / 2, GAME_WIDTH - 100].forEach(lx => {
@@ -2106,6 +2126,43 @@ export class GameScene extends Phaser.Scene {
     this.tutorialOverlay.add([bg, icon, txt]);
     this.tutorialOverlay.setAlpha(0);
     this.tweens.add({ targets: this.tutorialOverlay, alpha: 1, duration: 200, ease: 'Quad.easeOut' });
+
+    // Spotlight — pulsing circle that points to where the player should act next
+    this.clearTutorialSpotlight();
+    const spotTargets: Record<number, { x: number; y: number; r: number }> = {
+      0: { x: TABLE_POSITIONS[0].x, y: TABLE_POSITIONS[0].y, r: 60 },    // first empty table
+      1: { x: TABLE_POSITIONS[0].x, y: TABLE_POSITIONS[0].y, r: 60 },    // table with customer
+      2: { x: KITCHEN_X / 2, y: KITCHEN_Y, r: 50 },                     // cooking zone
+      3: { x: KITCHEN_X + (GAME_WIDTH - KITCHEN_X) / 2, y: KITCHEN_Y, r: 50 }, // ready zone
+      4: { x: TABLE_POSITIONS[0].x, y: TABLE_POSITIONS[0].y, r: 60 },    // table with eating customer
+      5: { x: TABLE_POSITIONS[0].x, y: TABLE_POSITIONS[0].y, r: 60 },    // dirty table
+      6: { x: 36, y: 196, r: 44 },                                        // dishwasher
+    };
+    const spotCfg = spotTargets[step];
+    if (spotCfg) {
+      const sg = this.add.graphics().setDepth(48).setAlpha(0);
+      sg.lineStyle(3, 0xFFCC44, 1);
+      sg.strokeCircle(spotCfg.x, spotCfg.y, spotCfg.r);
+      this.tutorialSpotlight = sg;
+      this.tutorialSpotlightTween = this.tweens.add({
+        targets: sg, alpha: { from: 0, to: 0.85 },
+        duration: 280, ease: 'Quad.easeOut',
+        onComplete: () => {
+          if (!sg.active) return;
+          this.tutorialSpotlightTween = this.tweens.add({
+            targets: sg,
+            alpha: { from: 0.85, to: 0.25 },
+            scale: { from: 1, to: 1.12 },
+            duration: 700, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
+          });
+        },
+      });
+    }
+  }
+
+  private clearTutorialSpotlight() {
+    if (this.tutorialSpotlightTween) { this.tutorialSpotlightTween.stop(); this.tutorialSpotlightTween = null; }
+    if (this.tutorialSpotlight) { this.tutorialSpotlight.destroy(); this.tutorialSpotlight = null; }
   }
 
   private advanceTutorial() {
@@ -2131,6 +2188,7 @@ export class GameScene extends Phaser.Scene {
 
   private endTutorial() {
     this.tutorialActive = false;
+    this.clearTutorialSpotlight();
     ProgressionSystem.markTutorialDone();
 
     this.tweens.add({

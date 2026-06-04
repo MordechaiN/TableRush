@@ -28,6 +28,8 @@ export class Table extends Phaser.GameObjects.Container {
   // Scene-level seat indicator ring — visible ring around customer position when occupied
   private seatRing: Phaser.GameObjects.Graphics | null = null;
   private seatRingTween: Phaser.Tweens.Tween | null = null;
+  // Scene-level place disc — cream circle behind customer that lifts them off the floor visually
+  private placeDisc: Phaser.GameObjects.Graphics | null = null;
 
   // World position of arrow anchor (above and outside customer sprite area)
   private arrowWorldX: number;
@@ -87,6 +89,7 @@ export class Table extends Phaser.GameObjects.Container {
     this.clearPulse();
     this.clearFloatEmoji();
     this.clearSeatRing();
+    this.clearPlaceDisc();
   }
 
   setOccupied(customerId: number) {
@@ -99,6 +102,7 @@ export class Table extends Phaser.GameObjects.Container {
     this.clearPulse();
     this.clearFloatEmoji();
     this.showSeatRing();
+    this.showPlaceDisc();
   }
 
   setDirty() {
@@ -111,6 +115,7 @@ export class Table extends Phaser.GameObjects.Container {
     this.setGlowState('dirty');
     this.setPriority('dirty');
     this.clearSeatRing();
+    this.clearPlaceDisc();
     this.setFloatEmoji('🍽️', false);
   }
 
@@ -415,6 +420,20 @@ export class Table extends Phaser.GameObjects.Container {
   clearSeatRing() {
     if (this.seatRingTween) { this.seatRingTween.stop(); this.seatRingTween = null; }
     if (this.seatRing) { this.seatRing.destroy(); this.seatRing = null; }
+  }
+
+  // Cream place disc — sits at depth 11 behind customer (depth 12), creates contrast on warm floor
+  private showPlaceDisc() {
+    this.clearPlaceDisc();
+    this.placeDisc = this.scene.add.graphics().setDepth(11);
+    this.placeDisc.fillStyle(0xFFF8E8, 0.72);
+    this.placeDisc.fillCircle(this.x, this.y - 8, 26);
+    this.placeDisc.lineStyle(1.5, 0xE8D8A0, 0.55);
+    this.placeDisc.strokeCircle(this.x, this.y - 8, 26);
+  }
+
+  clearPlaceDisc() {
+    if (this.placeDisc) { this.placeDisc.destroy(); this.placeDisc = null; }
   }
 
   flashClean() {

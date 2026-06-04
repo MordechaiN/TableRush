@@ -1,12 +1,19 @@
 # PROJECT STATUS
 
-**Last Updated:** 2026-06-03
-**Current Version:** v1.0.0 RC1 (Release Candidate 1 — Polish Sprint)
+**Last Updated:** 2026-06-04
+**Current Version:** v1.0.0 RC1 (Visual Environment Pass)
 
 ---
 
 ## Current Focus
-RC1 Polish Sprint — transforming functional game into commercial-quality product. 4 of 5 phases complete:
+Visual Environment Pass (2026-06-04) — replacing prototype markers with real environmental storytelling:
+- ✅ Removed text labels: "DISHWASHER", "HOST", "WAIT HERE" — space communicates itself
+- ✅ Replaced kitchen COOKING/READY pill badges with small 50%-alpha inline labels
+- ✅ Replaced thin ledge + "PICK UP" text with thick granite service counter
+- ✅ Added pendant lamp fixtures (amber hanging shades + cords) above all 5 dining tables
+- ✅ Added warm glow pools (depth 0, 6.5% alpha) beneath each table for candlelit ambiance
+
+Previous RC1 Sprint — 5 phases complete:
 - ✅ Phase 1: UI/UX Redesign — HUD tri-badge pills, main menu logo card + animations, game over cinematic
 - ✅ Phase 2: Art Direction — consistent visual language across all 6 scenes (tile floors, walls, cream panels)
 - ✅ Phase 3: Animation — customer food reaction, happy exit, main menu entrance, game over header

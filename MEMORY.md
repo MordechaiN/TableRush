@@ -38,7 +38,9 @@ Fast-paced restaurant management game. Premium casual — think Overcooked/Good 
 
 ---
 
-## Current State: v1.0.0 Release Candidate 1 (RC1 Polish Sprint)
+## Current State: v1.0.0 RC1 — Visual Environment Pass
+
+**Visual Environment Pass (2026-06-04): Removed all prototype text labels, replaced kitchen pill badges with subtle inline labels, replaced thin ledge with thick granite service counter, added pendant lamp fixtures above all 5 dining tables with warm floor glow pools.**
 
 **RC1 Sprint (2026-06-03): Audio system, HUD redesign, main menu visual upgrade, animation pass, game over cinematic.**
 **v1.0.0 public release: All scenes consistent visual language (tile floors, side walls, amber top bar, card panels). Zero console errors. Full playable loop tested.**
@@ -46,6 +48,13 @@ Fast-paced restaurant management game. Premium casual — think Overcooked/Good 
 **v1.2 Living restaurant — idle customer behaviors, rush hour waves, VIP customers, queue patience, player 1.25×, dishwasher steam.**
 **v1.1: Entrance queue, dirty dish carry to dishwasher, 7-step tutorial.**
 **v1.0 Restaurant Immersion: side walls, chairs, kitchen zone badges, entrance door, candle flicker, table numbers, gold coins, main menu.**
+
+### Visual Environment Pass Changes (2026-06-04)
+- **Kitchen badges**: Removed big orange/green pill badges from COOKING/READY zones → replaced with small 9px/50%-alpha inline labels. Kitchen reads as a workspace, not a UI.
+- **Service counter**: Replaced thin 6-10px ledge + "▲ PICK UP ▲" text with thick granite counter (dark countertop + mahogany face + panel dividers). Physical barrier between kitchen and dining room.
+- **Pendant lamps**: 5 small amber hanging fixtures (cord + shade cap + shade cone + warm inner glow) above each dining table at `pos.y - 90`. Clear of back chairs (chair center at `pos.y - 54`).
+- **Table glow pools**: Per-table warm amber glow (`0xFF9933, 0.065`) radius 60 at floor depth 0 — subtle candlelit ambiance beneath each table.
+- **Text labels removed**: "DISHWASHER", "HOST", "WAIT HERE" text labels deleted entirely. Props (dishwasher machine, host stand, footprint icons) remain — player reads the space, not the signage.
 
 ### RC1 Sprint Changes
 - **SoundManager.ts**: Web Audio API synthesis, 12 sound types: uiClick, seatCustomer, orderTaken, foodReady, deliverFood, paymentCollected, comboUp(tier 1-4), comboLost, customerAngry, dishwasher, rushHour, roundEnd, timerWarning

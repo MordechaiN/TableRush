@@ -285,21 +285,14 @@ export class GameScene extends Phaser.Scene {
     zoneDivider.lineStyle(2, 0x222222, 0.22);
     zoneDivider.lineBetween(KITCHEN_X + 4, KITCHEN_Y - 34, KITCHEN_X + 4, KITCHEN_Y + 34);
 
-    // COOKING zone badge — centered at left-zone center (x ≈ KITCHEN_X/2 = 120)
-    const cookBadge = this.add.graphics().setDepth(3);
-    cookBadge.fillStyle(0xCC5500, 1);
-    cookBadge.fillRoundedRect(14, KITCHEN_Y - 38, 128, 24, 12);
+    // Zone labels — small, ambient (player reads zones visually, not by reading text)
     this.add.text(78, KITCHEN_Y - 26, '🔥 COOKING', {
-      fontSize: '11px', fontFamily: 'Arial Black', color: '#FFFFFF',
-    }).setOrigin(0.5).setDepth(4);
+      fontSize: '9px', fontFamily: 'Arial', color: '#CC5500', letterSpacing: 1,
+    }).setOrigin(0.5).setDepth(4).setAlpha(0.5);
 
-    // READY zone badge — centered at right-zone center (x ≈ KITCHEN_X + (GAME_WIDTH-KITCHEN_X)/2 = 360)
-    const readyBadge = this.add.graphics().setDepth(3);
-    readyBadge.fillStyle(0x1A9944, 1);
-    readyBadge.fillRoundedRect(KITCHEN_X + 14, KITCHEN_Y - 38, 128, 24, 12);
     this.add.text(KITCHEN_X + 78, KITCHEN_Y - 26, '✅ READY', {
-      fontSize: '11px', fontFamily: 'Arial Black', color: '#FFFFFF',
-    }).setOrigin(0.5).setDepth(4);
+      fontSize: '9px', fontFamily: 'Arial', color: '#229944', letterSpacing: 1,
+    }).setOrigin(0.5).setDepth(4).setAlpha(0.5);
 
     // Kitchen glow — over the READY zone (right half of counter)
     this.kitchenGlow = this.add.graphics().setDepth(3);
@@ -307,16 +300,22 @@ export class GameScene extends Phaser.Scene {
     this.kitchenGlow.fillRoundedRect(KITCHEN_X + 8, KITCHEN_Y - 36, GAME_WIDTH - KITCHEN_X - 18, 72, 6);
     this.kitchenGlow.setAlpha(0);
 
-    // Kitchen pickup counter ledge — front edge, bold and readable
-    const ledge = this.add.graphics().setDepth(3);
-    ledge.fillStyle(0x4A2808, 1);
-    ledge.fillRoundedRect(10, KITCHEN_Y + 40, GAME_WIDTH - 20, 10, 3);
-    ledge.fillStyle(0x7A4820, 1);
-    ledge.fillRoundedRect(10, KITCHEN_Y + 38, GAME_WIDTH - 20, 6, 2);
-    // "PICK UP" label on ledge
-    this.add.text(KITCHEN_X, KITCHEN_Y + 48, '▲ PICK UP ▲', {
-      fontSize: '7px', fontFamily: 'Arial Black', color: '#CC8840', letterSpacing: 3,
-    }).setOrigin(0.5).setDepth(4).setAlpha(0.65);
+    // Service counter — prominent physical barrier between kitchen and dining room
+    const counter = this.add.graphics().setDepth(3);
+    // Dark granite countertop (top surface)
+    counter.fillStyle(0x241610, 1);
+    counter.fillRoundedRect(8, KITCHEN_Y + 36, GAME_WIDTH - 16, 16, 3);
+    // Lighter granite edge highlight
+    counter.fillStyle(0x3D2518, 0.7);
+    counter.fillRoundedRect(8, KITCHEN_Y + 36, GAME_WIDTH - 16, 4, 2);
+    // Warm mahogany front face (vertical panel below countertop)
+    counter.fillStyle(0x6B3812, 1);
+    counter.fillRoundedRect(8, KITCHEN_Y + 50, GAME_WIDTH - 16, 14, { tl: 0, tr: 0, bl: 5, br: 5 });
+    // Subtle panel dividers on the wood face
+    [GAME_WIDTH * 0.25, GAME_WIDTH * 0.5, GAME_WIDTH * 0.75].forEach(dx => {
+      counter.fillStyle(0x4A2808, 0.55);
+      counter.fillRect(Math.round(dx) - 1, KITCHEN_Y + 50, 2, 14);
+    });
 
     // Ticket rail
     this.ticketRail = this.add.container(KITCHEN_X, KITCHEN_Y + 10);
@@ -402,6 +401,22 @@ export class GameScene extends Phaser.Scene {
         ease: 'Sine.easeInOut',
         delay: flickerDelay,
       });
+
+      // Pendant lamp — positioned well above back chair (chair center pos.y-54, chair top ~pos.y-78)
+      const pShadeY = pos.y - 90;
+      const pLamp = this.add.graphics().setDepth(2);
+      pLamp.fillStyle(0x5C3C10, 1);
+      pLamp.fillRect(pos.x - 1, pShadeY - 12, 2, 12);          // cord
+      pLamp.fillStyle(0xAA6010, 1);
+      pLamp.fillRect(pos.x - 11, pShadeY, 22, 4);              // shade cap
+      pLamp.fillStyle(0xD4780A, 1);
+      pLamp.fillTriangle(pos.x - 11, pShadeY + 4, pos.x + 11, pShadeY + 4, pos.x + 6, pShadeY + 18); // shade body
+      pLamp.fillStyle(0xFFCC44, 0.45);
+      pLamp.fillTriangle(pos.x - 7, pShadeY + 4, pos.x + 7, pShadeY + 4, pos.x + 3, pShadeY + 16);   // warm inner glow
+      // Soft warm light pool on the floor beneath
+      const tableGlow = this.add.graphics().setDepth(0);
+      tableGlow.fillStyle(0xFF9933, 0.065);
+      tableGlow.fillCircle(pos.x, pos.y, 60);
     });
 
     // ── Dishwasher station (left wall, below kitchen) ─────────────────────────
@@ -429,10 +444,6 @@ export class GameScene extends Phaser.Scene {
     dw.fillStyle(0xAACCDD, 0.4);
     dw.fillCircle(36, 195, 3);
     dw.fillCircle(28, 202, 2);
-    // Label below dishwasher
-    this.add.text(36, 228, 'DISHWASHER', {
-      fontSize: '7px', fontFamily: 'Arial Black', color: '#666666', letterSpacing: 1,
-    }).setOrigin(0.5).setDepth(3);
 
     // Dishwasher glow (amber, shown when player carries dirty dishes)
     this.dishwasherGlow = this.add.graphics().setDepth(3).setAlpha(0);
@@ -502,9 +513,6 @@ export class GameScene extends Phaser.Scene {
     // Gold pen
     hs.fillStyle(0xFFCC22, 1);
     hs.fillRoundedRect(GAME_WIDTH - 58, GAME_HEIGHT - 100, 3, 14, 1);
-    this.add.text(GAME_WIDTH - 67, GAME_HEIGHT - 108, 'HOST', {
-      fontSize: '8px', fontFamily: 'Arial Black', color: '#9A5820',
-    }).setOrigin(0.5).setDepth(3);
 
     // ── Queue zone — "WAIT HERE" floor marking for arriving guests ───────────
     const queueZone = this.add.graphics().setDepth(0);
@@ -518,9 +526,6 @@ export class GameScene extends Phaser.Scene {
         fontSize: '16px',
       }).setOrigin(0.5).setDepth(0).setAlpha(0.55);
     });
-    this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 120, 'WAIT HERE', {
-      fontSize: '9px', fontFamily: 'Arial Black', color: '#AA8800', letterSpacing: 3,
-    }).setOrigin(0.5).setDepth(1).setAlpha(0.8);
 
     // Rush hour overlay (hidden by default — subtle full-screen red warmth during rush)
     this.rushHourOverlay = this.add.graphics().setDepth(1).setAlpha(0);

@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## Visual Environment Pass (2026-06-04)
+
+### Restaurant Environment Overhaul
+- **Pendant lamps**: 5 amber hanging fixtures above each dining table — cord + shade cap + shade cone + warm inner glow. Positioned at `pos.y - 90`, clear of back chairs (center `pos.y - 54`). Depth 2.
+- **Table glow pools**: Warm amber circles (`0xFF9933, 6.5% alpha`) at floor depth beneath each table — creates intimate candlelit dining feel per table.
+- **Service counter**: Replaced thin 6-10px ledge with thick granite counter — dark countertop (`0x241610`) + mahogany face panel (`0x6B3812`) + 3 vertical dividers. No "PICK UP" text.
+- **Kitchen zone labels**: Replaced large solid pill badges (COOKING/READY) with small 9px/50%-alpha inline text. Kitchen reads as a workspace, not a button panel.
+- **Text labels removed**: "DISHWASHER", "HOST", "WAIT HERE" — prototypical signage deleted. Props (machine, stand, footprints) communicate function without labels.
+
 ## RC1 — Release Candidate 1 Polish Sprint (2026-06-03)
 
 ### Audio System (Phase 4 — NOT optional)

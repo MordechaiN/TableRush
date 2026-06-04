@@ -110,12 +110,12 @@ export class Table extends Phaser.GameObjects.Container {
     const colors: Record<string, number> = {
       seated: 0xFFEE88,
       paying: 0xFFD700,
-      dirty: 0xFF8833,
+      dirty: 0xFF4400,
     };
     const color = colors[state] ?? 0xFFFFFF;
     this.stateGlow.fillStyle(color, 1);
     this.stateGlow.fillEllipse(0, 6, 168, 128);
-    const maxA = state === 'paying' ? 0.60 : state === 'dirty' ? 0.42 : 0.38;
+    const maxA = state === 'paying' ? 0.60 : state === 'dirty' ? 0.52 : 0.38;
     const minA = maxA * 0.38;
     this.stateGlow.setAlpha(maxA);
     this.stateGlowTween = this.scene.tweens.add({

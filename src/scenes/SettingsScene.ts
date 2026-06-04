@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { COLORS, GAME_WIDTH, GAME_HEIGHT } from '../config/GameConfig';
+import { COLORS, GAME_WIDTH, GAME_HEIGHT, fmtScore } from '../config/GameConfig';
 import { ProgressionSystem } from '../systems/ProgressionSystem';
 import { SoundManager } from '../systems/SoundManager';
 
@@ -88,7 +88,7 @@ export class SettingsScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     const prog = ProgressionSystem.getData();
-    this.add.text(cx, 416, `Level ${prog.level}  ·  High Score: ${prog.highScore}`, {
+    this.add.text(cx, 416, `Level ${prog.level}  ·  High Score: ${fmtScore(prog.highScore)}`, {
       fontSize: '16px', fontFamily: 'Arial Black', color: COLORS.TEXT_DARK,
     }).setOrigin(0.5);
 

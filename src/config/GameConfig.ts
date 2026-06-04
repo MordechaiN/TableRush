@@ -84,3 +84,7 @@ export const SPEED_MULTIPLIERS = [
 export const GAME_DURATION = 180; // seconds
 export const MAX_TABLES = 5;
 export const CLEAN_TIME = 1500; // ms to clean a table
+
+export function fmtScore(n: number): string {
+  return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}

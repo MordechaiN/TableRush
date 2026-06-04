@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { COLORS, GAME_WIDTH, GAME_HEIGHT } from '../config/GameConfig';
+import { COLORS, GAME_WIDTH, GAME_HEIGHT, fmtScore } from '../config/GameConfig';
 import { ProgressionSystem } from '../systems/ProgressionSystem';
 import { SoundManager } from '../systems/SoundManager';
 
@@ -9,6 +9,8 @@ export class MainMenuScene extends Phaser.Scene {
   create() {
     const cx = GAME_WIDTH / 2;
     const prog = ProgressionSystem.getData();
+    // Ambient music — plays if AudioContext is already active (returns from game session)
+    SoundManager.startMusic();
 
     // Warm background
     this.add.rectangle(cx, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, COLORS.FLOOR_WARM);
@@ -186,7 +188,7 @@ export class MainMenuScene extends Phaser.Scene {
     this.tweens.add({ targets: statBg, alpha: 1, duration: 350, delay: 550 });
 
     const statsGrp = [
-      this.add.text(cx - 86, statsY + 4, `🏆 ${prog.highScore}`, {
+      this.add.text(cx - 86, statsY + 4, `🏆 ${fmtScore(prog.highScore)}`, {
         fontSize: '18px', fontFamily: 'Arial Black', color: COLORS.TEXT_GOLD,
       }).setOrigin(0.5).setAlpha(0),
       this.add.text(cx, statsY + 4, '|', { fontSize: '16px', color: '#CCBBAA' }).setOrigin(0.5).setAlpha(0),

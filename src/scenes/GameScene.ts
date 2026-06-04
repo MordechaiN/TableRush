@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import {
   GAME_WIDTH, GAME_HEIGHT, COLORS,
   MENU_ITEMS, DIFFICULTY_TIERS, COMBO_MILESTONES, SPEED_MULTIPLIERS,
-  GAME_DURATION,
+  GAME_DURATION, fmtScore,
 } from '../config/GameConfig';
 import { Table } from '../entities/Table';
 import { Customer, OrderItem } from '../entities/Customer';
@@ -859,7 +859,7 @@ export class GameScene extends Phaser.Scene {
     const elapsed = (this.time.now - this.gameStartMs) / 1000;
     const tier = this.getDifficultyTier(elapsed);
     this.score = Math.max(0, this.score - Math.floor(tier.penalty * 0.5));
-    this.scoreTxt.setText(`🍽️  ${this.score}`);
+    this.scoreTxt.setText(`🍽️  ${fmtScore(this.score)}`);
     this.showFloating('Left! 😡', customer.x, customer.y - 50, COLORS.TEXT_RED);
     this.cameras.main.shake(100, 0.002);
     this.resetCombo();
@@ -946,7 +946,7 @@ export class GameScene extends Phaser.Scene {
 
     this.player.walkTo(table.x, table.y + 40, onBothArrived);
     this.tweens.add({
-      targets: customer, x: table.x, y: table.y - 6,
+      targets: customer, x: table.x, y: table.y - 16,
       duration: 700, ease: 'Quad.easeOut',
       onComplete: onBothArrived,
     });
@@ -970,6 +970,11 @@ export class GameScene extends Phaser.Scene {
         // Final-minute callout at the tier-3 transition (guests are least patient now)
         if (remaining <= 60 && remaining > 59) {
           this.showFloating('🌶️ Final minute!', GAME_WIDTH / 2, 90, COLORS.TEXT_ORANGE);
+          // Amber timer pill — visual warning before red at 30s
+          this.hudTimerPill.clear();
+          this.hudTimerPill.fillStyle(0xCC6600, 0.92);
+          this.hudTimerPill.fillRoundedRect(GAME_WIDTH - 156, 7, 148, 42, 10);
+          this.timeTxt.setColor('#FFCC44');
         }
         if (remaining <= 30) {
           if (remaining <= 30 && remaining > 29) {
@@ -1624,7 +1629,7 @@ export class GameScene extends Phaser.Scene {
 
   private addScore(amount: number) {
     this.score = Math.max(0, this.score + amount);
-    this.scoreTxt.setText(`🍽️  ${this.score}`);
+    this.scoreTxt.setText(`🍽️  ${fmtScore(this.score)}`);
     this.scoreTxt.setColor(COLORS.TEXT_GOLD);
     const bounce = this.comboMultiplier >= 5 ? 1.7 : this.comboMultiplier >= 4 ? 1.55 : this.comboMultiplier >= 3 ? 1.45 : 1.3;
     const dur = this.comboMultiplier >= 3 ? 160 : 130;
@@ -2030,7 +2035,7 @@ export class GameScene extends Phaser.Scene {
     const penalty = tier.penalty;
 
     this.score = Math.max(0, this.score - penalty);
-    this.scoreTxt.setText(`🍽️  ${this.score}`);
+    this.scoreTxt.setText(`🍽️  ${fmtScore(this.score)}`);
     this.showFloating(`-${penalty} 😠`, customer.x, customer.y - 40, COLORS.TEXT_RED);
     this.cameras.main.shake(200, 0.004);
     this.player.reactToAngry();
@@ -2177,12 +2182,12 @@ export class GameScene extends Phaser.Scene {
   private advanceTutorial() {
     this.tutorialStep++;
     const steps: string[] = [
-      'Tap the TABLE to take their order.',
-      'Food cooking! Tap the KITCHEN when it\'s ready.',
-      'Pick up the food and tap the TABLE to deliver.',
-      'Customer eating... Tap TABLE to collect payment.',
-      'Table dirty! Tap TABLE to pick up dishes.',
-      'Carry dishes to the DISHWASHER.',
+      'They\'re ready to order! Tap the TABLE to hear what they want.',
+      'Order sent! Tap the KITCHEN when the food is cooked.',
+      'Food\'s up! Grab it and tap the TABLE to serve it.',
+      'They\'re enjoying the meal. Tap the TABLE once they\'re ready to pay.',
+      'Time to clean up — tap the TABLE to collect the dirty dishes.',
+      'Now carry the dishes to the DISHWASHER.',
     ];
 
     if (this.tutorialStep <= 6) {
@@ -2447,7 +2452,7 @@ export class GameScene extends Phaser.Scene {
       fontSize: '52px', fontFamily: 'Arial Black', color: '#FFFFFF',
       stroke: '#1A0A00', strokeThickness: 8,
     }).setOrigin(0.5).setDepth(60).setScale(0).setAlpha(0.95);
-    const scoreLabel = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 30, `Score: ${this.score}`, {
+    const scoreLabel = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 30, `Score: ${fmtScore(this.score)}`, {
       fontSize: '28px', fontFamily: 'Arial Black', color: '#FFD700',
       stroke: '#1A0A00', strokeThickness: 5,
     }).setOrigin(0.5).setDepth(60).setAlpha(0).setScale(0.7);

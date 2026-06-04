@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { COLORS, GAME_WIDTH, GAME_HEIGHT, COMBO_MILESTONES } from '../config/GameConfig';
+import { COLORS, GAME_WIDTH, GAME_HEIGHT, COMBO_MILESTONES, fmtScore } from '../config/GameConfig';
 import { ProgressionSystem, RoundResult } from '../systems/ProgressionSystem';
 import { SoundManager } from '../systems/SoundManager';
 
@@ -29,6 +29,9 @@ export class GameOverScene extends Phaser.Scene {
     };
     const summary = ProgressionSystem.addRound(result);
     const prog = ProgressionSystem.getData();
+
+    // Resume ambient music during results review (AudioContext active from gameplay)
+    this.time.delayedCall(1400, () => SoundManager.startMusic());
 
     // ── Background (tile floor + walls, consistent visual language) ──────────
     this.add.rectangle(cx, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, COLORS.FLOOR_WARM);
@@ -96,11 +99,11 @@ export class GameOverScene extends Phaser.Scene {
     this.tweens.addCounter({
       from: 0, to: data.score,
       duration: Math.min(data.score * 4, 1500),
-      onUpdate: (tween) => scoreTxt.setText(String(Math.floor(tween.getValue() as number))),
+      onUpdate: (tween) => scoreTxt.setText(fmtScore(Math.floor(tween.getValue() as number))),
     });
 
     // High score
-    this.add.text(cx, y, `Best: ${prog.highScore}`, {
+    this.add.text(cx, y, `Best: ${fmtScore(prog.highScore)}`, {
       fontSize: '15px', fontFamily: 'Arial', color: COLORS.TEXT_GOLD,
     }).setOrigin(0.5);
     y += 30;

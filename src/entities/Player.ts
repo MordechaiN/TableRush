@@ -27,7 +27,7 @@ export class Player extends Phaser.GameObjects.Container {
     this.face = scene.add.graphics();
     this.add(this.face);
     this.setDepth(17);
-    this.setScale(1.25);
+    this.setScale(1.5);
     scene.add.existing(this);
     this.drawFace('normal');
     this.startIdleAnim();
@@ -58,7 +58,7 @@ export class Player extends Phaser.GameObjects.Container {
     this.clearCarry();
     if (capacity === 0) return;
 
-    const tray = this.scene.add.container(0, -46);
+    const tray = this.scene.add.container(0, -52);
     tray.setDepth(1);
     this.trayContainer = tray;
     this.add(tray);
@@ -127,7 +127,7 @@ export class Player extends Phaser.GameObjects.Container {
 
   showDirtyDish() {
     this.dirtyBadge?.destroy();
-    this.dirtyBadge = this.scene.add.text(18, 8, '🍽️', { fontSize: '11px' }).setOrigin(0.5);
+    this.dirtyBadge = this.scene.add.text(22, 8, '🍽️', { fontSize: '13px' }).setOrigin(0.5);
     this.add(this.dirtyBadge);
   }
 
@@ -175,7 +175,7 @@ export class Player extends Phaser.GameObjects.Container {
     };
     const badge = BADGES[emotion];
     if (badge) {
-      this.emotionBadge = this.scene.add.text(14, -46, badge, { fontSize: '14px' }).setOrigin(0.5);
+      this.emotionBadge = this.scene.add.text(18, -52, badge, { fontSize: '16px' }).setOrigin(0.5);
       this.add(this.emotionBadge);
       this.scene.tweens.add({ targets: this.emotionBadge, scale: { from: 0, to: 1 }, duration: 200, ease: 'Back.easeOut' });
     }
@@ -218,37 +218,37 @@ export class Player extends Phaser.GameObjects.Container {
 
   private drawFace(emotion: PlayerEmotion) {
     this.face.clear();
-    const cx = 0, cy = -17;
+    const cx = 0, cy = -22;  // head center for 48×76 sprite (16-38=-22)
     this.face.fillStyle(0x3C2010);
     switch (emotion) {
       case 'normal':
-        this.face.fillCircle(cx - 4, cy - 2, 1.5); this.face.fillCircle(cx + 4, cy - 2, 1.5);
-        this.face.fillRect(cx - 3, cy + 4, 6, 1.5);
+        this.face.fillCircle(cx - 5, cy - 2, 2); this.face.fillCircle(cx + 5, cy - 2, 2);
+        this.face.fillRect(cx - 4, cy + 4, 8, 2);
         break;
       case 'happy':
-        this.face.fillCircle(cx - 4, cy - 2, 1.5); this.face.fillCircle(cx + 4, cy - 2, 1.5);
-        this.face.lineStyle(2, 0x3C2010); this.face.beginPath();
-        this.face.arc(cx, cy + 3, 4, 0, Math.PI, false); this.face.strokePath();
-        break;
-      case 'proud':
-        this.face.lineStyle(2, 0x3C2010);
-        this.face.beginPath(); this.face.arc(cx - 4, cy - 2, 2.5, Math.PI, 0, false); this.face.strokePath();
-        this.face.beginPath(); this.face.arc(cx + 4, cy - 2, 2.5, Math.PI, 0, false); this.face.strokePath();
+        this.face.fillCircle(cx - 5, cy - 2, 2); this.face.fillCircle(cx + 5, cy - 2, 2);
         this.face.lineStyle(2.5, 0x3C2010); this.face.beginPath();
         this.face.arc(cx, cy + 3, 5, 0, Math.PI, false); this.face.strokePath();
         break;
+      case 'proud':
+        this.face.lineStyle(2.5, 0x3C2010);
+        this.face.beginPath(); this.face.arc(cx - 5, cy - 2, 3, Math.PI, 0, false); this.face.strokePath();
+        this.face.beginPath(); this.face.arc(cx + 5, cy - 2, 3, Math.PI, 0, false); this.face.strokePath();
+        this.face.lineStyle(3, 0x3C2010); this.face.beginPath();
+        this.face.arc(cx, cy + 3, 6, 0, Math.PI, false); this.face.strokePath();
+        break;
       case 'excited':
-        this.face.fillCircle(cx - 4, cy - 2, 2.2); this.face.fillCircle(cx + 4, cy - 2, 2.2);
+        this.face.fillCircle(cx - 5, cy - 2, 2.8); this.face.fillCircle(cx + 5, cy - 2, 2.8);
         this.face.fillStyle(0xFFFFFF, 0.9);
-        this.face.fillCircle(cx - 3, cy - 3, 1); this.face.fillCircle(cx + 5, cy - 3, 1);
-        this.face.fillStyle(0x3C2010); this.face.lineStyle(2.5, 0x3C2010); this.face.beginPath();
-        this.face.arc(cx, cy + 3, 5, 0, Math.PI, false); this.face.strokePath();
+        this.face.fillCircle(cx - 4, cy - 3, 1.2); this.face.fillCircle(cx + 6, cy - 3, 1.2);
+        this.face.fillStyle(0x3C2010); this.face.lineStyle(3, 0x3C2010); this.face.beginPath();
+        this.face.arc(cx, cy + 3, 6, 0, Math.PI, false); this.face.strokePath();
         break;
       case 'stressed':
-        this.face.fillRect(cx - 7, cy - 6, 5, 1.5); this.face.fillRect(cx + 2, cy - 5, 5, 1.5);
-        this.face.fillCircle(cx - 4, cy - 1, 1.5); this.face.fillCircle(cx + 4, cy - 1, 1.5);
-        this.face.lineStyle(1.5, 0x3C2010); this.face.beginPath();
-        this.face.arc(cx, cy + 7, 4, Math.PI, 0, false); this.face.strokePath();
+        this.face.fillRect(cx - 8, cy - 6, 6, 2); this.face.fillRect(cx + 2, cy - 5, 6, 2);
+        this.face.fillCircle(cx - 5, cy - 1, 2); this.face.fillCircle(cx + 5, cy - 1, 2);
+        this.face.lineStyle(2, 0x3C2010); this.face.beginPath();
+        this.face.arc(cx, cy + 7, 5, Math.PI, 0, false); this.face.strokePath();
         break;
     }
   }

@@ -14,6 +14,8 @@ export class Table extends Phaser.GameObjects.Container {
   private actionArrow!: Phaser.GameObjects.Graphics;
   private dirtOverlay!: Phaser.GameObjects.Graphics;
   private stateVisual!: Phaser.GameObjects.Graphics;
+  private stateGlow!: Phaser.GameObjects.Graphics;
+  private stateGlowTween: Phaser.Tweens.Tween | null = null;
   private arrowTween: Phaser.Tweens.Tween | null = null;
   private urgentAlphaTween: Phaser.Tweens.Tween | null = null;
   private currentPriority: TablePriority = 'none';
@@ -36,6 +38,11 @@ export class Table extends Phaser.GameObjects.Container {
     shadow.fillStyle(0x000000, 0.15);
     shadow.fillEllipse(0, 8, 110, 30);
     this.add(shadow);
+
+    // State glow — color changes based on table state (below table body)
+    this.stateGlow = scene.add.graphics();
+    this.stateGlow.setAlpha(0);
+    this.add(this.stateGlow);
 
     this.tableBody = scene.add.image(0, 0, 'table');
     this.add(this.tableBody);
@@ -68,6 +75,7 @@ export class Table extends Phaser.GameObjects.Container {
     this.dirtOverlay.setVisible(false);
     this.stateVisual.clear();
     this.tableBody.clearTint();
+    this.setGlowState('empty');
     this.clearPulse();
   }
 
@@ -77,6 +85,7 @@ export class Table extends Phaser.GameObjects.Container {
     this.dirtOverlay.setVisible(false);
     this.stateVisual.clear();
     this.tableBody.clearTint();
+    this.setGlowState('seated');
     this.clearPulse();
   }
 
@@ -87,7 +96,34 @@ export class Table extends Phaser.GameObjects.Container {
     this.drawDirtOverlay();
     this.dirtOverlay.setVisible(true);
     this.tableBody.clearTint();
+    this.setGlowState('dirty');
     this.setPriority('dirty');
+  }
+
+  setPayingGlow() { this.setGlowState('paying'); }
+
+  private setGlowState(state: 'empty' | 'seated' | 'paying' | 'dirty' | 'off') {
+    if (this.stateGlowTween) { this.stateGlowTween.stop(); this.stateGlowTween = null; }
+    this.stateGlow.clear();
+    if (state === 'off' || state === 'empty') { this.stateGlow.setAlpha(0); return; }
+
+    const colors: Record<string, number> = {
+      seated: 0xFFEE88,
+      paying: 0xFFD700,
+      dirty: 0xFF8833,
+    };
+    const color = colors[state] ?? 0xFFFFFF;
+    this.stateGlow.fillStyle(color, 1);
+    this.stateGlow.fillEllipse(0, 6, 168, 128);
+    const maxA = state === 'paying' ? 0.60 : state === 'dirty' ? 0.42 : 0.38;
+    const minA = maxA * 0.38;
+    this.stateGlow.setAlpha(maxA);
+    this.stateGlowTween = this.scene.tweens.add({
+      targets: this.stateGlow,
+      alpha: { from: maxA, to: minA },
+      duration: state === 'paying' ? 500 : 900,
+      yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
+    });
   }
 
   // Draw a small contextual object on the table surface to communicate state.

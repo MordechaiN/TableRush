@@ -11,109 +11,92 @@ export class BootScene extends Phaser.Scene {
   private createTextures() {
     const g = this.make.graphics({ x: 0, y: 0 });
 
-    // ─── PLAYER (waiter) ───────────────────────────────────────────────────────
-    // 40×62 — head center at pixel (20,14) radius 12
-    // In container (origin 0.5): head center = (0, 14−31) = (0, −17)
-    g.clear();
-    // Shadow
-    g.fillStyle(0x000000, 0.12);
-    g.fillEllipse(20, 58, 34, 10);
-    // Legs
-    g.fillStyle(0x1A1A3A);
-    g.fillRoundedRect(11, 42, 8, 14, 2);
-    g.fillRoundedRect(21, 42, 8, 14, 2);
-    // Shoes
-    g.fillStyle(0x0A0A0A);
-    g.fillRoundedRect(9, 54, 11, 5, 2);
-    g.fillRoundedRect(20, 54, 11, 5, 2);
-    // Body (navy jacket)
-    g.fillStyle(COLORS.WAITER_JACKET);
-    g.fillRoundedRect(8, 22, 24, 22, 6);
-    // Body outline
-    g.lineStyle(1.5, 0x0D1550, 0.8);
-    g.strokeRoundedRect(8, 22, 24, 22, 6);
-    // White apron
-    g.fillStyle(0xF8F8F8, 0.9);
-    g.fillRoundedRect(12, 26, 16, 16, 3);
-    // Apron pocket
-    g.fillStyle(0xEEEEEE);
-    g.fillRoundedRect(14, 38, 10, 4, 2);
-    // Apron strings
-    g.lineStyle(1, 0xF0F0F0, 0.7);
-    g.lineBetween(12, 27, 8, 32);
-    g.lineBetween(28, 27, 32, 32);
-    // White shirt collar
-    g.fillStyle(COLORS.WAITER_SHIRT);
-    g.fillTriangle(20, 22, 16, 27, 24, 27);
-    // Bow tie
-    g.fillStyle(0x111111);
-    g.fillTriangle(18, 27, 20, 30, 22, 27);
-    // Head
-    g.fillStyle(0xFDBA8C);
-    g.fillCircle(20, 14, 12);
-    // Ears
-    g.fillStyle(0xE08B5A);
-    g.fillCircle(8, 14, 3.5);
-    g.fillCircle(32, 14, 3.5);
-    // Head outline
-    g.lineStyle(1.5, 0x3C2010, 0.7);
-    g.strokeCircle(20, 14, 12);
-    // Hair
-    g.fillStyle(0x4A2C0A);
-    g.fillRoundedRect(9, 4, 22, 8, 4);
-    // Hair highlight
-    g.fillStyle(0x6B3E14, 0.5);
-    g.fillRoundedRect(10, 4, 10, 4, 2);
-    // Head highlight
-    g.fillStyle(0xFFFFFF, 0.15);
-    g.fillCircle(15, 10, 4);
-    g.generateTexture('player', 40, 62);
+    // ─── PLAYER (waiter) ─────────────────────────────────────────────────────
+    // 48×76 — larger, more expressive sprite. Head center at (24,16) r=15
+    // In container (origin 0.5): head center = (0, 16−38) = (0, −22)
+    const drawWaiter = (isWalking: boolean) => {
+      g.clear();
+      // Drop shadow
+      g.fillStyle(0x000000, 0.14);
+      g.fillEllipse(24, 72, isWalking ? 44 : 38, 11);
 
-    // ─── PLAYER WALK FRAME ────────────────────────────────────────────────────
-    g.clear();
-    // Shadow (wider during stride)
-    g.fillStyle(0x000000, 0.12);
-    g.fillEllipse(20, 58, 38, 10);
-    // Legs (walking stride — left forward, right back)
-    g.fillStyle(0x1A1A3A);
-    g.fillRoundedRect(9, 40, 8, 16, 2);   // left leg forward
-    g.fillRoundedRect(23, 44, 8, 12, 2);  // right leg back
-    // Shoes
-    g.fillStyle(0x0A0A0A);
-    g.fillRoundedRect(7, 54, 12, 5, 2);
-    g.fillRoundedRect(22, 54, 10, 5, 2);
-    // Body
-    g.fillStyle(COLORS.WAITER_JACKET);
-    g.fillRoundedRect(8, 22, 24, 22, 6);
-    g.lineStyle(1.5, 0x0D1550, 0.8);
-    g.strokeRoundedRect(8, 22, 24, 22, 6);
-    // Apron
-    g.fillStyle(0xF8F8F8, 0.9);
-    g.fillRoundedRect(12, 26, 16, 16, 3);
-    g.fillStyle(0xEEEEEE);
-    g.fillRoundedRect(14, 38, 10, 4, 2);
-    // Collar
-    g.fillStyle(COLORS.WAITER_SHIRT);
-    g.fillTriangle(20, 22, 16, 27, 24, 27);
-    // Bow tie
-    g.fillStyle(0x111111);
-    g.fillTriangle(18, 27, 20, 30, 22, 27);
-    // Head
-    g.fillStyle(0xFDBA8C);
-    g.fillCircle(20, 14, 12);
-    // Ears
-    g.fillStyle(0xE08B5A);
-    g.fillCircle(8, 14, 3.5);
-    g.fillCircle(32, 14, 3.5);
-    // Head outline
-    g.lineStyle(1.5, 0x3C2010, 0.7);
-    g.strokeCircle(20, 14, 12);
-    // Hair
-    g.fillStyle(0x4A2C0A);
-    g.fillRoundedRect(9, 4, 22, 8, 4);
-    g.fillStyle(0xFFFFFF, 0.15);
-    g.fillCircle(15, 10, 4);
-    g.generateTexture('player_walk', 40, 62);
+      // Legs
+      g.fillStyle(0x14143A);
+      if (isWalking) {
+        g.fillRoundedRect(11, 52, 10, 17, 3);  // left leg forward
+        g.fillRoundedRect(27, 56, 10, 13, 3);  // right leg back
+        g.fillStyle(0x0A0A14);
+        g.fillRoundedRect(9, 68, 13, 6, 3);
+        g.fillRoundedRect(27, 68, 11, 5, 3);
+      } else {
+        g.fillRoundedRect(13, 52, 10, 17, 3);
+        g.fillRoundedRect(25, 52, 10, 17, 3);
+        g.fillStyle(0x0A0A14);
+        g.fillRoundedRect(11, 67, 13, 6, 3);
+        g.fillRoundedRect(25, 67, 13, 6, 3);
+      }
+
+      // Body (navy jacket — wider & taller for presence)
+      g.fillStyle(0x1A2472);  // rich navy
+      g.fillRoundedRect(9, 28, 30, 26, 8);
+      g.lineStyle(2, 0x0D1550, 0.9);
+      g.strokeRoundedRect(9, 28, 30, 26, 8);
+
+      // Jacket lapels
+      g.fillStyle(0x243090, 0.7);
+      g.fillTriangle(24, 28, 19, 35, 24, 38);
+      g.fillTriangle(24, 28, 29, 35, 24, 38);
+
+      // White shirt / apron
+      g.fillStyle(0xFAFAFA, 0.95);
+      g.fillRoundedRect(14, 32, 20, 20, 4);
+      // Apron pocket
+      g.fillStyle(0xECECEC);
+      g.fillRoundedRect(16, 48, 14, 5, 2);
+      g.lineStyle(0.5, 0xCCCCCC, 0.5);
+      g.strokeRoundedRect(16, 48, 14, 5, 2);
+
+      // Collar & bow tie
+      g.fillStyle(0xFFFFFF);
+      g.fillTriangle(24, 28, 20, 33, 28, 33);
+      g.fillStyle(0x0A0A0A);
+      g.fillTriangle(21, 33, 24, 37, 27, 33);
+      // Bow tie wings
+      g.fillTriangle(18, 32, 21, 34, 18, 36);
+      g.fillTriangle(27, 32, 30, 34, 27, 36);
+
+      // Neck
+      g.fillStyle(0xFDBA8C);
+      g.fillRoundedRect(21, 24, 6, 8, 2);
+
+      // Head — larger radius (15 vs 12 before = 56% more area)
+      g.fillStyle(0xFDBA8C);
+      g.fillCircle(24, 16, 15);
+      // Ears
+      g.fillStyle(0xE8A070);
+      g.fillCircle(8, 16, 5);
+      g.fillCircle(40, 16, 5);
+      // Head outline
+      g.lineStyle(2, 0x3C2010, 0.8);
+      g.strokeCircle(24, 16, 15);
+
+      // Hair (dark, swept back)
+      g.fillStyle(0x3A1E08);
+      g.fillRoundedRect(10, 3, 28, 12, 6);
+      g.fillRoundedRect(9, 6, 6, 8, 3);   // left sideburn
+      g.fillRoundedRect(33, 6, 6, 8, 3);  // right sideburn
+      // Hair highlight
+      g.fillStyle(0x5A3012, 0.6);
+      g.fillRoundedRect(12, 4, 14, 5, 3);
+      // Forehead shine
+      g.fillStyle(0xFFFFFF, 0.18);
+      g.fillCircle(18, 12, 5);
+    };
+
+    drawWaiter(false);
+    g.generateTexture('player', 48, 76);
+    drawWaiter(true);
+    g.generateTexture('player_walk', 48, 76);
 
     // ─── CUSTOMER VARIANTS ────────────────────────────────────────────────────
     // 48×72 — head circle at (24,14) radius 14

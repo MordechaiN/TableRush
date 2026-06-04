@@ -109,6 +109,8 @@ export class GameScene extends Phaser.Scene {
     this.readyPlateSprites.forEach((plate) => {
       const timer = (plate as any)._steamTimer as Phaser.Time.TimerEvent | undefined;
       if (timer) timer.remove();
+      const ring = (plate as any)._readyRing as Phaser.GameObjects.Graphics | undefined;
+      if (ring) ring.destroy();
       plate.destroy();
     });
     this.readyPlateSprites.clear();
@@ -293,124 +295,142 @@ export class GameScene extends Phaser.Scene {
     }).setOrigin(0, 0).setDepth(3);
 
     // ── Kitchen ───────────────────────────────────────────────────────────────
-    this.add.image(KITCHEN_X, KITCHEN_Y, 'kitchen').setOrigin(0.5, 0.5).setDepth(2);
 
-    // ── COOKING ZONE (left half) — stainless steel with grill & burners ────────
-    const cookBg = this.add.graphics().setDepth(2.5);
-    // Steel surface
-    cookBg.fillStyle(0x6E6E6E, 1);
-    cookBg.fillRoundedRect(8, KITCHEN_Y - 34, KITCHEN_X - 16, 68, { tl: 4, tr: 0, bl: 4, br: 0 });
-    // Subtle brushed texture (horizontal streaks)
-    for (let ly = KITCHEN_Y - 28; ly < KITCHEN_Y + 34; ly += 8) {
-      cookBg.lineStyle(0.5, 0x888888, 0.25);
-      cookBg.lineBetween(12, ly, KITCHEN_X - 12, ly);
+    // ── COOKING ZONE (left half) ────────────────────────────────────────────
+    const cookZone = this.add.graphics().setDepth(2.5);
+    // Cast iron charcoal surface — dark enough for flame contrast, not pitch black
+    cookZone.fillStyle(0x3A2C22, 1);
+    cookZone.fillRoundedRect(8, KITCHEN_Y - 34, KITCHEN_X - 16, 68, { tl: 4, tr: 0, bl: 4, br: 0 });
+    // Warm amber vignette (more noticeable near the burners)
+    cookZone.fillStyle(0xFF8833, 0.08);
+    cookZone.fillRoundedRect(8, KITCHEN_Y - 10, KITCHEN_X - 16, 44, { tl: 0, tr: 0, bl: 4, br: 0 });
+
+    // Burner plate (left) — lighter rings for contrast on dark background
+    const burnerL = this.add.graphics().setDepth(2.7);
+    const blx = 70, bly = KITCHEN_Y + 8;
+    burnerL.fillStyle(0x282828, 1); burnerL.fillCircle(blx, bly, 22);
+    burnerL.lineStyle(3, 0x888888, 1); burnerL.strokeCircle(blx, bly, 22);    // outer rim — silver
+    burnerL.lineStyle(2, 0x666666, 1); burnerL.strokeCircle(blx, bly, 14);
+    burnerL.lineStyle(1.5, 0x555555, 1); burnerL.strokeCircle(blx, bly, 7);
+    burnerL.fillStyle(0x1A1A1A, 1); burnerL.fillCircle(blx, bly, 5);
+    burnerL.lineStyle(1.5, 0x777777, 0.8);
+    for (let a = 0; a < 6; a++) {
+      const rad = (a * Math.PI * 2) / 6;
+      burnerL.lineBetween(blx + Math.cos(rad) * 7, bly + Math.sin(rad) * 7, blx + Math.cos(rad) * 21, bly + Math.sin(rad) * 21);
     }
 
-    // Grill station (left third)
-    const grill = this.add.graphics().setDepth(2.6);
-    const gx = 36, gy = KITCHEN_Y;
-    // Grill surface dark iron
-    grill.fillStyle(0x3A3A3A, 1);
-    grill.fillRoundedRect(gx - 22, gy - 20, 44, 38, 4);
-    // Grill grates
-    grill.lineStyle(2.5, 0x555555, 1);
-    for (let gi = 0; gi < 5; gi++) {
-      const gly = gy - 16 + gi * 7;
-      grill.lineBetween(gx - 18, gly, gx + 18, gly);
+    // Burner plate (right)
+    const burnerR = this.add.graphics().setDepth(2.7);
+    const brx = 185, bry = KITCHEN_Y + 8;
+    burnerR.fillStyle(0x282828, 1); burnerR.fillCircle(brx, bry, 22);
+    burnerR.lineStyle(3, 0x888888, 1); burnerR.strokeCircle(brx, bry, 22);
+    burnerR.lineStyle(2, 0x666666, 1); burnerR.strokeCircle(brx, bry, 14);
+    burnerR.lineStyle(1.5, 0x555555, 1); burnerR.strokeCircle(brx, bry, 7);
+    burnerR.fillStyle(0x1A1A1A, 1); burnerR.fillCircle(brx, bry, 5);
+    burnerR.lineStyle(1.5, 0x777777, 0.8);
+    for (let a = 0; a < 6; a++) {
+      const rad = (a * Math.PI * 2) / 6;
+      burnerR.lineBetween(brx + Math.cos(rad) * 7, bry + Math.sin(rad) * 7, brx + Math.cos(rad) * 21, bry + Math.sin(rad) * 21);
     }
-    // Grill frame
-    grill.lineStyle(2, 0x888888, 0.9);
-    grill.strokeRoundedRect(gx - 22, gy - 20, 44, 38, 4);
-    // Control knob
-    grill.fillStyle(0x2A2A2A, 1); grill.fillCircle(gx - 8, gy + 24, 5);
-    grill.fillStyle(0xCCCCCC, 0.8); grill.fillCircle(gx - 8, gy + 24, 3);
-    grill.fillStyle(0xFF4400, 1); grill.fillRect(gx - 9, gy + 23, 2, 2);
 
-    // Stovetop / burners (center of cooking zone)
-    const stove = this.add.graphics().setDepth(2.6);
-    const sx = KITCHEN_X - 68, sy = KITCHEN_Y;
-    stove.fillStyle(0x222222, 1);
-    stove.fillRoundedRect(sx - 24, sy - 20, 48, 40, 5);
-    // Two burner rings
-    [[sx - 8, sy - 8], [sx + 8, sy + 8]].forEach(([bx, by]) => {
-      stove.lineStyle(3, 0x555555, 1); stove.strokeCircle(bx, by, 10);
-      stove.lineStyle(1.5, 0x333333, 1); stove.strokeCircle(bx, by, 6);
-      stove.fillStyle(0x1A1A1A, 1); stove.fillCircle(bx, by, 3);
-    });
-
-    // Flame animations when orders are cooking (triggered dynamically in update)
-    // Static pilot flame for ambiance
-    const pilotFlame = this.add.graphics().setDepth(2.7);
-    pilotFlame.fillStyle(0xFF6600, 0.9);
-    pilotFlame.fillTriangle(sx - 8, sy - 12, sx - 5, sy - 20, sx - 2, sy - 12);
-    pilotFlame.fillStyle(0xFFCC00, 0.7);
-    pilotFlame.fillTriangle(sx - 8, sy - 14, sx - 5, sy - 21, sx - 2, sy - 14);
+    // Pilot flame on left burner — tall, bright, impossible to miss
+    const pilotFlame = this.add.graphics().setDepth(2.9);
+    // Outer flame body
+    pilotFlame.fillStyle(0xFF4400, 0.95);
+    pilotFlame.fillTriangle(blx - 8, bly - 8, blx, bly - 28, blx + 8, bly - 8);
+    // Mid flame
+    pilotFlame.fillStyle(0xFF8800, 0.9);
+    pilotFlame.fillTriangle(blx - 5, bly - 9, blx, bly - 24, blx + 5, bly - 9);
+    // Inner hot core
+    pilotFlame.fillStyle(0xFFDD00, 0.85);
+    pilotFlame.fillTriangle(blx - 3, bly - 10, blx, bly - 19, blx + 3, bly - 10);
+    // White hot tip
+    pilotFlame.fillStyle(0xFFFFAA, 0.7);
+    pilotFlame.fillCircle(blx, bly - 20, 3);
     this.tweens.add({
-      targets: pilotFlame, alpha: { from: 0.8, to: 1.0 },
-      scaleY: { from: 0.9, to: 1.1 },
-      duration: 220, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
+      targets: pilotFlame,
+      scaleY: { from: 0.85, to: 1.15 }, scaleX: { from: 0.92, to: 1.08 },
+      alpha: { from: 0.88, to: 1.0 },
+      duration: 200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
     });
 
-    // Range hood above cooking zone
-    const hood = this.add.graphics().setDepth(3);
-    hood.fillStyle(0x8A8A8A, 1);
-    hood.fillRoundedRect(8, KITCHEN_Y - 46, KITCHEN_X - 16, 14, { tl: 4, tr: 0, bl: 0, br: 0 });
-    hood.lineStyle(1, 0xAAAAAA, 0.6);
-    hood.strokeRoundedRect(8, KITCHEN_Y - 46, KITCHEN_X - 16, 14, { tl: 4, tr: 0, bl: 0, br: 0 });
-    // Hood vent slots
-    hood.lineStyle(1, 0x666666, 0.6);
-    for (let hx = 20; hx < KITCHEN_X - 18; hx += 18) {
-      hood.lineBetween(hx, KITCHEN_Y - 44, hx, KITCHEN_Y - 36);
-    }
+    // Flame glow pool — orange halo on cooking surface (left burner)
+    const flameGlow = this.add.graphics().setDepth(2.6);
+    flameGlow.fillStyle(0xFF6600, 0.18);
+    flameGlow.fillCircle(blx, bly, 32);
+    this.tweens.add({
+      targets: flameGlow, alpha: { from: 0.5, to: 1.0 },
+      duration: 300, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
+    });
+
+    // Right burner smaller flame (simmers, less intense than pilot)
+    const flameR = this.add.graphics().setDepth(2.9);
+    flameR.fillStyle(0xFF4400, 0.8);
+    flameR.fillTriangle(brx - 6, bry - 6, brx, bry - 18, brx + 6, bry - 6);
+    flameR.fillStyle(0xFF8800, 0.75);
+    flameR.fillTriangle(brx - 4, bry - 7, brx, bry - 15, brx + 4, bry - 7);
+    flameR.fillStyle(0xFFDD00, 0.65);
+    flameR.fillTriangle(brx - 2, bry - 8, brx, bry - 13, brx + 2, bry - 8);
+    this.tweens.add({
+      targets: flameR,
+      scaleY: { from: 0.82, to: 1.18 }, alpha: { from: 0.75, to: 1.0 },
+      duration: 260, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
+      delay: 110,
+    });
+    const flameGlowR = this.add.graphics().setDepth(2.6);
+    flameGlowR.fillStyle(0xFF6600, 0.12);
+    flameGlowR.fillCircle(brx, bry, 28);
+    this.tweens.add({
+      targets: flameGlowR, alpha: { from: 0.4, to: 0.9 },
+      duration: 380, yoyo: true, repeat: -1, ease: 'Sine.easeInOut', delay: 80,
+    });
 
     // COOKING label
-    this.add.text(KITCHEN_X / 2, KITCHEN_Y - 28, '🔥 COOKING', {
-      fontSize: '9px', fontFamily: 'Arial', color: '#FF8833', letterSpacing: 1,
-    }).setOrigin(0.5).setDepth(4).setAlpha(0.7);
+    this.add.text(KITCHEN_X / 2, KITCHEN_Y - 22, '🔥 COOKING', {
+      fontSize: '10px', fontFamily: 'Arial Black', color: '#FF9944', letterSpacing: 1,
+    }).setOrigin(0.5).setDepth(4);
 
-    // ── PASS / READY ZONE (right half) — heat lamp lit pickup counter ──────────
+    // ── PASS / READY ZONE (right half) ──────────────────────────────────────
     const passZone = this.add.graphics().setDepth(2.5);
-    // Warm stainless pass surface
-    passZone.fillStyle(0x7A7A6A, 1);
+    // Warm cream pass surface
+    passZone.fillStyle(0xFFF8EE, 1);
     passZone.fillRoundedRect(KITCHEN_X + 8, KITCHEN_Y - 34, GAME_WIDTH - KITCHEN_X - 16, 68, { tl: 0, tr: 4, bl: 0, br: 4 });
-    // Warm gold tint when food is ready (baked into base)
-    passZone.fillStyle(0xFFCC44, 0.05);
-    passZone.fillRoundedRect(KITCHEN_X + 8, KITCHEN_Y - 34, GAME_WIDTH - KITCHEN_X - 16, 68, { tl: 0, tr: 4, bl: 0, br: 4 });
+    // Subtle warm border
+    passZone.lineStyle(2, 0xE8C89A, 0.6);
+    passZone.strokeRoundedRect(KITCHEN_X + 8, KITCHEN_Y - 34, GAME_WIDTH - KITCHEN_X - 16, 68, { tl: 0, tr: 4, bl: 0, br: 4 });
 
-    // Heat lamp bar above pass
-    const heatLamp = this.add.graphics().setDepth(3);
-    heatLamp.fillStyle(0x5C3010, 1);
-    heatLamp.fillRoundedRect(KITCHEN_X + 8, KITCHEN_Y - 46, GAME_WIDTH - KITCHEN_X - 16, 13, { tl: 0, tr: 4, bl: 0, br: 0 });
-    // Heat lamp bulbs
-    const lampColor = 0xFF8822;
-    [KITCHEN_X + 32, KITCHEN_X + 64, KITCHEN_X + 96, KITCHEN_X + 128, KITCHEN_X + 160].forEach(lbx => {
+    // Heat lamp strip at top of ready zone
+    const lampStrip = this.add.graphics().setDepth(3);
+    lampStrip.fillStyle(0x3A1800, 1);
+    lampStrip.fillRoundedRect(KITCHEN_X + 8, KITCHEN_Y - 34, GAME_WIDTH - KITCHEN_X - 16, 10, { tl: 0, tr: 4, bl: 0, br: 0 });
+    // Amber bulbs
+    [KITCHEN_X + 36, KITCHEN_X + 80, KITCHEN_X + 124, KITCHEN_X + 168, KITCHEN_X + 212].forEach(lbx => {
       if (lbx > GAME_WIDTH - 20) return;
-      heatLamp.fillStyle(lampColor, 0.9); heatLamp.fillCircle(lbx, KITCHEN_Y - 40, 5);
-      heatLamp.lineStyle(1, 0xFF4400, 0.5); heatLamp.strokeCircle(lbx, KITCHEN_Y - 40, 5);
-      const glow = this.add.graphics().setDepth(2);
-      glow.fillStyle(0xFF6600, 0.06); glow.fillCircle(lbx, KITCHEN_Y - 10, 28);
+      lampStrip.fillStyle(0xFF8800, 0.95); lampStrip.fillCircle(lbx, KITCHEN_Y - 29, 4);
     });
-    // Lamp flicker
     this.tweens.add({
-      targets: heatLamp, alpha: { from: 0.92, to: 1.0 },
-      duration: 400, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
+      targets: lampStrip, alpha: { from: 0.88, to: 1.0 },
+      duration: 600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
     });
+
+    // Warm heat glow from lamp on pass surface
+    const heatPool = this.add.graphics().setDepth(2.6);
+    heatPool.fillStyle(0xFF8800, 0.07);
+    heatPool.fillRoundedRect(KITCHEN_X + 8, KITCHEN_Y - 24, GAME_WIDTH - KITCHEN_X - 16, 58, { tl: 0, tr: 4, bl: 0, br: 4 });
 
     // READY label
-    this.add.text(KITCHEN_X + (GAME_WIDTH - KITCHEN_X) / 2, KITCHEN_Y - 28, '✅ READY', {
-      fontSize: '9px', fontFamily: 'Arial', color: '#44CC66', letterSpacing: 1,
-    }).setOrigin(0.5).setDepth(4).setAlpha(0.7);
+    this.add.text(KITCHEN_X + (GAME_WIDTH - KITCHEN_X) / 2, KITCHEN_Y - 22, '✅ READY', {
+      fontSize: '10px', fontFamily: 'Arial Black', color: '#22AA55', letterSpacing: 1,
+    }).setOrigin(0.5).setDepth(4);
 
-    // Zone divider — vertical chrome strip
+    // Zone divider — amber gold chrome strip
     const zoneDivider = this.add.graphics().setDepth(4);
-    zoneDivider.fillStyle(0x9A9A9A, 1);
+    zoneDivider.fillStyle(0xC8A030, 1);
     zoneDivider.fillRect(KITCHEN_X - 2, KITCHEN_Y - 34, 4, 68);
-    zoneDivider.lineStyle(1, 0xCCCCCC, 0.5);
-    zoneDivider.lineBetween(KITCHEN_X, KITCHEN_Y - 34, KITCHEN_X, KITCHEN_Y + 34);
 
-    // Kitchen glow — over the READY zone
+    // Kitchen glow — over the READY zone (shown when food is ready)
     this.kitchenGlow = this.add.graphics().setDepth(3);
-    this.kitchenGlow.fillStyle(0x27AE60, 1.0);
+    this.kitchenGlow.fillStyle(0x22CC55, 1.0);
     this.kitchenGlow.fillRoundedRect(KITCHEN_X + 8, KITCHEN_Y - 34, GAME_WIDTH - KITCHEN_X - 16, 68, { tl: 0, tr: 4, bl: 0, br: 4 });
     this.kitchenGlow.setAlpha(0);
 
@@ -822,11 +842,12 @@ export class GameScene extends Phaser.Scene {
   }
 
   private updateSeatingArrows() {
-    const showSeating = this.waitingQueue.length > 0;
-    for (const table of this.tables) {
-      if (table.state === 'empty') {
-        if (showSeating) table.setPriority('seating');
-        else table.clearPulse();
+    // Clear seating arrows on tables that no longer have queue waiting.
+    // setPriority('seating') is handled exclusively by updateActionPriority so
+    // only one arrow (the primary) ever shows — no mass-setPriority here.
+    if (this.waitingQueue.length === 0) {
+      for (const table of this.tables) {
+        if (table.state === 'empty') table.clearPulse();
       }
     }
   }
@@ -1012,6 +1033,8 @@ export class GameScene extends Phaser.Scene {
     if (!plate) return;
     const timer = (plate as any)._steamTimer as Phaser.Time.TimerEvent | undefined;
     if (timer) timer.remove();
+    const ring = (plate as any)._readyRing as Phaser.GameObjects.Graphics | undefined;
+    if (ring) ring.destroy();
     plate.destroy();
     this.readyPlateSprites.delete(orderId);
   }
@@ -1100,56 +1123,68 @@ export class GameScene extends Phaser.Scene {
   }
 
   private spawnReadyPlate(order: KitchenOrder) {
-    // Plates space along the READY zone. Inventory kitchen: no table number needed.
     const existingCount = this.readyPlateSprites.size;
-    const plateX = KITCHEN_X + 30 + existingCount * 46;
-    const plateY = KITCHEN_Y + 20;
+    // Space plates evenly across the ready zone (right half of kitchen counter)
+    const plateX = KITCHEN_X + 40 + existingCount * 52;
+    const plateY = KITCHEN_Y + 8;
 
     const plate = this.add.container(plateX, plateY).setDepth(3.5);
 
-    // Plate shadow
+    // Warm plate shadow
     const shadow = this.add.graphics();
-    shadow.fillStyle(0x000000, 0.18);
-    shadow.fillEllipse(2, 4, 26, 10);
+    shadow.fillStyle(0x000000, 0.22);
+    shadow.fillEllipse(3, 7, 38, 14);
     plate.add(shadow);
 
-    // Plate rim
+    // Plate rim — warm white ceramic
     const plateBg = this.add.graphics();
-    plateBg.fillStyle(0xFAF8F4, 1);
-    plateBg.fillCircle(0, 0, 14);
-    plateBg.lineStyle(2, 0xD0C8BA, 1);
-    plateBg.strokeCircle(0, 0, 14);
-    // Inner plate
-    plateBg.fillStyle(0xFFFDF8, 1);
-    plateBg.fillCircle(0, 0, 10);
+    plateBg.fillStyle(0xF8F2E8, 1);
+    plateBg.fillCircle(0, 0, 18);
+    plateBg.lineStyle(2.5, 0xD4C8A8, 1);
+    plateBg.strokeCircle(0, 0, 18);
+    // Inner plate well
+    plateBg.fillStyle(0xFFFBF4, 1);
+    plateBg.fillCircle(0, 0, 13);
+    // Subtle plate sheen
+    plateBg.fillStyle(0xFFFFFF, 0.35);
+    plateBg.fillEllipse(-5, -8, 10, 6);
     plate.add(plateBg);
 
-    // Food emoji — slightly larger for clarity
-    plate.add(this.add.text(0, 0, order.item.emoji, { fontSize: '16px' }).setOrigin(0.5));
+    // Food emoji — large and clear
+    plate.add(this.add.text(0, 1, order.item.emoji, { fontSize: '20px' }).setOrigin(0.5));
 
-    // Steam wisps above plate
+    // "READY" indicator ring pulse
+    const readyRing = this.add.graphics().setDepth(3.4);
+    readyRing.lineStyle(2, 0x22CC55, 0.8);
+    readyRing.strokeCircle(plateX, plateY, 22);
+    this.tweens.add({
+      targets: readyRing, alpha: { from: 0.9, to: 0.1 }, scale: { from: 1, to: 1.5 },
+      duration: 1200, repeat: -1, ease: 'Quad.easeOut',
+    });
+    (plate as any)._readyRing = readyRing;
+
+    // Steam wisps
     const steamTimer = this.time.addEvent({
-      delay: 900, loop: true,
+      delay: 700, loop: true,
       callback: () => {
         if (!plate.active) return;
-        const wx = plateX + (Math.random() - 0.5) * 8;
-        const wy = plateY - 14;
+        const wx = plateX + (Math.random() - 0.5) * 10;
+        const wy = plateY - 18;
         const puff = this.add.graphics().setDepth(3.6);
-        puff.fillStyle(0xFFFFFF, 0.22);
-        puff.fillCircle(0, 0, 3 + Math.random() * 2);
+        puff.fillStyle(0xFFFFFF, 0.3);
+        puff.fillCircle(0, 0, 4 + Math.random() * 3);
         puff.setPosition(wx, wy);
         this.tweens.add({
-          targets: puff, y: wy - 16, alpha: 0, scaleX: 1.8, scaleY: 1.8,
-          duration: 700, ease: 'Quad.easeOut',
+          targets: puff, y: wy - 22, alpha: 0, scaleX: 2, scaleY: 2,
+          duration: 800, ease: 'Quad.easeOut',
           onComplete: () => puff.destroy(),
         });
       },
     });
-    // Store timer reference on container for cleanup
     (plate as any)._steamTimer = steamTimer;
 
     plate.setScale(0);
-    this.tweens.add({ targets: plate, scale: 1, duration: 200, ease: 'Back.easeOut' });
+    this.tweens.add({ targets: plate, scale: 1, duration: 220, ease: 'Back.easeOut' });
 
     this.readyPlateSprites.set(order.id, plate);
   }
@@ -1188,6 +1223,10 @@ export class GameScene extends Phaser.Scene {
       const deliveryScore = Math.floor(customer.order!.price * 10 * speedMult * this.comboMultiplier);
       this.addScore(deliveryScore);
 
+      // Delivery flash — warm white burst
+      this.cameras.main.flash(120, 255, 255, 200, false);
+      this.spawnFoodBurst(table.x, table.y - 20, customer.order!.emoji);
+
       const pickupTime = this.orderStartTimes.get(orderId);
       if (pickupTime !== undefined) {
         const deliveryMs = this.time.now - pickupTime;
@@ -1202,10 +1241,10 @@ export class GameScene extends Phaser.Scene {
 
       if (speedMult > 1) {
         const label = SPEED_MULTIPLIERS.find(s => customer.patienceAtDelivery >= s.minPct)?.label ?? '';
-        if (label) this.showFloating(label, table.x, table.y - 60, COLORS.TEXT_GOLD);
+        if (label) this.showFloating(label, table.x, table.y - 70, COLORS.TEXT_GOLD, 1.2);
       }
-      const deliverSize = this.comboMultiplier >= 5 ? 1.6 : this.comboMultiplier >= 4 ? 1.35 : this.comboMultiplier >= 3 ? 1.15 : 1;
-      this.showFloating('✓ SERVED!', table.x, table.y - 55, '#4CAF50');
+      const deliverSize = this.comboMultiplier >= 5 ? 1.8 : this.comboMultiplier >= 4 ? 1.5 : this.comboMultiplier >= 3 ? 1.25 : 1.1;
+      this.showFloating('✓ SERVED!', table.x, table.y - 55, '#4CAF50', deliverSize);
       this.showFloating(`+${deliveryScore}`, table.x, table.y - 35, COLORS.TEXT_ORANGE, deliverSize);
       this.playerBusy = false;
 
@@ -1219,6 +1258,7 @@ export class GameScene extends Phaser.Scene {
         customer.startPatience();
         customer.showPayBubble(customer.order!.price);
         table.setStateVisual('bill');
+        table.setPayingGlow();
         table.setPriority('paying');
 
         if (this.tutorialActive && this.tutorialStep === 3) {
@@ -1241,14 +1281,25 @@ export class GameScene extends Phaser.Scene {
       const payScore = Math.floor((customer.order!.price + tip) * 5 * this.comboMultiplier * vipMult);
       this.addScore(payScore);
       SoundManager.paymentCollected();
-      const paySize = this.comboMultiplier >= 5 ? 1.8 : this.comboMultiplier >= 4 ? 1.5 : this.comboMultiplier >= 3 ? 1.25 : 1;
+
+      // Big gold flash on payment
+      this.cameras.main.flash(180, 255, 215, 0, false);
+      this.cameras.main.shake(80, 0.003);
+
+      const paySize = this.comboMultiplier >= 5 ? 2.0 : this.comboMultiplier >= 4 ? 1.7 : this.comboMultiplier >= 3 ? 1.4 : 1.2;
       this.showFloating(`💰 $${payScore}`, table.x, table.y - 50, COLORS.TEXT_GOLD, paySize);
       this.spawnCoins(table.x, table.y);
 
+      // XP preview (actual XP saved at end-of-round)
+      const xpGain = Math.max(1, Math.floor(payScore / 20));
+      this.time.delayedCall(350, () => {
+        this.showFloating(`+${xpGain} XP`, table.x + 40, table.y - 70, '#AADDFF', 0.8);
+      });
+
       if (customer.isVIP) {
         this.time.delayedCall(200, () => {
-          this.showFloating('⭐ VIP! ×2.5', table.x, table.y - 100, COLORS.TEXT_GOLD);
-          this.cameras.main.flash(140, 255, 220, 0, false);
+          this.showFloating('⭐ VIP! ×2.5', table.x, table.y - 100, COLORS.TEXT_GOLD, 1.3);
+          this.cameras.main.flash(180, 255, 220, 0, false);
         });
       }
 
@@ -1258,7 +1309,7 @@ export class GameScene extends Phaser.Scene {
 
       if (customer.patienceAtDelivery >= 0.75) {
         this.time.delayedCall(300, () => {
-          this.showFloating('⭐ PERFECT!', table.x, table.y - 95, COLORS.TEXT_GOLD);
+          this.showFloating('⭐ PERFECT!', table.x, table.y - 95, COLORS.TEXT_GOLD, 1.1);
         });
       }
 
@@ -1666,7 +1717,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private updateActionPriority() {
-    if (this.time.now - this.priorityLastUpdate < 150) return;
+    if (this.time.now - this.priorityLastUpdate < 32) return;
     this.priorityLastUpdate = this.time.now;
 
     // Carrying dirty dishes: only dishwasher matters
@@ -1738,8 +1789,21 @@ export class GameScene extends Phaser.Scene {
       }
     }
 
+    // Drive arrow state: only the primary table shows its arrow
     for (const table of this.tables) {
-      table.setUrgencyLevel(table.id === primaryTableId);
+      const isPrimary = (table.id === primaryTableId);
+      // Assign priority type if this table should gain one
+      if (isPrimary && primaryTableId !== -1) {
+        // Determine the right priority for this table
+        const cust = this.getCustomerAtTable(table.id);
+        if (cust && cust.getPatienceFraction() < 0.25) table.setPriority('urgent');
+        else if (cust?.state === 'paying') table.setPriority('paying');
+        else if (cust?.state === 'waiting_food') table.setPriority('kitchen_ready');
+        else if (cust?.state === 'requesting') table.setPriority('requesting');
+        else if (table.state === 'dirty') table.setPriority('dirty');
+        else if (table.state === 'empty' && this.waitingQueue.length > 0) table.setPriority('seating');
+      }
+      table.setUrgencyLevel(isPrimary);
     }
     this.setKitchenGlowPrimary(primaryKitchen);
   }
@@ -1900,8 +1964,36 @@ export class GameScene extends Phaser.Scene {
 
   // ─── Helpers ──────────────────────────────────────────────────────────────
 
+  private spawnFoodBurst(x: number, y: number, emoji: string) {
+    // 5 emoji pieces burst outward then fade
+    for (let i = 0; i < 5; i++) {
+      const angle = (Math.PI * 2 / 5) * i - Math.PI / 2;
+      const dist = 38 + Math.random() * 18;
+      const piece = this.add.text(x, y, emoji, { fontSize: '14px' }).setOrigin(0.5).setDepth(22).setAlpha(0.9);
+      this.tweens.add({
+        targets: piece,
+        x: x + Math.cos(angle) * dist,
+        y: y + Math.sin(angle) * dist - 12,
+        alpha: 0, scale: 0.4,
+        duration: 520 + i * 40,
+        delay: i * 30,
+        ease: 'Quad.easeOut',
+        onComplete: () => piece.destroy(),
+      });
+    }
+    // Bright starburst ring
+    const ring = this.add.graphics().setDepth(21);
+    ring.lineStyle(3, 0xFFEE44, 0.9);
+    ring.strokeCircle(x, y, 8);
+    this.tweens.add({
+      targets: ring, scaleX: 3.5, scaleY: 3.5, alpha: 0,
+      duration: 400, ease: 'Quad.easeOut',
+      onComplete: () => ring.destroy(),
+    });
+  }
+
   private showFloating(text: string, x: number, y: number, color: string, sizeMult = 1) {
-    const px = Math.round(20 * sizeMult);
+    const px = Math.round(24 * sizeMult);
     const t = this.add.text(x, y, text, {
       fontSize: `${px}px`, fontFamily: 'Arial Black', color,
     }).setOrigin(0.5).setDepth(25).setScale(0);

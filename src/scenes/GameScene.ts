@@ -1558,6 +1558,7 @@ export class GameScene extends Phaser.Scene {
 
   private startRushHour() {
     if (this.rushHourActive) return;
+    if (this.tutorialActive) return;
     this.rushHourActive = true;
     SoundManager.rushHour();
 

@@ -754,6 +754,10 @@ export class GameScene extends Phaser.Scene {
       if (this.tutorialActive && this.tutorialStep === 0) this.advanceTutorial();
     };
 
+    // Customer faces the table during escort + walks with a subtle bob
+    customer.faceDirection(table.x);
+    customer.walkBob(700);
+
     this.player.walkTo(table.x, table.y + 40, onBothArrived);
     this.tweens.add({
       targets: customer, x: table.x, y: table.y - 6,
@@ -920,6 +924,7 @@ export class GameScene extends Phaser.Scene {
       customer.state = 'waiting_food';
       customer.showOrderBubble(order);
       customer.showOrderFlash();
+      this.player.setEmotion('happy', 900);
       table.setStateVisual('ticket');
       this.showFloating('✓ ORDER!', table.x, table.y - 70, '#4CAF50');
       SoundManager.orderTaken();
@@ -1025,6 +1030,7 @@ export class GameScene extends Phaser.Scene {
       }
 
       this.player.deliverAnim();
+      this.player.setEmotion('happy', 1200);
       SoundManager.deliverFood();
       customer.patienceAtDelivery = customer.getPatienceFraction();
       customer.hideBubble();
@@ -1871,7 +1877,24 @@ export class GameScene extends Phaser.Scene {
 
   private spawnKitchenSteam() {
     const activeCooking = this.kitchenOrders.filter(o => !o.ready);
-    if (activeCooking.length === 0) return;
+    // Always emit a small ambient puff (25% chance) even with no orders — kitchen is always hot
+    if (activeCooking.length === 0) {
+      if (Math.random() > 0.25) return;
+      const sx = KITCHEN_X - 80 + Math.random() * 60;
+      const sy = KITCHEN_Y - 32;
+      const steam = this.add.graphics().setDepth(5);
+      steam.fillStyle(0xFFFFFF, 0.12 + Math.random() * 0.08);
+      steam.fillCircle(0, 0, 2 + Math.random() * 2);
+      steam.setPosition(sx, sy);
+      this.tweens.add({
+        targets: steam,
+        y: sy - 18 - Math.random() * 12, x: sx + (Math.random() - 0.5) * 10,
+        alpha: 0, scaleX: 1.5, scaleY: 1.5,
+        duration: 700 + Math.random() * 300, ease: 'Quad.easeOut',
+        onComplete: () => steam.destroy(),
+      });
+      return;
+    }
 
     const count = Math.min(activeCooking.length, 3);
     for (let i = 0; i < count; i++) {

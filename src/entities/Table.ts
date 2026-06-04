@@ -86,7 +86,7 @@ export class Table extends Phaser.GameObjects.Container {
     this.stateVisual.clear();
     this.drawDirtOverlay();
     this.dirtOverlay.setVisible(true);
-    this.tableBody.setTint(0xFF6622);
+    this.tableBody.clearTint();
     this.setPriority('dirty');
   }
 

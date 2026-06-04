@@ -186,6 +186,22 @@ export class Customer extends Phaser.GameObjects.Container {
     });
   }
 
+  // Face left or right based on target x position
+  faceDirection(toX: number) {
+    this.bodySprite.setFlipX(toX < this.x);
+  }
+
+  // Walking bob — subtle scale pulse during escort (call with matchDuration)
+  walkBob(duration: number) {
+    this.scene.tweens.add({
+      targets: this.bodySprite,
+      y: { from: 0, to: -4 },
+      duration: 160, yoyo: true,
+      repeat: Math.floor(duration / 320),
+      ease: 'Sine.easeInOut',
+    });
+  }
+
   showNameBanner() {
     const name = CUSTOMER_VARIANTS[this.variantIndex].name.toUpperCase();
     const txt = this.scene.add.text(0, -100, name, {

@@ -83,6 +83,7 @@ export class GameScene extends Phaser.Scene {
   private steamTimer: Phaser.Time.TimerEvent | null = null;
   private priorityLastUpdate = 0;
   private kitchenGlowPrimary = false;
+  private cookingOnBurner: Map<number, Phaser.GameObjects.Container> = new Map();
 
   private tutorialStep = 0;
   private tutorialActive = false;
@@ -1119,6 +1120,7 @@ export class GameScene extends Phaser.Scene {
       };
       this.kitchenOrders.push(kitchenOrder);
       this.addTicket(kitchenOrder);
+      this.showCookingOnBurner(kitchenOrder);
 
       // Cook timer
       this.time.delayedCall(item.cookTime, () => {
@@ -1133,6 +1135,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   private onOrderReady(order: KitchenOrder) {
+    this.hideCookingOnBurner(order.id);
+
     if (order.ticketObj) {
       order.progressBar?.clear();
       const badge = this.add.text(0, -16, '✓', {
@@ -1149,6 +1153,9 @@ export class GameScene extends Phaser.Scene {
       // Green flash: unmistakable "food is ready, go get it" signal
       this.cameras.main.flash(110, 80, 255, 80, false);
     }
+
+    // Big READY pop above the kitchen — can't miss it
+    this.showReadyPop(order.item.emoji);
 
     // Spawn a physical plate on the READY counter zone
     this.spawnReadyPlate(order);
@@ -1222,6 +1229,76 @@ export class GameScene extends Phaser.Scene {
     this.readyPlateSprites.set(order.id, plate);
   }
 
+  // Cooking burner visual — shows food emoji above active burner while cooking
+  private showCookingOnBurner(order: KitchenOrder) {
+    const burnerSlots = [70, 185];
+    const usedSlots = new Set<number>();
+    this.cookingOnBurner.forEach(c => usedSlots.add((c as any)._slot ?? 0));
+    const slot = usedSlots.has(0) ? 1 : 0;
+    const bx = burnerSlots[slot] ?? 70;
+    const by = KITCHEN_Y - 18;
+
+    const container = this.add.container(bx, by).setDepth(4);
+    (container as any)._slot = slot;
+
+    // Pot silhouette behind emoji
+    const pot = this.add.graphics();
+    pot.fillStyle(0x1A1A1A, 0.7);
+    pot.fillRoundedRect(-13, -6, 26, 18, 4);
+    pot.fillStyle(0x333333, 0.8);
+    pot.fillRoundedRect(-10, -10, 6, 8, 2); // left handle
+    pot.fillRoundedRect(4, -10, 6, 8, 2);   // right handle
+    container.add(pot);
+
+    const foodTxt = this.add.text(0, 4, order.item.emoji, { fontSize: '14px' }).setOrigin(0.5);
+    container.add(foodTxt);
+
+    // Boiling bob animation
+    this.tweens.add({
+      targets: container, y: { from: by, to: by - 5 },
+      duration: 400, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
+    });
+
+    container.setScale(0);
+    this.tweens.add({ targets: container, scale: 1, duration: 180, ease: 'Back.easeOut' });
+
+    this.cookingOnBurner.set(order.id, container);
+  }
+
+  private hideCookingOnBurner(orderId: number) {
+    const container = this.cookingOnBurner.get(orderId);
+    if (container) {
+      this.tweens.add({
+        targets: container, scale: 0, alpha: 0, duration: 150, ease: 'Quad.easeIn',
+        onComplete: () => container.destroy(),
+      });
+      this.cookingOnBurner.delete(orderId);
+    }
+  }
+
+  // Pops a big "READY!" announcement above kitchen — visible from dining area
+  private showReadyPop(emoji: string) {
+    // Appears just below the kitchen counter — visible from the dining floor
+    const rx = GAME_WIDTH * 0.75;
+    const ry = KITCHEN_Y + 78;
+    const pop = this.add.text(rx, ry, `${emoji} READY!`, {
+      fontSize: '24px', fontFamily: 'Arial Black', color: '#44FF88',
+      stroke: '#002200', strokeThickness: 5,
+    }).setOrigin(0.5).setDepth(22).setAlpha(0).setScale(0.4);
+
+    this.tweens.add({
+      targets: pop, alpha: 1, scale: 1.15, y: ry - 12,
+      duration: 200, ease: 'Back.easeOut',
+      onComplete: () => {
+        this.tweens.add({
+          targets: pop, alpha: 0, y: ry - 38,
+          duration: 550, delay: 700, ease: 'Quad.easeIn',
+          onComplete: () => pop.destroy(),
+        });
+      },
+    });
+  }
+
   // orderId identifies which tray slot to drop; customer.order.emoji identifies the food type.
   private deliverFood(table: Table, customer: Customer, orderId: number) {
     if (!customer.order) return;
@@ -1248,6 +1325,10 @@ export class GameScene extends Phaser.Scene {
       customer.refillPatience();
       table.setStateVisual('plate');
       table.clearFloatEmoji();
+      // Eating indicator — "leave me alone" signal
+      this.time.delayedCall(600, () => {
+        if (customer.state === 'eating') table.setFloatEmoji('😋', true);
+      });
 
       this.tray.drop(orderId);
       this.syncTrayDisplay();
@@ -1294,6 +1375,7 @@ export class GameScene extends Phaser.Scene {
         table.setStateVisual('bill');
         table.setPayingGlow();
         table.setPriority('paying');
+        table.setFloatEmoji('💳', true);
 
         if (this.tutorialActive && this.tutorialStep === 3) {
           this.advanceTutorial();
@@ -1377,6 +1459,8 @@ export class GameScene extends Phaser.Scene {
   private collectDirtyDishes(table: Table) {
     this.playerBusy = true;
     table.clearPulse();
+    const savedTableX = table.x;
+    const savedTableY = table.y;
     this.player.walkTo(table.x, table.y + 40, () => {
       this.player.collectAnim();
       table.setEmpty();
@@ -1384,10 +1468,9 @@ export class GameScene extends Phaser.Scene {
       this.updateSeatingArrows();
 
       this.carryingDirty = true;
-      // Show dirty dish as a badge independent of food tray so player can still carry food
       this.player.showDirtyDish();
       this.setDishwasherGlowPrimary(true);
-      this.showFloating('→ DISHWASHER', table.x, table.y - 30, COLORS.TEXT_ORANGE);
+      this.showFloating('🧹 CLEAR!', savedTableX, savedTableY - 40, COLORS.TEXT_ORANGE, 1.1);
       this.playerBusy = false;
 
       if (this.tutorialActive && this.tutorialStep === 5) {
@@ -1411,7 +1494,8 @@ export class GameScene extends Phaser.Scene {
       this.player.hideDirtyDish();
       this.setDishwasherGlowPrimary(false);
       this.updateSeatingArrows();
-      this.showFloating('✨ Clean!', 80, 180, COLORS.TEXT_GREEN);
+      this.showFloating('✨ CLEAN!', 80, 165, COLORS.TEXT_GREEN, 1.3);
+      this.cameras.main.flash(80, 120, 255, 120, false);
       this.spawnDishwasherSteam();
       SoundManager.dishwasher();
       this.playerBusy = false;

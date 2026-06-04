@@ -378,12 +378,13 @@ export class Table extends Phaser.GameObjects.Container {
   }
 
   // Floating emoji above the table surface — communicates food order, dirty state, etc.
+  // Depth 19 puts it above the player (17) and action arrows (15) for always-on legibility.
   setFloatEmoji(emoji: string, bouncing = false) {
     this.clearFloatEmoji();
-    const ey = this.y - 72;
+    const ey = this.y - 78;
     this.floatEmoji = this.scene.add.text(this.x, ey, emoji, {
-      fontSize: '26px',
-    }).setOrigin(0.5).setDepth(14);
+      fontSize: '28px',
+    }).setOrigin(0.5).setDepth(19);
     if (bouncing) {
       this.floatEmojiTween = this.scene.tweens.add({
         targets: this.floatEmoji,

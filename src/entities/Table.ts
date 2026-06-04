@@ -29,9 +29,9 @@ export class Table extends Phaser.GameObjects.Container {
     super(scene, x, y);
     this.id = id;
 
-    // Arrow anchor: 75px above table center, above customer sprite top (table.y−20, sprite top table.y−56)
+    // Arrow anchor: 105px above table center — clears pendant lamp shade (which ends at y-72)
     this.arrowWorldX = x;
-    this.arrowWorldY = y - 72;
+    this.arrowWorldY = y - 105;
 
     // Shadow
     const shadow = scene.add.graphics();

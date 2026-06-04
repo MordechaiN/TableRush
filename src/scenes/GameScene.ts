@@ -184,6 +184,16 @@ export class GameScene extends Phaser.Scene {
     diningArea.lineStyle(1.5, 0xAA7030, 0.1);
     diningArea.strokeRoundedRect(18, 188, GAME_WIDTH - 36, 450, 8);
 
+    // Decorative dining rug — warm burgundy oval with gold border, adds restaurant feel
+    const rug = this.add.graphics().setDepth(0.2);
+    rug.fillStyle(0x8B1A2A, 0.22);
+    rug.fillEllipse(GAME_WIDTH / 2, 430, 320, 380);
+    // Rug border (inner gold band)
+    rug.lineStyle(3, 0xC8902A, 0.28);
+    rug.strokeEllipse(GAME_WIDTH / 2, 430, 320, 380);
+    rug.lineStyle(1.5, 0xC8902A, 0.16);
+    rug.strokeEllipse(GAME_WIDTH / 2, 430, 300, 356);
+
     // ── Walls ─────────────────────────────────────────────────────────────────
     this.add.rectangle(GAME_WIDTH / 2, 0, GAME_WIDTH, 90, COLORS.WALL_ACCENT);
     // Wainscoting detail

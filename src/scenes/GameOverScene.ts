@@ -64,9 +64,14 @@ export class GameOverScene extends Phaser.Scene {
 
     // ── Header — cinematic entrance ───────────────────────────────────────────
     const isRecord = summary.isNewHighScore;
-    const headerText = isRecord ? '🏆 NEW RECORD!' : 'ROUND COMPLETE!';
-    const headerColor = isRecord ? COLORS.TEXT_GOLD : COLORS.TEXT_DARK;
-    const headerSize = isRecord ? '32px' : '28px';
+    const isNewBestStars = summary.isNewBestStars && !isRecord && data.stars > 1;
+    const headerText = isRecord ? '🏆 NEW RECORD!'
+      : isNewBestStars ? '⭐ PERSONAL BEST!'
+      : 'ROUND COMPLETE!';
+    const headerColor = isRecord ? COLORS.TEXT_GOLD
+      : isNewBestStars ? '#FFE066'
+      : COLORS.TEXT_DARK;
+    const headerSize = isRecord || isNewBestStars ? '32px' : '28px';
     const hdr = this.add.text(cx, y, headerText, {
       fontSize: headerSize, fontFamily: 'Arial Black', color: headerColor,
     }).setOrigin(0.5).setAlpha(0).setScale(0.7);
@@ -74,11 +79,11 @@ export class GameOverScene extends Phaser.Scene {
       targets: hdr, alpha: 1, scaleX: 1, scaleY: 1,
       duration: 380, ease: 'Back.easeOut',
     });
-    if (isRecord) {
-      // Gold shimmer loop on the header
+    if (isRecord || isNewBestStars) {
+      // Shimmer loop on the header
       this.tweens.add({ targets: hdr, alpha: { from: 1, to: 0.7 }, duration: 700, yoyo: true, repeat: -1, delay: 500 });
     }
-    y += isRecord ? 54 : 50;
+    y += (isRecord || isNewBestStars) ? 54 : 50;
 
     // Stars
     this.showStars(cx, y, data.stars);
@@ -266,7 +271,7 @@ export class GameOverScene extends Phaser.Scene {
     this.makeBtn(cx, btnY, 'PLAY AGAIN', 'btn_orange', () => this.scene.start('GameScene'));
     this.makeBtn(cx, btnY + 64, 'MAIN MENU', 'btn_green', () => this.scene.start('MainMenuScene'));
 
-    if (summary.isNewHighScore) {
+    if (summary.isNewHighScore || isNewBestStars) {
       this.spawnConfetti();
     }
   }

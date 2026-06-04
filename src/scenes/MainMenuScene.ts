@@ -201,9 +201,16 @@ export class MainMenuScene extends Phaser.Scene {
     if (prog.bestStars > 0) {
       let starsStr = '';
       for (let i = 0; i < prog.bestStars; i++) starsStr += '⭐';
-      this.add.text(cx, statsY + 28, `Best: ${starsStr}`, {
+      const subLine = prog.totalRounds >= 3
+        ? `Best: ${starsStr}  ·  ${prog.totalRounds} rounds`
+        : `Best: ${starsStr}`;
+      this.add.text(cx, statsY + 28, subLine, {
         fontSize: '13px', color: COLORS.TEXT_GOLD,
       }).setOrigin(0.5).setAlpha(0.85);
+    } else if (prog.totalRounds >= 3) {
+      this.add.text(cx, statsY + 28, `${prog.totalRounds} rounds played`, {
+        fontSize: '13px', color: '#CCBBAA',
+      }).setOrigin(0.5).setAlpha(0.75);
     }
 
     // ── Buttons (staggered entrance) ──────────────────────────────────────────

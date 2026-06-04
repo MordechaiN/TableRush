@@ -1512,7 +1512,8 @@ export class GameScene extends Phaser.Scene {
       this.carryingDirty = true;
       this.player.showDirtyDish();
       this.setDishwasherGlowPrimary(true);
-      this.showFloating('🧹 CLEAR!', savedTableX, savedTableY - 40, COLORS.TEXT_ORANGE, 1.1);
+      this.showFloating('🧹 CLEAR!', savedTableX, savedTableY - 40, COLORS.TEXT_ORANGE, 1.3);
+      this.spawnCleanBurst(savedTableX, savedTableY);
       this.playerBusy = false;
 
       if (this.tutorialActive && this.tutorialStep === 5) {
@@ -2321,6 +2322,34 @@ export class GameScene extends Phaser.Scene {
       if (c === target) return id;
     }
     return -1;
+  }
+
+  private spawnCleanBurst(x: number, y: number) {
+    // Small sparkle burst — 6 white/green circles expanding from table center
+    for (let i = 0; i < 6; i++) {
+      const angle = (Math.PI * 2 / 6) * i - Math.PI / 2;
+      const dot = this.add.graphics().setDepth(22);
+      dot.fillStyle(i % 2 === 0 ? 0xAAFFAA : 0xFFFFFF, 1);
+      dot.fillCircle(0, 0, 5 + Math.random() * 3);
+      dot.setPosition(x, y - 10);
+      this.tweens.add({
+        targets: dot,
+        x: x + Math.cos(angle) * (40 + Math.random() * 20),
+        y: (y - 10) + Math.sin(angle) * (32 + Math.random() * 16),
+        alpha: 0, scaleX: 0.3, scaleY: 0.3,
+        duration: 450 + i * 35, delay: i * 20, ease: 'Quad.easeOut',
+        onComplete: () => dot.destroy(),
+      });
+    }
+    // Expanding ring
+    const ring = this.add.graphics().setDepth(21);
+    ring.lineStyle(3, 0x66FF88, 0.9);
+    ring.strokeCircle(x, y - 10, 8);
+    this.tweens.add({
+      targets: ring, scaleX: 4.5, scaleY: 3, alpha: 0,
+      duration: 420, ease: 'Quad.easeOut',
+      onComplete: () => ring.destroy(),
+    });
   }
 
   private spawnStarBurst(x: number, y: number) {

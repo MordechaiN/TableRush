@@ -52,8 +52,8 @@ export class MainMenuScene extends Phaser.Scene {
     shafts.fillStyle(0xFFEE88, 0.05);
     shafts.fillTriangle(GAME_WIDTH - 24, 90, GAME_WIDTH - 180, 90, GAME_WIDTH - 110, 500);
 
-    // ── Background table silhouettes — very subtle atmosphere ───────────────
-    const bgTables = this.add.graphics().setAlpha(0.10);
+    // ── Background table silhouettes — atmospheric restaurant backdrop ───────
+    const bgTables = this.add.graphics().setAlpha(0.22);
     [[100, 590], [380, 590], [240, 730]].forEach(([tx, ty]) => {
       // Table body
       bgTables.fillStyle(0x8B4513, 1);

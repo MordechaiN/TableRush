@@ -42,7 +42,7 @@ export class Player extends Phaser.GameObjects.Container {
     const dist = Math.hypot(x - this.x, y - this.y);
     this.walkTween = this.scene.tweens.add({
       targets: this, x, y,
-      duration: dist * 1.35, ease: 'Quad.easeInOut',
+      duration: dist * 1.15, ease: 'Quad.easeOut',
       onComplete: () => {
         this.stopWalkAnim();
         this.isWalking = false;

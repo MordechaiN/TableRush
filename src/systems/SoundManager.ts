@@ -309,4 +309,23 @@ export const SoundManager = {
     tone(ac, master, 'square', 880, 0.6, t, 0.08);
     tone(ac, master, 'square', 660, 0.5, t + 0.15, 0.08);
   },
+
+  // starReveal(n): bell tone pitched up for each star (1=C5, 2=E5, 3=G5+sparkle)
+  starReveal(starNum: number) {
+    if (!this.isEnabled()) return;
+    const ac = getCtx(); if (!ac) return;
+    const t = ac.currentTime;
+    const master = gain(ac, 0.32);
+    master.connect(ac.destination);
+    const freqs = [523, 659, 784];
+    const freq = freqs[Math.min(starNum - 1, 2)];
+    tone(ac, master, 'sine', freq, 1.0, t, 0.45);
+    tone(ac, master, 'sine', freq * 2, 0.22, t, 0.35); // overtone shimmer
+    if (starNum === 3) {
+      // Third star: full G major chord + sparkle
+      tone(ac, master, 'sine', 988, 0.5, t + 0.04, 0.40);
+      tone(ac, master, 'sine', 1319, 0.35, t + 0.08, 0.35);
+      tone(ac, master, 'sine', 1568, 0.22, t + 0.12, 0.30);
+    }
+  },
 };

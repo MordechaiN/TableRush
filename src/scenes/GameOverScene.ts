@@ -196,10 +196,43 @@ export class GameOverScene extends Phaser.Scene {
 
     if (summary.levelAfter > summary.levelBefore) {
       y += 22;
-      const lvlTxt = this.add.text(cx, y, `🎉 LEVEL UP → ${summary.levelAfter}!`, {
-        fontSize: '18px', fontFamily: 'Arial Black', color: COLORS.TEXT_GOLD,
-      }).setOrigin(0.5).setAlpha(0);
-      this.tweens.add({ targets: lvlTxt, alpha: 1, scaleX: 1.2, scaleY: 1.2, duration: 400, delay: 1200, yoyo: true, repeat: 2 });
+      // Level-up pill background
+      const lvlBg = this.add.graphics().setAlpha(0);
+      lvlBg.fillStyle(0xFF9900, 1);
+      lvlBg.fillRoundedRect(cx - 140, y - 16, 280, 36, 12);
+      const lvlTxt = this.add.text(cx, y + 2, `🎉  LEVEL UP  →  ${summary.levelAfter}`, {
+        fontSize: '20px', fontFamily: 'Arial Black', color: '#FFFFFF',
+      }).setOrigin(0.5).setAlpha(0).setScale(0.4);
+      this.tweens.add({
+        targets: [lvlTxt, lvlBg], alpha: 1, duration: 180, delay: 1200,
+      });
+      this.tweens.add({
+        targets: lvlTxt, scaleX: 1, scaleY: 1,
+        duration: 320, delay: 1200, ease: 'Back.easeOut',
+        onComplete: () => {
+          SoundManager.comboUp(3);
+          this.cameras.main.flash(120, 255, 160, 40, false);
+          // Coin burst
+          for (let ci = 0; ci < 8; ci++) {
+            const angle = (Math.PI * 2 / 8) * ci;
+            const coin = this.add.graphics().setDepth(45);
+            coin.fillStyle(0xFFD700, 1);
+            coin.fillCircle(0, 0, 7);
+            coin.lineStyle(2, 0xCC9900, 1);
+            coin.strokeCircle(0, 0, 7);
+            coin.setPosition(cx, y + 2);
+            this.tweens.add({
+              targets: coin,
+              x: cx + Math.cos(angle) * 55,
+              y: y + 2 + Math.sin(angle) * 40,
+              alpha: 0, scale: 0,
+              duration: 500, delay: ci * 35,
+              ease: 'Quad.easeOut',
+              onComplete: () => coin.destroy(),
+            });
+          }
+        },
+      });
     }
 
     y += 30;
@@ -280,17 +313,61 @@ export class GameOverScene extends Phaser.Scene {
 
   private showStars(cx: number, y: number, count: number) {
     for (let i = 0; i < 3; i++) {
-      const tex = i < count ? 'star_full' : 'star_empty';
-      const star = this.add.image(cx + (i - 1) * 52, y + 16, tex).setScale(0.9).setAlpha(0);
-      const delay = 400 + i * 200;
+      const isFull = i < count;
+      const tex = isFull ? 'star_full' : 'star_empty';
+      const star = this.add.image(cx + (i - 1) * 52, y + 16, tex).setScale(0).setAlpha(1);
+      const delay = 440 + i * 230;
       this.tweens.add({
-        targets: star, alpha: 1, scaleX: 1.1, scaleY: 1.1,
-        duration: 300, delay,
+        targets: star, scaleX: 1.35, scaleY: 1.35,
+        duration: 260, delay, ease: 'Back.easeOut',
+        onStart: () => {
+          if (isFull) {
+            SoundManager.starReveal(i + 1);
+            this.cameras.main.flash(90, 255, 220, 60, false);
+          }
+        },
         onComplete: () => {
-          this.tweens.add({ targets: star, scaleX: 0.9, scaleY: 0.9, duration: 150 });
+          this.tweens.add({ targets: star, scaleX: isFull ? 1.0 : 0.9, scaleY: isFull ? 1.0 : 0.9, duration: 160, ease: 'Quad.easeOut' });
+          // 3-star final sparkle burst
+          if (isFull && i === 2) {
+            this.time.delayedCall(200, () => this.starBurstCelebration(cx, y + 16));
+          }
         },
       });
     }
+  }
+
+  private starBurstCelebration(cx: number, cy: number) {
+    this.cameras.main.flash(220, 255, 230, 100, false);
+    const burst = ['⭐', '✨', '💫', '🌟', '⭐', '✨', '💫', '🌟', '⭐', '✨', '💫', '🌟'];
+    burst.forEach((icon, i) => {
+      const angle = (Math.PI * 2 / burst.length) * i;
+      const dist = 70 + Math.random() * 40;
+      const s = this.add.text(cx, cy, icon, {
+        fontSize: `${14 + Math.floor(Math.random() * 10)}px`,
+      }).setOrigin(0.5).setDepth(50);
+      this.tweens.add({
+        targets: s,
+        x: cx + Math.cos(angle) * dist,
+        y: cy + Math.sin(angle) * dist,
+        alpha: 0, scale: 0,
+        duration: 600 + i * 30,
+        ease: 'Quad.easeOut',
+        onComplete: () => s.destroy(),
+      });
+    });
+    // Gold "PERFECT!" banner
+    const banner = this.add.text(cx, cy - 54, '✨ PERFECT SHIFT! ✨', {
+      fontSize: '22px', fontFamily: 'Arial Black', color: '#FFD700',
+      stroke: '#000000', strokeThickness: 4,
+    }).setOrigin(0.5).setDepth(50).setScale(0);
+    this.tweens.add({
+      targets: banner, scale: 1.1, duration: 350, ease: 'Back.easeOut',
+      onComplete: () => {
+        this.tweens.add({ targets: banner, scaleX: 1.0, scaleY: 1.0, duration: 120 });
+        this.tweens.add({ targets: banner, alpha: 0, duration: 500, delay: 2200, onComplete: () => banner.destroy() });
+      },
+    });
   }
 
   private makeBtn(x: number, y: number, label: string, tex: string, cb: () => void) {

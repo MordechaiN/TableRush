@@ -952,16 +952,20 @@ export class GameScene extends Phaser.Scene {
             this.hudTimerPill.clear();
             this.hudTimerPill.fillStyle(0x8B1010, 0.95);
             this.hudTimerPill.fillRoundedRect(GAME_WIDTH - 156, 7, 148, 42, 10);
+            this.timeTxt.setColor('#FF6666');
             this.showFloating('⏰ 30s LEFT!', GAME_WIDTH / 2, GAME_HEIGHT / 2 - 40, COLORS.TEXT_RED);
             this.cameras.main.shake(150, 0.003);
             SoundManager.timerWarning();
           }
+          // Pulse timer text on every second under 30s
+          this.tweens.add({
+            targets: this.timeTxt, scale: { from: 1.12, to: 1.0 },
+            duration: 250, ease: 'Quad.easeOut',
+          });
         }
         if (remaining <= 10 && remaining > 0) {
-          this.tweens.add({
-            targets: this.timeTxt, scale: { from: 1, to: 1.2 },
-            duration: 400, yoyo: true,
-          });
+          SoundManager.timerWarning();
+          this.timeTxt.setColor('#FF2222');
         }
         if (remaining <= 0) this.endGame();
       },
@@ -1531,12 +1535,27 @@ export class GameScene extends Phaser.Scene {
     this.rushHourActive = true;
     SoundManager.rushHour();
 
-    this.triggerCelebration('⚡ RUSH HOUR! ⚡', '#FF4444');
-    this.cameras.main.shake(280, 0.005);
+    // Big banner slam — red, bold, screen-covering for 1 frame then settles
+    const banner = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 80, '⚡ RUSH HOUR ⚡', {
+      fontSize: '40px', fontFamily: 'Arial Black', color: '#FF3322',
+      stroke: '#000000', strokeThickness: 6,
+    }).setOrigin(0.5).setDepth(40).setScale(0);
+    this.tweens.add({
+      targets: banner, scale: 1.2, duration: 300, ease: 'Back.easeOut',
+      onComplete: () => {
+        this.tweens.add({ targets: banner, scaleX: 1.0, scaleY: 1.0, duration: 120 });
+        this.time.delayedCall(1600, () => {
+          this.tweens.add({ targets: banner, alpha: 0, y: banner.y - 40, duration: 400, onComplete: () => banner.destroy() });
+        });
+      },
+    });
+
+    this.cameras.main.shake(320, 0.008);
+    this.cameras.main.flash(180, 255, 60, 60, false);
 
     this.tweens.add({
       targets: this.rushHourOverlay,
-      alpha: 0.045,
+      alpha: 0.055,
       duration: 600, ease: 'Quad.easeOut',
     });
 
@@ -1583,7 +1602,7 @@ export class GameScene extends Phaser.Scene {
     this.tweens.add({
       targets: this.scoreTxt, scaleX: 1.3, scaleY: 1.3,
       duration: 130, yoyo: true, ease: 'Back.easeOut',
-      onComplete: () => this.scoreTxt.setColor(COLORS.TEXT_DARK),
+      onComplete: () => this.scoreTxt.setColor('#FFFFFF'),
     });
   }
 

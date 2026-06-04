@@ -102,11 +102,86 @@ export class MainMenuScene extends Phaser.Scene {
     }).setOrigin(0.5).setAlpha(0);
     this.tweens.add({ targets: tagline, alpha: 0.8, duration: 380, delay: 480, ease: 'Quad.easeOut' });
 
-    // Floating side food emojis
-    const d1 = this.add.text(cx - 178, logoY + 105, '🍔', { fontSize: '30px' }).setOrigin(0.5).setAlpha(0.7);
-    const d2 = this.add.text(cx + 178, logoY + 105, '🍕', { fontSize: '30px' }).setOrigin(0.5).setAlpha(0.7);
-    this.tweens.add({ targets: d1, y: logoY + 95, duration: 1300, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
-    this.tweens.add({ targets: d2, y: logoY + 115, duration: 1500, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    // ── Waiter mascot — drawn in logo card, tray-carrying hero ───────────────
+    const wc = logoY + 105;   // waiter center y
+    const wx = cx - 165;      // far-left of card, beside logo
+    const waiterGfx = this.add.graphics().setAlpha(0).setDepth(2);
+
+    // Body (navy jacket)
+    waiterGfx.fillStyle(0x1A237E, 1);
+    waiterGfx.fillRoundedRect(wx - 14, wc - 8, 28, 36, 4);
+    // Shirt (white strip)
+    waiterGfx.fillStyle(0xFFFFFF, 1);
+    waiterGfx.fillRect(wx - 5, wc - 6, 10, 18);
+    // Bow-tie
+    waiterGfx.fillStyle(0xE53935, 1);
+    waiterGfx.fillTriangle(wx - 5, wc - 6, wx - 1, wc - 2, wx - 5, wc + 2);
+    waiterGfx.fillTriangle(wx + 5, wc - 6, wx + 1, wc - 2, wx + 5, wc + 2);
+    // Head
+    waiterGfx.fillStyle(0xFDA07A, 1);
+    waiterGfx.fillCircle(wx, wc - 22, 14);
+    // Hair
+    waiterGfx.fillStyle(0x2C1810, 1);
+    waiterGfx.fillEllipse(wx, wc - 33, 28, 12);
+    // Eyes
+    waiterGfx.fillCircle(wx - 5, wc - 23, 2.5);
+    waiterGfx.fillCircle(wx + 5, wc - 23, 2.5);
+    // Smile
+    waiterGfx.lineStyle(2, 0x2C1810, 1);
+    waiterGfx.beginPath();
+    waiterGfx.arc(wx, wc - 18, 5, 0, Math.PI, false);
+    waiterGfx.strokePath();
+    // Arm holding tray
+    waiterGfx.fillStyle(0x1A237E, 1);
+    waiterGfx.fillRoundedRect(wx + 10, wc - 4, 16, 8, 3);
+    // Tray
+    waiterGfx.fillStyle(0x7A4A1E, 1);
+    waiterGfx.fillRoundedRect(wx + 16, wc - 10, 34, 6, 2);
+    waiterGfx.fillStyle(0xC4874A, 0.5);
+    waiterGfx.fillRoundedRect(wx + 17, wc - 9, 32, 3, 1);
+    // Food on tray
+    this.add.text(wx + 33, wc - 16, '🍔', { fontSize: '16px' }).setOrigin(0.5).setAlpha(0).setDepth(2);
+
+    this.tweens.add({ targets: waiterGfx, alpha: 1, duration: 380, delay: 600, ease: 'Quad.easeOut' });
+    // Idle bob
+    this.tweens.add({ targets: waiterGfx, y: { from: 0, to: -6 }, duration: 1100, yoyo: true, repeat: -1, ease: 'Sine.easeInOut', delay: 700 });
+
+    // Mirror waiter on right side (facing left, holding dessert)
+    const wx2 = cx + 165;
+    const waiterGfx2 = this.add.graphics().setAlpha(0).setDepth(2);
+    waiterGfx2.fillStyle(0x1A237E, 1);
+    waiterGfx2.fillRoundedRect(wx2 - 14, wc - 8, 28, 36, 4);
+    waiterGfx2.fillStyle(0xFFFFFF, 1);
+    waiterGfx2.fillRect(wx2 - 5, wc - 6, 10, 18);
+    waiterGfx2.fillStyle(0xE53935, 1);
+    waiterGfx2.fillTriangle(wx2 - 5, wc - 6, wx2 - 1, wc - 2, wx2 - 5, wc + 2);
+    waiterGfx2.fillTriangle(wx2 + 5, wc - 6, wx2 + 1, wc - 2, wx2 + 5, wc + 2);
+    waiterGfx2.fillStyle(0xFDA07A, 1);
+    waiterGfx2.fillCircle(wx2, wc - 22, 14);
+    waiterGfx2.fillStyle(0x2C1810, 1);
+    waiterGfx2.fillEllipse(wx2, wc - 33, 28, 12);
+    waiterGfx2.fillCircle(wx2 - 5, wc - 23, 2.5);
+    waiterGfx2.fillCircle(wx2 + 5, wc - 23, 2.5);
+    waiterGfx2.lineStyle(2, 0x2C1810, 1);
+    waiterGfx2.beginPath();
+    waiterGfx2.arc(wx2, wc - 18, 5, 0, Math.PI, false);
+    waiterGfx2.strokePath();
+    // Arm (other side)
+    waiterGfx2.fillStyle(0x1A237E, 1);
+    waiterGfx2.fillRoundedRect(wx2 - 26, wc - 4, 16, 8, 3);
+    waiterGfx2.fillStyle(0x7A4A1E, 1);
+    waiterGfx2.fillRoundedRect(wx2 - 50, wc - 10, 34, 6, 2);
+    waiterGfx2.fillStyle(0xC4874A, 0.5);
+    waiterGfx2.fillRoundedRect(wx2 - 49, wc - 9, 32, 3, 1);
+    this.add.text(wx2 - 34, wc - 16, '🍕', { fontSize: '16px' }).setOrigin(0.5).setAlpha(0).setDepth(2);
+
+    this.tweens.add({ targets: waiterGfx2, alpha: 1, duration: 380, delay: 750, ease: 'Quad.easeOut' });
+    this.tweens.add({ targets: waiterGfx2, y: { from: 0, to: -6 }, duration: 1300, yoyo: true, repeat: -1, ease: 'Sine.easeInOut', delay: 900 });
+
+    // Floating side food emojis (smaller, overlap with waiters)
+    const d1 = this.add.text(cx - 178, logoY + 105, '🍔', { fontSize: '20px' }).setOrigin(0.5).setAlpha(0);
+    const d2 = this.add.text(cx + 178, logoY + 105, '🍕', { fontSize: '20px' }).setOrigin(0.5).setAlpha(0);
+    void d1; void d2;
 
     // ── Stats row ─────────────────────────────────────────────────────────────
     const statsY = 424;

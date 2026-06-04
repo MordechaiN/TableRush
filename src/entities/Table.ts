@@ -289,13 +289,15 @@ export class Table extends Phaser.GameObjects.Container {
   }
 
   setUrgencyLevel(isPrimary: boolean) {
-    const newBaseScale = isPrimary ? 1.0 : 0.25;
-    if (this.arrowBaseScale === newBaseScale) return;
-    this.arrowBaseScale = newBaseScale;
-    if (this.currentPriority !== 'none') {
-      const p = this.currentPriority;
-      this.currentPriority = 'none';
-      this.setPriority(p);
+    // Secondary tables are completely hidden — only the #1 priority indicator is visible.
+    // Keeping the state (currentPriority, tweens) intact so it snaps back when promoted.
+    if (isPrimary) {
+      if (this.currentPriority !== 'none') {
+        this.actionArrow.setVisible(true);
+        this.actionArrow.setAlpha(0.95);
+      }
+    } else {
+      this.actionArrow.setAlpha(0);
     }
   }
 

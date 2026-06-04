@@ -7,6 +7,7 @@ import {
 import { Table } from '../entities/Table';
 import { Customer, OrderItem } from '../entities/Customer';
 import { Player } from '../entities/Player';
+import { CarrySystem } from '../systems/CarrySystem';
 import { ProgressionSystem } from '../systems/ProgressionSystem';
 import { SoundManager } from '../systems/SoundManager';
 
@@ -64,9 +65,10 @@ export class GameScene extends Phaser.Scene {
   private spawnTimer!: Phaser.Time.TimerEvent;
 
   private playerBusy = false;
-  private carryingOrderId = -1;
+  private tray = new CarrySystem(2);
   private carryingDirty = false;
   private waitingQueue: Customer[] = [];
+  private readyPlateSprites = new Map<number, Phaser.GameObjects.Container>();
 
   private kitchenGlow!: Phaser.GameObjects.Graphics;
   private kitchenGlowTween: Phaser.Tweens.Tween | null = null;
@@ -99,8 +101,10 @@ export class GameScene extends Phaser.Scene {
     this.nearMissSaves = 0;
     this.orderStartTimes.clear();
     this.playerBusy = false;
-    this.carryingOrderId = -1;
+    this.tray = new CarrySystem(2);
     this.carryingDirty = false;
+    this.readyPlateSprites.forEach(s => s.destroy());
+    this.readyPlateSprites.clear();
     this.waitingQueue = [];
     this.rushHourActive = false;
     this.kitchenOrders = [];
@@ -708,7 +712,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private updateSeatingArrows() {
-    const showSeating = this.waitingQueue.length > 0 && !this.carryingDirty;
+    const showSeating = this.waitingQueue.length > 0;
     for (const table of this.tables) {
       if (table.state === 'empty') {
         if (showSeating) table.setPriority('seating');
@@ -752,7 +756,7 @@ export class GameScene extends Phaser.Scene {
 
     this.player.walkTo(table.x, table.y + 40, onBothArrived);
     this.tweens.add({
-      targets: customer, x: table.x, y: table.y - 24,
+      targets: customer, x: table.x, y: table.y - 6,
       duration: 700, ease: 'Quad.easeOut',
       onComplete: onBothArrived,
     });
@@ -805,12 +809,6 @@ export class GameScene extends Phaser.Scene {
       return;
     }
 
-    // While carrying dirty dishes only dishwasher is actionable
-    if (this.carryingDirty) {
-      this.showFloating('→ DISHWASHER!', this.player.x, this.player.y - 60, COLORS.TEXT_ORANGE);
-      return;
-    }
-
     const table = this.tables[tableId];
     const customer = this.getCustomerAtTable(tableId);
 
@@ -831,11 +829,15 @@ export class GameScene extends Phaser.Scene {
       return;
     }
 
-    if (customer.state === 'waiting_food' && this.carryingOrderId !== -1) {
-      const order = this.kitchenOrders.find(o => o.id === this.carryingOrderId);
-      if (order && order.item.itemId === (customer.order?.itemId ?? -1)) {
-        this.deliverFood(table, customer, order);
-        return;
+    if (customer.state === 'waiting_food' && !this.tray.isEmpty()) {
+      // Match tray slot to this exact table
+      const slot = this.tray.getSlots().find(s => s.tableId === tableId);
+      if (slot) {
+        const order = this.kitchenOrders.find(o => o.id === slot.orderId);
+        if (order) {
+          this.deliverFood(table, customer, order);
+          return;
+        }
       }
     }
 
@@ -851,37 +853,44 @@ export class GameScene extends Phaser.Scene {
       this.showFloating('BUSY!', this.player.x, this.player.y - 60, COLORS.TEXT_RED);
       return;
     }
-    if (this.carryingDirty) {
-      this.showFloating('→ DISHWASHER!', this.player.x, this.player.y - 60, COLORS.TEXT_ORANGE);
-      return;
-    }
-    if (this.carryingOrderId !== -1) return;
+    if (!this.tray.canPickUp()) return;
 
-    const readyOrder = this.kitchenOrders.find(o => o.ready);
-    if (!readyOrder) return;
+    // Find ready orders not already on the tray
+    const readyOrders = this.kitchenOrders.filter(
+      o => o.ready && !this.tray.hasOrder(o.id)
+    );
+    if (readyOrders.length === 0) return;
 
     this.playerBusy = true;
     this.player.walkTo(KITCHEN_X, KITCHEN_Y + 50, () => {
       this.player.bounce();
-      this.carryingOrderId = readyOrder.id;
-      this.orderStartTimes.set(readyOrder.id, this.time.now);
-      this.player.carryItem(readyOrder.item.emoji);
+
+      // Pick up as many as the tray allows (up to 2)
+      const slots = Math.min(readyOrders.length, this.tray.maxCapacity - this.tray.count);
+      for (let i = 0; i < slots; i++) {
+        const order = readyOrders[i];
+        this.tray.pickUp(order.id, order.tableId, order.item.emoji);
+        this.orderStartTimes.set(order.id, this.time.now);
+        this.removeTicket(order.id);
+
+        // Remove the ready plate sprite from counter
+        this.readyPlateSprites.get(order.id)?.destroy();
+        this.readyPlateSprites.delete(order.id);
+      }
+
+      // Update tray visual
+      this.player.carryItems(this.tray.getSlots().map(s => s.emoji));
+
+      // Highlight the target tables
+      for (const slot of this.tray.getSlots()) {
+        const t = this.tables[slot.tableId];
+        if (t) t.setPriority('kitchen_ready');
+      }
+
+      this.updateKitchenGlow();
       this.playerBusy = false;
 
-      // Highlight all tables whose customers can accept this item type (inventory model)
-      for (const table of this.tables) {
-        const cust = this.getCustomerAtTable(table.id);
-        if (cust?.state === 'waiting_food' && cust.order?.itemId === readyOrder.item.itemId) {
-          table.setPriority('kitchen_ready');
-        }
-      }
-
-      this.removeTicket(readyOrder.id);
-      this.updateKitchenGlow();
-
-      if (this.tutorialActive && this.tutorialStep === 2) {
-        this.advanceTutorial();
-      }
+      if (this.tutorialActive && this.tutorialStep === 2) this.advanceTutorial();
     });
   }
 
@@ -949,7 +958,6 @@ export class GameScene extends Phaser.Scene {
       }).setOrigin(0.5);
       order.ticketObj.add(badge);
 
-      // Scale-punch the ticket so the player notices it's ready
       this.tweens.add({
         targets: order.ticketObj,
         scaleX: { from: 1.0, to: 1.38 }, scaleY: { from: 1.0, to: 1.38 },
@@ -957,7 +965,47 @@ export class GameScene extends Phaser.Scene {
       });
       SoundManager.foodReady();
     }
+
+    // Spawn a physical plate on the READY counter zone
+    this.spawnReadyPlate(order);
     this.updateKitchenGlow();
+  }
+
+  private spawnReadyPlate(order: KitchenOrder) {
+    // Space plates along the right half of the counter (READY zone)
+    const existingCount = this.readyPlateSprites.size;
+    const plateX = KITCHEN_X + 40 + existingCount * 52;
+    const plateY = KITCHEN_Y + 22;  // on the granite countertop
+
+    const plate = this.add.container(plateX, plateY).setDepth(3);
+
+    const plateBg = this.add.graphics();
+    plateBg.fillStyle(0xFAF8F4, 1);
+    plateBg.fillCircle(0, 0, 13);
+    plateBg.lineStyle(1.5, 0xD0C8BA);
+    plateBg.strokeCircle(0, 0, 13);
+    plate.add(plateBg);
+
+    const foodText = this.add.text(0, 0, order.item.emoji, { fontSize: '14px' }).setOrigin(0.5);
+    plate.add(foodText);
+
+    // Table number badge so player can match it
+    const numText = this.add.text(10, -14, `${order.tableId + 1}`, {
+      fontSize: '8px', fontFamily: 'Arial Black', color: '#FFFFFF',
+    }).setOrigin(0.5).setDepth(4);
+    const numBg = this.add.graphics().setDepth(3);
+    numBg.fillStyle(0x7A3C10, 1);
+    numBg.fillCircle(10, -14, 7);
+    plate.add(numBg);
+    plate.add(numText);
+
+    // Pop-in animation
+    plate.setScale(0);
+    this.tweens.add({
+      targets: plate, scale: 1, duration: 200, ease: 'Back.easeOut',
+    });
+
+    this.readyPlateSprites.set(order.id, plate);
   }
 
   private deliverFood(table: Table, customer: Customer, order: KitchenOrder) {
@@ -968,8 +1016,9 @@ export class GameScene extends Phaser.Scene {
     this.player.walkTo(table.x, table.y + 40, () => {
       // Customer may have gotten angry while player was walking over
       if (customer.state !== 'waiting_food') {
-        this.player.clearCarry();
-        this.carryingOrderId = -1;
+        this.tray.drop(order.id);
+        const remaining = this.tray.getSlots().map(s => s.emoji);
+        remaining.length > 0 ? this.player.carryItems(remaining) : this.player.clearCarry();
         this.kitchenOrders = this.kitchenOrders.filter(o => o.id !== order.id);
         this.playerBusy = false;
         return;
@@ -985,8 +1034,10 @@ export class GameScene extends Phaser.Scene {
       customer.refillPatience();
       table.setStateVisual('plate');
 
-      this.player.clearCarry();
-      this.carryingOrderId = -1;
+      // Drop this order from tray; keep carrying if second item still in tray
+      this.tray.drop(order.id);
+      const remainingEmojis = this.tray.getSlots().map(s => s.emoji);
+      remainingEmojis.length > 0 ? this.player.carryItems(remainingEmojis) : this.player.clearCarry();
       this.kitchenOrders = this.kitchenOrders.filter(o => o.id !== order.id);
 
       const speedMult = this.getSpeedMultiplier(customer.patienceAtDelivery);
@@ -1104,7 +1155,8 @@ export class GameScene extends Phaser.Scene {
       this.updateSeatingArrows();
 
       this.carryingDirty = true;
-      this.player.carryDishes();
+      // Show dirty dish as a badge independent of food tray so player can still carry food
+      this.player.showDirtyDish();
       this.setDishwasherGlowPrimary(true);
       this.showFloating('→ DISHWASHER', table.x, table.y - 30, COLORS.TEXT_ORANGE);
       this.playerBusy = false;
@@ -1127,7 +1179,7 @@ export class GameScene extends Phaser.Scene {
     this.player.walkTo(80, 210, () => {
       this.player.bounce();
       this.carryingDirty = false;
-      this.player.clearCarry();
+      this.player.hideDirtyDish();
       this.setDishwasherGlowPrimary(false);
       this.updateSeatingArrows();
       this.showFloating('✨ Clean!', 80, 180, COLORS.TEXT_GREEN);
@@ -1495,23 +1547,21 @@ export class GameScene extends Phaser.Scene {
       }
     }
 
-    // 3. Carrying food: highlight the first table whose customer can accept what we're holding
-    if (primaryTableId === -1 && this.carryingOrderId !== -1) {
-      const order = this.kitchenOrders.find(o => o.id === this.carryingOrderId);
-      if (order) {
-        for (const table of this.tables) {
-          const cust = this.getCustomerAtTable(table.id);
-          if (cust?.state === 'waiting_food' && cust.order?.itemId === order.item.itemId) {
-            primaryTableId = table.id;
-            break;
-          }
+    // 3. Carrying food: point at first table in tray that has a waiting customer
+    if (primaryTableId === -1 && !this.tray.isEmpty()) {
+      for (const slot of this.tray.getSlots()) {
+        const cust = this.getCustomerAtTable(slot.tableId);
+        if (cust?.state === 'waiting_food') {
+          primaryTableId = slot.tableId;
+          break;
         }
-        if (primaryTableId === -1) primaryTableId = order.tableId;
       }
+      // Fall back to the tableId of the first slot if no waiting_food found yet
+      if (primaryTableId === -1) primaryTableId = this.tray.getSlots()[0]?.tableId ?? -1;
     }
 
-    // 4. Kitchen has ready order to pick up
-    if (primaryTableId === -1 && this.carryingOrderId === -1 && this.kitchenOrders.some(o => o.ready)) {
+    // 4. Kitchen has ready order to pick up (and tray has room)
+    if (primaryTableId === -1 && this.tray.canPickUp() && this.kitchenOrders.some(o => o.ready && !this.tray.hasOrder(o.id))) {
       primaryKitchen = true;
     }
 
@@ -1589,6 +1639,19 @@ export class GameScene extends Phaser.Scene {
     if (table) {
       table.setEmpty();
       this.updateSeatingArrows();
+    }
+
+    // Cancel their kitchen order and remove ready plate from counter
+    const angryOrder = this.kitchenOrders.find(o => o.customerId === id);
+    if (angryOrder) {
+      this.removeTicket(angryOrder.id);
+      this.readyPlateSprites.get(angryOrder.id)?.destroy();
+      this.readyPlateSprites.delete(angryOrder.id);
+      this.tray.drop(angryOrder.id);
+      this.kitchenOrders = this.kitchenOrders.filter(o => o.id !== angryOrder.id);
+      // Re-render tray if item was dropped from it
+      const remaining = this.tray.getSlots().map(s => s.emoji);
+      remaining.length > 0 ? this.player.carryItems(remaining) : this.player.clearCarry();
     }
 
     customer.stopIdleBehavior();

@@ -11,9 +11,9 @@ export class Player extends Phaser.GameObjects.Container {
   private sprite!: Phaser.GameObjects.Image;
   private face!: Phaser.GameObjects.Graphics;
   private trayImage: Phaser.GameObjects.Image | null = null;
-  private plateImage: Phaser.GameObjects.Image | null = null;
-  private trayLabel: Phaser.GameObjects.Text | null = null;
+  private trayLabels: Phaser.GameObjects.Text[] = [];
   private emotionBadge: Phaser.GameObjects.Text | null = null;
+  private dirtyBadge: Phaser.GameObjects.Text | null = null;
   private walkTween: Phaser.Tweens.Tween | null = null;
   private walkAnimTimer: Phaser.Time.TimerEvent | null = null;
   private walkFrame = 0;
@@ -61,17 +61,25 @@ export class Player extends Phaser.GameObjects.Container {
     });
   }
 
-  carryItem(emoji: string) {
+  // Show 1 or 2 food items on the tray. Positions items side-by-side for 2.
+  carryItems(emojis: string[]) {
     this.clearCarry();
+    if (emojis.length === 0) return;
+
     this.trayImage = this.scene.add.image(0, -44, 'tray');
     this.add(this.trayImage);
-    const plateKey = this.scene.textures.exists('food_plate') ? 'food_plate' : null;
-    if (plateKey) {
-      this.plateImage = this.scene.add.image(0, -56, plateKey);
-      this.add(this.plateImage);
-    }
-    this.trayLabel = this.scene.add.text(0, -54, emoji, { fontSize: '24px' }).setOrigin(0.5);
-    this.add(this.trayLabel);
+
+    const xOffsets = emojis.length === 1 ? [0] : [-12, 12];
+    const fontSize = emojis.length === 1 ? '22px' : '16px';
+    this.trayLabels = emojis.map((emoji, i) => {
+      const lbl = this.scene.add.text(xOffsets[i], -54, emoji, { fontSize }).setOrigin(0.5);
+      this.add(lbl);
+      return lbl;
+    });
+  }
+
+  carryItem(emoji: string) {
+    this.carryItems([emoji]);
   }
 
   // Enhanced animations for delivery and collection
@@ -96,14 +104,25 @@ export class Player extends Phaser.GameObjects.Container {
   }
 
   carryDishes() {
-    this.carryItem('🍽️');
-    if (this.plateImage) this.plateImage.setTint(0xAA8866);
+    this.carryItems(['🍽️']);
   }
 
   clearCarry() {
     this.trayImage?.destroy(); this.trayImage = null;
-    this.plateImage?.destroy(); this.plateImage = null;
-    this.trayLabel?.destroy(); this.trayLabel = null;
+    this.trayLabels.forEach(l => l.destroy());
+    this.trayLabels = [];
+  }
+
+  // Show a small dirty-dishes badge independent of the food tray
+  showDirtyDish() {
+    this.dirtyBadge?.destroy();
+    this.dirtyBadge = this.scene.add.text(18, 8, '🍽️', { fontSize: '11px' }).setOrigin(0.5);
+    this.add(this.dirtyBadge);
+  }
+
+  hideDirtyDish() {
+    this.dirtyBadge?.destroy();
+    this.dirtyBadge = null;
   }
 
   bounce() {

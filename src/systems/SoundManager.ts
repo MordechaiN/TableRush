@@ -104,6 +104,12 @@ function playMusicBar(ac: AudioContext, barIdx: number, startT: number) {
   return bar; // return bar duration in seconds
 }
 
+function vibrate(pattern: number | number[]) {
+  if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+    try { navigator.vibrate(pattern); } catch { /* ignore */ }
+  }
+}
+
 export const SoundManager = {
   isEnabled(): boolean {
     return localStorage.getItem('tablerush_sfx') !== 'off';
@@ -144,6 +150,7 @@ export const SoundManager = {
   },
 
   seatCustomer() {
+    vibrate(18);
     if (!this.isEnabled()) return;
     const ac = getCtx(); if (!ac) return;
     const t = ac.currentTime;
@@ -156,6 +163,7 @@ export const SoundManager = {
   },
 
   orderTaken() {
+    vibrate(14);
     if (!this.isEnabled()) return;
     const ac = getCtx(); if (!ac) return;
     const t = ac.currentTime;
@@ -167,6 +175,7 @@ export const SoundManager = {
   },
 
   foodReady() {
+    vibrate([20, 10, 20]);
     if (!this.isEnabled()) return;
     const ac = getCtx(); if (!ac) return;
     const t = ac.currentTime;
@@ -180,6 +189,7 @@ export const SoundManager = {
   },
 
   deliverFood() {
+    vibrate(22);
     if (!this.isEnabled()) return;
     const ac = getCtx(); if (!ac) return;
     const t = ac.currentTime;
@@ -192,6 +202,7 @@ export const SoundManager = {
   },
 
   paymentCollected() {
+    vibrate([30, 15, 30]);
     if (!this.isEnabled()) return;
     const ac = getCtx(); if (!ac) return;
     const t = ac.currentTime;
@@ -207,6 +218,7 @@ export const SoundManager = {
 
   // tier: 1=×2, 2=×3, 3=×4, 4=×5
   comboUp(tier: number) {
+    vibrate(tier >= 4 ? [40, 10, 40] : tier >= 3 ? [25, 8, 25] : 20);
     if (!this.isEnabled()) return;
     const ac = getCtx(); if (!ac) return;
     const t = ac.currentTime;
@@ -235,6 +247,7 @@ export const SoundManager = {
   },
 
   comboLost() {
+    vibrate([20, 10, 20, 10, 20]);
     if (!this.isEnabled()) return;
     const ac = getCtx(); if (!ac) return;
     const t = ac.currentTime;
@@ -246,6 +259,7 @@ export const SoundManager = {
   },
 
   customerAngry() {
+    vibrate([40, 20, 40]);
     if (!this.isEnabled()) return;
     const ac = getCtx(); if (!ac) return;
     const t = ac.currentTime;

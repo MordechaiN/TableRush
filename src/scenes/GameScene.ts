@@ -1619,9 +1619,11 @@ export class GameScene extends Phaser.Scene {
     this.score = Math.max(0, this.score + amount);
     this.scoreTxt.setText(`🍽️  ${this.score}`);
     this.scoreTxt.setColor(COLORS.TEXT_GOLD);
+    const bounce = this.comboMultiplier >= 5 ? 1.7 : this.comboMultiplier >= 4 ? 1.55 : this.comboMultiplier >= 3 ? 1.45 : 1.3;
+    const dur = this.comboMultiplier >= 3 ? 160 : 130;
     this.tweens.add({
-      targets: this.scoreTxt, scaleX: 1.3, scaleY: 1.3,
-      duration: 130, yoyo: true, ease: 'Back.easeOut',
+      targets: this.scoreTxt, scaleX: bounce, scaleY: bounce,
+      duration: dur, yoyo: true, ease: 'Back.easeOut',
       onComplete: () => this.scoreTxt.setColor('#FFFFFF'),
     });
   }
@@ -2419,7 +2421,26 @@ export class GameScene extends Phaser.Scene {
     const stars = happyRate >= 0.9 && this.score >= 2000 ? 3
       : happyRate >= 0.7 ? 2 : 1;
 
-    this.time.delayedCall(500, () => {
+    // "SHIFT OVER!" cinematic banner before results screen
+    this.cameras.main.flash(300, 255, 255, 255, true);
+    const shiftBanner = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 40, 'SHIFT OVER!', {
+      fontSize: '52px', fontFamily: 'Arial Black', color: '#FFFFFF',
+      stroke: '#1A0A00', strokeThickness: 8,
+    }).setOrigin(0.5).setDepth(60).setScale(0).setAlpha(0.95);
+    const scoreLabel = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 30, `Score: ${this.score}`, {
+      fontSize: '28px', fontFamily: 'Arial Black', color: '#FFD700',
+      stroke: '#1A0A00', strokeThickness: 5,
+    }).setOrigin(0.5).setDepth(60).setAlpha(0).setScale(0.7);
+
+    this.tweens.add({
+      targets: shiftBanner, scale: 1.1, duration: 400, ease: 'Back.easeOut',
+      onComplete: () => {
+        this.tweens.add({ targets: shiftBanner, scaleX: 1.0, scaleY: 1.0, duration: 120 });
+        this.tweens.add({ targets: scoreLabel, alpha: 1, scaleX: 1, scaleY: 1, duration: 300, delay: 100, ease: 'Back.easeOut' });
+      },
+    });
+
+    this.time.delayedCall(1600, () => {
       this.scene.start('GameOverScene', {
         score: this.score,
         stars,

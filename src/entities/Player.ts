@@ -2,7 +2,6 @@ import Phaser from 'phaser';
 
 export type PlayerEmotion = 'normal' | 'happy' | 'stressed' | 'excited' | 'proud';
 
-// Priority: higher value = harder to override
 const EMOTION_PRIORITY: Record<PlayerEmotion, number> = {
   normal: 0, happy: 1, proud: 2, stressed: 2, excited: 3,
 };
@@ -10,8 +9,7 @@ const EMOTION_PRIORITY: Record<PlayerEmotion, number> = {
 export class Player extends Phaser.GameObjects.Container {
   private sprite!: Phaser.GameObjects.Image;
   private face!: Phaser.GameObjects.Graphics;
-  private trayImage: Phaser.GameObjects.Image | null = null;
-  private trayLabels: Phaser.GameObjects.Text[] = [];
+  private trayContainer: Phaser.GameObjects.Container | null = null;
   private emotionBadge: Phaser.GameObjects.Text | null = null;
   private dirtyBadge: Phaser.GameObjects.Text | null = null;
   private walkTween: Phaser.Tweens.Tween | null = null;
@@ -24,14 +22,10 @@ export class Player extends Phaser.GameObjects.Container {
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y);
-
     this.sprite = scene.add.image(0, 0, 'player');
     this.add(this.sprite);
-
-    // Face overlay drawn above the player sprite (head center at container (0,-17))
     this.face = scene.add.graphics();
     this.add(this.face);
-
     this.setDepth(17);
     this.setScale(1.25);
     scene.add.existing(this);
@@ -45,13 +39,10 @@ export class Player extends Phaser.GameObjects.Container {
     this.isWalking = true;
     this.sprite.setFlipX(x < this.x);
     this.startWalkAnim();
-
     const dist = Math.hypot(x - this.x, y - this.y);
     this.walkTween = this.scene.tweens.add({
-      targets: this,
-      x, y,
-      duration: dist * 1.6,
-      ease: 'Quad.easeInOut',
+      targets: this, x, y,
+      duration: dist * 1.6, ease: 'Quad.easeInOut',
       onComplete: () => {
         this.stopWalkAnim();
         this.isWalking = false;
@@ -61,34 +52,67 @@ export class Player extends Phaser.GameObjects.Container {
     });
   }
 
-  // Show 1 or 2 food items on the tray. Positions items side-by-side for 2.
-  carryItems(emojis: string[]) {
+  // Always-visible tray: shows all capacity slots, filled or empty.
+  // Call with emojis=[] to show an empty tray. capacity=0 hides tray entirely.
+  showTray(emojis: string[], capacity: number) {
     this.clearCarry();
-    if (emojis.length === 0) return;
+    if (capacity === 0) return;
 
-    this.trayImage = this.scene.add.image(0, -44, 'tray');
-    this.add(this.trayImage);
+    const tray = this.scene.add.container(0, -46);
+    tray.setDepth(1);
+    this.trayContainer = tray;
+    this.add(tray);
 
-    const xOffsets = emojis.length === 1 ? [0] : [-12, 12];
-    const fontSize = emojis.length === 1 ? '22px' : '16px';
-    this.trayLabels = emojis.map((emoji, i) => {
-      const lbl = this.scene.add.text(xOffsets[i], -54, emoji, { fontSize }).setOrigin(0.5);
-      this.add(lbl);
-      return lbl;
-    });
+    // Tray base
+    if (this.scene.textures.exists('tray')) {
+      tray.add(this.scene.add.image(0, 0, 'tray'));
+    } else {
+      const g = this.scene.add.graphics();
+      const w = capacity * 26 + 12;
+      g.fillStyle(0x7A4A1E, 1);
+      g.fillRoundedRect(-w / 2, -12, w, 20, 5);
+      g.fillStyle(0xC4874A, 0.55);
+      g.fillRoundedRect(-w / 2 + 2, -11, w - 4, 8, 3);
+      tray.add(g);
+    }
+
+    const slotSpacing = capacity <= 2 ? 24 : capacity === 3 ? 20 : 17;
+    const totalW = (capacity - 1) * slotSpacing;
+    const startX = -totalW / 2;
+    const slotY = -12;
+    const fontSize = capacity <= 2 ? '18px' : capacity === 3 ? '15px' : '13px';
+
+    for (let i = 0; i < capacity; i++) {
+      const sx = startX + i * slotSpacing;
+      if (i < emojis.length) {
+        tray.add(this.scene.add.text(sx, slotY, emojis[i], { fontSize }).setOrigin(0.5));
+      } else {
+        const ring = this.scene.add.graphics();
+        ring.lineStyle(1.5, 0xFFFFFF, 0.45);
+        ring.strokeCircle(sx, slotY, 8);
+        ring.fillStyle(0x000000, 0.15);
+        ring.fillCircle(sx, slotY, 8);
+        tray.add(ring);
+      }
+    }
+
+    tray.setScale(0);
+    this.scene.tweens.add({ targets: tray, scale: 1, duration: 150, ease: 'Back.easeOut' });
   }
 
-  carryItem(emoji: string) {
-    this.carryItems([emoji]);
+  // Legacy wrappers
+  carryItems(emojis: string[]) { this.showTray(emojis, Math.max(emojis.length, 2)); }
+  carryItem(emoji: string)     { this.showTray([emoji], 2); }
+  carryDishes()                { this.showTray(['🍽️'], 2); }
+
+  clearCarry() {
+    if (this.trayContainer) { this.trayContainer.destroy(); this.trayContainer = null; }
   }
 
-  // Enhanced animations for delivery and collection
   deliverAnim() {
     this.scene.tweens.add({
       targets: this.sprite,
-      y: { from: 0, to: -12 },
-      scaleX: { from: 1, to: 1.18 },
-      scaleY: { from: 1, to: 1.18 },
+      y: { from: 0, to: -12 }, scaleX: { from: 1, to: 1.18 }, scaleY: { from: 1, to: 1.18 },
       duration: 160, yoyo: true, ease: 'Back.easeOut',
     });
   }
@@ -96,24 +120,11 @@ export class Player extends Phaser.GameObjects.Container {
   collectAnim() {
     this.scene.tweens.add({
       targets: this.sprite,
-      y: { from: 0, to: 9 },
-      scaleX: { from: 1, to: 0.88 },
-      scaleY: { from: 1, to: 0.88 },
+      y: { from: 0, to: 9 }, scaleX: { from: 1, to: 0.88 }, scaleY: { from: 1, to: 0.88 },
       duration: 140, yoyo: true, ease: 'Quad.easeIn',
     });
   }
 
-  carryDishes() {
-    this.carryItems(['🍽️']);
-  }
-
-  clearCarry() {
-    this.trayImage?.destroy(); this.trayImage = null;
-    this.trayLabels.forEach(l => l.destroy());
-    this.trayLabels = [];
-  }
-
-  // Show a small dirty-dishes badge independent of the food tray
   showDirtyDish() {
     this.dirtyBadge?.destroy();
     this.dirtyBadge = this.scene.add.text(18, 8, '🍽️', { fontSize: '11px' }).setOrigin(0.5);
@@ -132,52 +143,33 @@ export class Player extends Phaser.GameObjects.Container {
     });
   }
 
-  // Flash red + shake to signal "I'm busy!"
   showBusy() {
     this.sprite.setTint(0xFF2222);
     this.scene.time.delayedCall(380, () => {
-      if (this.currentEmotion === 'excited') {
-        this.sprite.setTint(0xFFDD44);
-      } else {
-        this.sprite.clearTint();
-      }
+      this.currentEmotion === 'excited' ? this.sprite.setTint(0xFFDD44) : this.sprite.clearTint();
     });
-
-    // Shake the sprite within the container (doesn't fight walkTo)
     const origX = this.sprite.x;
     this.scene.tweens.add({
-      targets: this.sprite,
-      x: { from: origX - 5, to: origX + 5 },
+      targets: this.sprite, x: { from: origX - 5, to: origX + 5 },
       duration: 55, yoyo: true, repeat: 3,
       onComplete: () => { this.sprite.x = origX; },
     });
-
-    // Briefly show stressed face then revert
     this.drawFace('stressed');
     this.scene.time.delayedCall(440, () => this.drawFace(this.currentEmotion));
   }
 
   setEmotion(emotion: PlayerEmotion, revertAfterMs = 0) {
-    // Don't downgrade from a higher-priority emotion (except explicit revert to normal)
     if (emotion !== 'normal' &&
         EMOTION_PRIORITY[emotion] < EMOTION_PRIORITY[this.currentEmotion]) return;
-
     if (this.revertTimer) { this.revertTimer.remove(); this.revertTimer = null; }
-
     this.currentEmotion = emotion;
     this.drawFace(emotion);
-
-    // Remove old badge
     if (this.emotionBadge) { this.emotionBadge.destroy(); this.emotionBadge = null; }
-
-    // Sprite tint
     switch (emotion) {
       case 'excited': this.sprite.setTint(0xFFDD44); break;
       case 'stressed': this.sprite.setTint(0xFFBBBB); break;
       default: this.sprite.clearTint();
     }
-
-    // Floating emoji badge above head
     const BADGES: Partial<Record<PlayerEmotion, string>> = {
       happy: '😊', excited: '🤩', stressed: '😰', proud: '😤',
     };
@@ -185,112 +177,78 @@ export class Player extends Phaser.GameObjects.Container {
     if (badge) {
       this.emotionBadge = this.scene.add.text(14, -46, badge, { fontSize: '14px' }).setOrigin(0.5);
       this.add(this.emotionBadge);
-      this.scene.tweens.add({
-        targets: this.emotionBadge, scale: { from: 0, to: 1 },
-        duration: 200, ease: 'Back.easeOut',
-      });
+      this.scene.tweens.add({ targets: this.emotionBadge, scale: { from: 0, to: 1 }, duration: 200, ease: 'Back.easeOut' });
     }
-
     if (revertAfterMs > 0) {
       this.revertTimer = this.scene.time.delayedCall(revertAfterMs, () => this.setEmotion('normal'));
     }
   }
 
-  // Called from GameScene when combo milestones hit
   celebrateCombo(count: number) {
     if (count >= 10) {
       this.setEmotion('excited', 4000);
-      this.scene.tweens.add({
-        targets: this,
-        scaleX: { from: 1, to: 1.3 }, scaleY: { from: 1, to: 1.3 },
-        duration: 200, yoyo: true, repeat: 1, ease: 'Back.easeOut',
-      });
+      this.scene.tweens.add({ targets: this, scaleX: { from: 1, to: 1.3 }, scaleY: { from: 1, to: 1.3 }, duration: 200, yoyo: true, repeat: 1, ease: 'Back.easeOut' });
     } else if (count >= 5) {
       this.setEmotion('excited', 3000);
-      this.scene.tweens.add({
-        targets: this, scale: { from: 1, to: 1.15 },
-        duration: 160, yoyo: true, ease: 'Back.easeOut',
-      });
+      this.scene.tweens.add({ targets: this, scale: { from: 1, to: 1.15 }, duration: 160, yoyo: true, ease: 'Back.easeOut' });
     } else if (count >= 3) {
       this.setEmotion('excited', 2500);
     }
   }
 
-  // Called from GameScene when a customer leaves angry
   reactToAngry() {
     this.setEmotion('stressed', 2000);
     if (!this.isWalking) {
       this.stopIdleAnim();
       this.scene.tweens.add({
-        targets: this.sprite, y: 6,
-        duration: 260, yoyo: true, ease: 'Quad.easeIn',
-        onComplete: () => {
-          this.sprite.y = 0;
-          if (!this.isWalking) this.startIdleAnim();
-        },
+        targets: this.sprite, y: 6, duration: 260, yoyo: true, ease: 'Quad.easeIn',
+        onComplete: () => { this.sprite.y = 0; if (!this.isWalking) this.startIdleAnim(); },
       });
     }
   }
 
+  faceDirection(toX: number) { this.sprite.setFlipX(toX < this.x); }
+
+  walkBob(duration: number) {
+    this.scene.tweens.add({
+      targets: this.sprite, y: { from: 0, to: -4 }, duration: 160, yoyo: true,
+      repeat: Math.floor(duration / 320), ease: 'Sine.easeInOut',
+    });
+  }
+
   private drawFace(emotion: PlayerEmotion) {
     this.face.clear();
-    // Player texture: 40×62, head fillCircle at pixel (20,14) radius 12.
-    // Container origin = image center (20,31). Head center in container = (0,-17).
     const cx = 0, cy = -17;
-
     this.face.fillStyle(0x3C2010);
-
     switch (emotion) {
       case 'normal':
-        this.face.fillCircle(cx - 4, cy - 2, 1.5);
-        this.face.fillCircle(cx + 4, cy - 2, 1.5);
+        this.face.fillCircle(cx - 4, cy - 2, 1.5); this.face.fillCircle(cx + 4, cy - 2, 1.5);
         this.face.fillRect(cx - 3, cy + 4, 6, 1.5);
         break;
-
       case 'happy':
-        this.face.fillCircle(cx - 4, cy - 2, 1.5);
-        this.face.fillCircle(cx + 4, cy - 2, 1.5);
-        this.face.lineStyle(2, 0x3C2010);
-        this.face.beginPath();
-        this.face.arc(cx, cy + 3, 4, 0, Math.PI, false);
-        this.face.strokePath();
+        this.face.fillCircle(cx - 4, cy - 2, 1.5); this.face.fillCircle(cx + 4, cy - 2, 1.5);
+        this.face.lineStyle(2, 0x3C2010); this.face.beginPath();
+        this.face.arc(cx, cy + 3, 4, 0, Math.PI, false); this.face.strokePath();
         break;
-
       case 'proud':
-        // Confident squinted eyes + wide smile
         this.face.lineStyle(2, 0x3C2010);
         this.face.beginPath(); this.face.arc(cx - 4, cy - 2, 2.5, Math.PI, 0, false); this.face.strokePath();
         this.face.beginPath(); this.face.arc(cx + 4, cy - 2, 2.5, Math.PI, 0, false); this.face.strokePath();
-        this.face.lineStyle(2.5, 0x3C2010);
-        this.face.beginPath();
-        this.face.arc(cx, cy + 3, 5, 0, Math.PI, false);
-        this.face.strokePath();
+        this.face.lineStyle(2.5, 0x3C2010); this.face.beginPath();
+        this.face.arc(cx, cy + 3, 5, 0, Math.PI, false); this.face.strokePath();
         break;
-
       case 'excited':
-        // Big sparkly eyes + wide open smile
-        this.face.fillCircle(cx - 4, cy - 2, 2.2);
-        this.face.fillCircle(cx + 4, cy - 2, 2.2);
+        this.face.fillCircle(cx - 4, cy - 2, 2.2); this.face.fillCircle(cx + 4, cy - 2, 2.2);
         this.face.fillStyle(0xFFFFFF, 0.9);
-        this.face.fillCircle(cx - 3, cy - 3, 1);
-        this.face.fillCircle(cx + 5, cy - 3, 1);
-        this.face.fillStyle(0x3C2010);
-        this.face.lineStyle(2.5, 0x3C2010);
-        this.face.beginPath();
-        this.face.arc(cx, cy + 3, 5, 0, Math.PI, false);
-        this.face.strokePath();
+        this.face.fillCircle(cx - 3, cy - 3, 1); this.face.fillCircle(cx + 5, cy - 3, 1);
+        this.face.fillStyle(0x3C2010); this.face.lineStyle(2.5, 0x3C2010); this.face.beginPath();
+        this.face.arc(cx, cy + 3, 5, 0, Math.PI, false); this.face.strokePath();
         break;
-
       case 'stressed':
-        // Worried inner-up brows + frown
-        this.face.fillRect(cx - 7, cy - 6, 5, 1.5);
-        this.face.fillRect(cx + 2, cy - 5, 5, 1.5);
-        this.face.fillCircle(cx - 4, cy - 1, 1.5);
-        this.face.fillCircle(cx + 4, cy - 1, 1.5);
-        this.face.lineStyle(1.5, 0x3C2010);
-        this.face.beginPath();
-        this.face.arc(cx, cy + 7, 4, Math.PI, 0, false);
-        this.face.strokePath();
+        this.face.fillRect(cx - 7, cy - 6, 5, 1.5); this.face.fillRect(cx + 2, cy - 5, 5, 1.5);
+        this.face.fillCircle(cx - 4, cy - 1, 1.5); this.face.fillCircle(cx + 4, cy - 1, 1.5);
+        this.face.lineStyle(1.5, 0x3C2010); this.face.beginPath();
+        this.face.arc(cx, cy + 7, 4, Math.PI, 0, false); this.face.strokePath();
         break;
     }
   }
@@ -299,11 +257,9 @@ export class Player extends Phaser.GameObjects.Container {
     this.stopWalkAnim();
     this.walkFrame = 0;
     this.walkAnimTimer = this.scene.time.addEvent({
-      delay: 160,
-      loop: true,
+      delay: 160, loop: true,
       callback: () => {
         this.walkFrame = 1 - this.walkFrame;
-        // player_walk may not exist yet (loaded from BootScene); fall back silently
         const key = this.walkFrame === 1 ? 'player_walk' : 'player';
         if (this.scene.textures.exists(key)) this.sprite.setTexture(key);
       },
@@ -318,10 +274,8 @@ export class Player extends Phaser.GameObjects.Container {
 
   private startIdleAnim() {
     this.idleTween = this.scene.tweens.add({
-      targets: this.sprite,
-      y: { from: 0, to: -3 },
-      duration: 900, yoyo: true, repeat: -1,
-      ease: 'Sine.easeInOut',
+      targets: this.sprite, y: { from: 0, to: -3 },
+      duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
     });
   }
 

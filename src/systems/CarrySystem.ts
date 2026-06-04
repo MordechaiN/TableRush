@@ -1,8 +1,5 @@
-// Carry architecture — currently 1-item capacity. Future upgrades expand this.
-
 export interface CarrySlot {
   orderId: number;
-  tableId: number;
   emoji: string;
 }
 
@@ -10,7 +7,7 @@ export class CarrySystem {
   private capacity: number;
   private slots: CarrySlot[] = [];
 
-  constructor(capacity = 1) {
+  constructor(capacity = 2) {
     this.capacity = capacity;
   }
 
@@ -18,14 +15,21 @@ export class CarrySystem {
     return this.slots.length < this.capacity;
   }
 
-  pickUp(orderId: number, tableId: number, emoji: string): boolean {
+  pickUp(orderId: number, emoji: string): boolean {
     if (!this.canPickUp()) return false;
-    this.slots.push({ orderId, tableId, emoji });
+    this.slots.push({ orderId, emoji });
     return true;
   }
 
   drop(orderId: number): CarrySlot | null {
     const idx = this.slots.findIndex(s => s.orderId === orderId);
+    if (idx === -1) return null;
+    return this.slots.splice(idx, 1)[0];
+  }
+
+  // Drop the first slot carrying this food type; used for inventory-kitchen delivery
+  dropByEmoji(emoji: string): CarrySlot | null {
+    const idx = this.slots.findIndex(s => s.emoji === emoji);
     if (idx === -1) return null;
     return this.slots.splice(idx, 1)[0];
   }
@@ -52,6 +56,10 @@ export class CarrySystem {
     return this.slots.some(s => s.orderId === orderId);
   }
 
+  hasItemType(emoji: string): boolean {
+    return this.slots.some(s => s.emoji === emoji);
+  }
+
   get count(): number {
     return this.slots.length;
   }
@@ -60,7 +68,6 @@ export class CarrySystem {
     return this.capacity;
   }
 
-  // Future upgrade path: call this when player buys tray upgrade
   upgrade(newCapacity: number): void {
     this.capacity = Math.max(this.capacity, newCapacity);
   }

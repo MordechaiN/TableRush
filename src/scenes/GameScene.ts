@@ -101,9 +101,16 @@ export class GameScene extends Phaser.Scene {
     this.nearMissSaves = 0;
     this.orderStartTimes.clear();
     this.playerBusy = false;
-    this.tray = new CarrySystem(2);
+    // Tray capacity scales with player level: 2 → 3 → 4 slots
+    const { level } = ProgressionSystem.getData();
+    const trayCapacity = level >= 5 ? 4 : level >= 3 ? 3 : 2;
+    this.tray = new CarrySystem(trayCapacity);
     this.carryingDirty = false;
-    this.readyPlateSprites.forEach(s => s.destroy());
+    this.readyPlateSprites.forEach((plate) => {
+      const timer = (plate as any)._steamTimer as Phaser.Time.TimerEvent | undefined;
+      if (timer) timer.remove();
+      plate.destroy();
+    });
     this.readyPlateSprites.clear();
     this.waitingQueue = [];
     this.rushHourActive = false;
@@ -118,6 +125,8 @@ export class GameScene extends Phaser.Scene {
     this.buildUI();
 
     this.player = new Player(this, GAME_WIDTH / 2, 700);
+    // Show empty tray slots immediately so player sees their capacity from the start
+    this.player.showTray([], this.tray.maxCapacity);
 
     this.steamTimer = this.time.addEvent({
       delay: 700, loop: true,
@@ -286,33 +295,123 @@ export class GameScene extends Phaser.Scene {
     // ── Kitchen ───────────────────────────────────────────────────────────────
     this.add.image(KITCHEN_X, KITCHEN_Y, 'kitchen').setOrigin(0.5, 0.5).setDepth(2);
 
-    // Zone backgrounds — visual separation between COOKING (left) and READY (right)
-    const cookZoneBg = this.add.graphics().setDepth(2.5);
-    cookZoneBg.fillStyle(0xCC4400, 0.09);
-    cookZoneBg.fillRoundedRect(10, KITCHEN_Y - 36, KITCHEN_X - 18, 72, 4);
+    // ── COOKING ZONE (left half) — stainless steel with grill & burners ────────
+    const cookBg = this.add.graphics().setDepth(2.5);
+    // Steel surface
+    cookBg.fillStyle(0x6E6E6E, 1);
+    cookBg.fillRoundedRect(8, KITCHEN_Y - 34, KITCHEN_X - 16, 68, { tl: 4, tr: 0, bl: 4, br: 0 });
+    // Subtle brushed texture (horizontal streaks)
+    for (let ly = KITCHEN_Y - 28; ly < KITCHEN_Y + 34; ly += 8) {
+      cookBg.lineStyle(0.5, 0x888888, 0.25);
+      cookBg.lineBetween(12, ly, KITCHEN_X - 12, ly);
+    }
 
-    const readyZoneBg = this.add.graphics().setDepth(2.5);
-    readyZoneBg.fillStyle(0x009933, 0.09);
-    readyZoneBg.fillRoundedRect(KITCHEN_X + 8, KITCHEN_Y - 36, GAME_WIDTH - KITCHEN_X - 18, 72, 4);
+    // Grill station (left third)
+    const grill = this.add.graphics().setDepth(2.6);
+    const gx = 36, gy = KITCHEN_Y;
+    // Grill surface dark iron
+    grill.fillStyle(0x3A3A3A, 1);
+    grill.fillRoundedRect(gx - 22, gy - 20, 44, 38, 4);
+    // Grill grates
+    grill.lineStyle(2.5, 0x555555, 1);
+    for (let gi = 0; gi < 5; gi++) {
+      const gly = gy - 16 + gi * 7;
+      grill.lineBetween(gx - 18, gly, gx + 18, gly);
+    }
+    // Grill frame
+    grill.lineStyle(2, 0x888888, 0.9);
+    grill.strokeRoundedRect(gx - 22, gy - 20, 44, 38, 4);
+    // Control knob
+    grill.fillStyle(0x2A2A2A, 1); grill.fillCircle(gx - 8, gy + 24, 5);
+    grill.fillStyle(0xCCCCCC, 0.8); grill.fillCircle(gx - 8, gy + 24, 3);
+    grill.fillStyle(0xFF4400, 1); grill.fillRect(gx - 9, gy + 23, 2, 2);
 
-    // Vertical zone divider
+    // Stovetop / burners (center of cooking zone)
+    const stove = this.add.graphics().setDepth(2.6);
+    const sx = KITCHEN_X - 68, sy = KITCHEN_Y;
+    stove.fillStyle(0x222222, 1);
+    stove.fillRoundedRect(sx - 24, sy - 20, 48, 40, 5);
+    // Two burner rings
+    [[sx - 8, sy - 8], [sx + 8, sy + 8]].forEach(([bx, by]) => {
+      stove.lineStyle(3, 0x555555, 1); stove.strokeCircle(bx, by, 10);
+      stove.lineStyle(1.5, 0x333333, 1); stove.strokeCircle(bx, by, 6);
+      stove.fillStyle(0x1A1A1A, 1); stove.fillCircle(bx, by, 3);
+    });
+
+    // Flame animations when orders are cooking (triggered dynamically in update)
+    // Static pilot flame for ambiance
+    const pilotFlame = this.add.graphics().setDepth(2.7);
+    pilotFlame.fillStyle(0xFF6600, 0.9);
+    pilotFlame.fillTriangle(sx - 8, sy - 12, sx - 5, sy - 20, sx - 2, sy - 12);
+    pilotFlame.fillStyle(0xFFCC00, 0.7);
+    pilotFlame.fillTriangle(sx - 8, sy - 14, sx - 5, sy - 21, sx - 2, sy - 14);
+    this.tweens.add({
+      targets: pilotFlame, alpha: { from: 0.8, to: 1.0 },
+      scaleY: { from: 0.9, to: 1.1 },
+      duration: 220, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
+    });
+
+    // Range hood above cooking zone
+    const hood = this.add.graphics().setDepth(3);
+    hood.fillStyle(0x8A8A8A, 1);
+    hood.fillRoundedRect(8, KITCHEN_Y - 46, KITCHEN_X - 16, 14, { tl: 4, tr: 0, bl: 0, br: 0 });
+    hood.lineStyle(1, 0xAAAAAA, 0.6);
+    hood.strokeRoundedRect(8, KITCHEN_Y - 46, KITCHEN_X - 16, 14, { tl: 4, tr: 0, bl: 0, br: 0 });
+    // Hood vent slots
+    hood.lineStyle(1, 0x666666, 0.6);
+    for (let hx = 20; hx < KITCHEN_X - 18; hx += 18) {
+      hood.lineBetween(hx, KITCHEN_Y - 44, hx, KITCHEN_Y - 36);
+    }
+
+    // COOKING label
+    this.add.text(KITCHEN_X / 2, KITCHEN_Y - 28, '🔥 COOKING', {
+      fontSize: '9px', fontFamily: 'Arial', color: '#FF8833', letterSpacing: 1,
+    }).setOrigin(0.5).setDepth(4).setAlpha(0.7);
+
+    // ── PASS / READY ZONE (right half) — heat lamp lit pickup counter ──────────
+    const passZone = this.add.graphics().setDepth(2.5);
+    // Warm stainless pass surface
+    passZone.fillStyle(0x7A7A6A, 1);
+    passZone.fillRoundedRect(KITCHEN_X + 8, KITCHEN_Y - 34, GAME_WIDTH - KITCHEN_X - 16, 68, { tl: 0, tr: 4, bl: 0, br: 4 });
+    // Warm gold tint when food is ready (baked into base)
+    passZone.fillStyle(0xFFCC44, 0.05);
+    passZone.fillRoundedRect(KITCHEN_X + 8, KITCHEN_Y - 34, GAME_WIDTH - KITCHEN_X - 16, 68, { tl: 0, tr: 4, bl: 0, br: 4 });
+
+    // Heat lamp bar above pass
+    const heatLamp = this.add.graphics().setDepth(3);
+    heatLamp.fillStyle(0x5C3010, 1);
+    heatLamp.fillRoundedRect(KITCHEN_X + 8, KITCHEN_Y - 46, GAME_WIDTH - KITCHEN_X - 16, 13, { tl: 0, tr: 4, bl: 0, br: 0 });
+    // Heat lamp bulbs
+    const lampColor = 0xFF8822;
+    [KITCHEN_X + 32, KITCHEN_X + 64, KITCHEN_X + 96, KITCHEN_X + 128, KITCHEN_X + 160].forEach(lbx => {
+      if (lbx > GAME_WIDTH - 20) return;
+      heatLamp.fillStyle(lampColor, 0.9); heatLamp.fillCircle(lbx, KITCHEN_Y - 40, 5);
+      heatLamp.lineStyle(1, 0xFF4400, 0.5); heatLamp.strokeCircle(lbx, KITCHEN_Y - 40, 5);
+      const glow = this.add.graphics().setDepth(2);
+      glow.fillStyle(0xFF6600, 0.06); glow.fillCircle(lbx, KITCHEN_Y - 10, 28);
+    });
+    // Lamp flicker
+    this.tweens.add({
+      targets: heatLamp, alpha: { from: 0.92, to: 1.0 },
+      duration: 400, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
+    });
+
+    // READY label
+    this.add.text(KITCHEN_X + (GAME_WIDTH - KITCHEN_X) / 2, KITCHEN_Y - 28, '✅ READY', {
+      fontSize: '9px', fontFamily: 'Arial', color: '#44CC66', letterSpacing: 1,
+    }).setOrigin(0.5).setDepth(4).setAlpha(0.7);
+
+    // Zone divider — vertical chrome strip
     const zoneDivider = this.add.graphics().setDepth(4);
-    zoneDivider.lineStyle(2, 0x222222, 0.22);
-    zoneDivider.lineBetween(KITCHEN_X + 4, KITCHEN_Y - 34, KITCHEN_X + 4, KITCHEN_Y + 34);
+    zoneDivider.fillStyle(0x9A9A9A, 1);
+    zoneDivider.fillRect(KITCHEN_X - 2, KITCHEN_Y - 34, 4, 68);
+    zoneDivider.lineStyle(1, 0xCCCCCC, 0.5);
+    zoneDivider.lineBetween(KITCHEN_X, KITCHEN_Y - 34, KITCHEN_X, KITCHEN_Y + 34);
 
-    // Zone labels — small, ambient (player reads zones visually, not by reading text)
-    this.add.text(78, KITCHEN_Y - 26, '🔥 COOKING', {
-      fontSize: '9px', fontFamily: 'Arial', color: '#CC5500', letterSpacing: 1,
-    }).setOrigin(0.5).setDepth(4).setAlpha(0.5);
-
-    this.add.text(KITCHEN_X + 78, KITCHEN_Y - 26, '✅ READY', {
-      fontSize: '9px', fontFamily: 'Arial', color: '#229944', letterSpacing: 1,
-    }).setOrigin(0.5).setDepth(4).setAlpha(0.5);
-
-    // Kitchen glow — over the READY zone (right half of counter)
+    // Kitchen glow — over the READY zone
     this.kitchenGlow = this.add.graphics().setDepth(3);
     this.kitchenGlow.fillStyle(0x27AE60, 1.0);
-    this.kitchenGlow.fillRoundedRect(KITCHEN_X + 8, KITCHEN_Y - 36, GAME_WIDTH - KITCHEN_X - 18, 72, 6);
+    this.kitchenGlow.fillRoundedRect(KITCHEN_X + 8, KITCHEN_Y - 34, GAME_WIDTH - KITCHEN_X - 16, 68, { tl: 0, tr: 4, bl: 0, br: 4 });
     this.kitchenGlow.setAlpha(0);
 
     // Service counter — prominent physical barrier between kitchen and dining room
@@ -846,14 +945,11 @@ export class GameScene extends Phaser.Scene {
     }
 
     if (customer.state === 'waiting_food' && !this.tray.isEmpty()) {
-      // Match tray slot to this exact table
-      const slot = this.tray.getSlots().find(s => s.tableId === tableId);
+      // Inventory kitchen: match tray item to customer's order type (any instance of that food)
+      const slot = this.tray.getSlots().find(s => s.emoji === customer.order?.emoji);
       if (slot) {
-        const order = this.kitchenOrders.find(o => o.id === slot.orderId);
-        if (order) {
-          this.deliverFood(table, customer, order);
-          return;
-        }
+        this.deliverFood(table, customer, slot.orderId);
+        return;
       }
     }
 
@@ -885,22 +981,21 @@ export class GameScene extends Phaser.Scene {
       const slots = Math.min(readyOrders.length, this.tray.maxCapacity - this.tray.count);
       for (let i = 0; i < slots; i++) {
         const order = readyOrders[i];
-        this.tray.pickUp(order.id, order.tableId, order.item.emoji);
+        this.tray.pickUp(order.id, order.item.emoji);
         this.orderStartTimes.set(order.id, this.time.now);
         this.removeTicket(order.id);
-
-        // Remove the ready plate sprite from counter
-        this.readyPlateSprites.get(order.id)?.destroy();
-        this.readyPlateSprites.delete(order.id);
+        this.destroyReadyPlate(order.id);
       }
 
-      // Update tray visual
-      this.player.carryItems(this.tray.getSlots().map(s => s.emoji));
+      this.syncTrayDisplay();
 
-      // Highlight the target tables
-      for (const slot of this.tray.getSlots()) {
-        const t = this.tables[slot.tableId];
-        if (t) t.setPriority('kitchen_ready');
+      // Highlight tables whose customers ordered what we're carrying
+      const carryEmojis = new Set(this.tray.getSlots().map(s => s.emoji));
+      for (const t of this.tables) {
+        const cust = this.getCustomerAtTable(t.id);
+        if (cust?.state === 'waiting_food' && cust.order && carryEmojis.has(cust.order.emoji)) {
+          t.setPriority('kitchen_ready');
+        }
       }
 
       this.updateKitchenGlow();
@@ -911,6 +1006,22 @@ export class GameScene extends Phaser.Scene {
   }
 
   // ─── Gameplay Steps ───────────────────────────────────────────────────────
+
+  private destroyReadyPlate(orderId: number) {
+    const plate = this.readyPlateSprites.get(orderId);
+    if (!plate) return;
+    const timer = (plate as any)._steamTimer as Phaser.Time.TimerEvent | undefined;
+    if (timer) timer.remove();
+    plate.destroy();
+    this.readyPlateSprites.delete(orderId);
+  }
+
+  // Single source of truth for tray display. Call after every pick/drop.
+  private syncTrayDisplay() {
+    const emojis = this.tray.getSlots().map(s => s.emoji);
+    this.player.showTray(emojis, this.tray.maxCapacity);
+    if (this.carryingDirty) this.player.showDirtyDish();
+  }
 
   private getCustomerAtTable(tableId: number): Customer | undefined {
     for (const [, c] of this.customers) {
@@ -989,54 +1100,71 @@ export class GameScene extends Phaser.Scene {
   }
 
   private spawnReadyPlate(order: KitchenOrder) {
-    // Space plates along the right half of the counter (READY zone)
+    // Plates space along the READY zone. Inventory kitchen: no table number needed.
     const existingCount = this.readyPlateSprites.size;
-    const plateX = KITCHEN_X + 40 + existingCount * 52;
-    const plateY = KITCHEN_Y + 22;  // on the granite countertop
+    const plateX = KITCHEN_X + 30 + existingCount * 46;
+    const plateY = KITCHEN_Y + 20;
 
-    const plate = this.add.container(plateX, plateY).setDepth(3);
+    const plate = this.add.container(plateX, plateY).setDepth(3.5);
 
+    // Plate shadow
+    const shadow = this.add.graphics();
+    shadow.fillStyle(0x000000, 0.18);
+    shadow.fillEllipse(2, 4, 26, 10);
+    plate.add(shadow);
+
+    // Plate rim
     const plateBg = this.add.graphics();
     plateBg.fillStyle(0xFAF8F4, 1);
-    plateBg.fillCircle(0, 0, 13);
-    plateBg.lineStyle(1.5, 0xD0C8BA);
-    plateBg.strokeCircle(0, 0, 13);
+    plateBg.fillCircle(0, 0, 14);
+    plateBg.lineStyle(2, 0xD0C8BA, 1);
+    plateBg.strokeCircle(0, 0, 14);
+    // Inner plate
+    plateBg.fillStyle(0xFFFDF8, 1);
+    plateBg.fillCircle(0, 0, 10);
     plate.add(plateBg);
 
-    const foodText = this.add.text(0, 0, order.item.emoji, { fontSize: '14px' }).setOrigin(0.5);
-    plate.add(foodText);
+    // Food emoji — slightly larger for clarity
+    plate.add(this.add.text(0, 0, order.item.emoji, { fontSize: '16px' }).setOrigin(0.5));
 
-    // Table number badge so player can match it
-    const numText = this.add.text(10, -14, `${order.tableId + 1}`, {
-      fontSize: '8px', fontFamily: 'Arial Black', color: '#FFFFFF',
-    }).setOrigin(0.5).setDepth(4);
-    const numBg = this.add.graphics().setDepth(3);
-    numBg.fillStyle(0x7A3C10, 1);
-    numBg.fillCircle(10, -14, 7);
-    plate.add(numBg);
-    plate.add(numText);
-
-    // Pop-in animation
-    plate.setScale(0);
-    this.tweens.add({
-      targets: plate, scale: 1, duration: 200, ease: 'Back.easeOut',
+    // Steam wisps above plate
+    const steamTimer = this.time.addEvent({
+      delay: 900, loop: true,
+      callback: () => {
+        if (!plate.active) return;
+        const wx = plateX + (Math.random() - 0.5) * 8;
+        const wy = plateY - 14;
+        const puff = this.add.graphics().setDepth(3.6);
+        puff.fillStyle(0xFFFFFF, 0.22);
+        puff.fillCircle(0, 0, 3 + Math.random() * 2);
+        puff.setPosition(wx, wy);
+        this.tweens.add({
+          targets: puff, y: wy - 16, alpha: 0, scaleX: 1.8, scaleY: 1.8,
+          duration: 700, ease: 'Quad.easeOut',
+          onComplete: () => puff.destroy(),
+        });
+      },
     });
+    // Store timer reference on container for cleanup
+    (plate as any)._steamTimer = steamTimer;
+
+    plate.setScale(0);
+    this.tweens.add({ targets: plate, scale: 1, duration: 200, ease: 'Back.easeOut' });
 
     this.readyPlateSprites.set(order.id, plate);
   }
 
-  private deliverFood(table: Table, customer: Customer, order: KitchenOrder) {
+  // orderId identifies which tray slot to drop; customer.order.emoji identifies the food type.
+  private deliverFood(table: Table, customer: Customer, orderId: number) {
     if (!customer.order) return;
     this.playerBusy = true;
     table.clearPulse();
 
     this.player.walkTo(table.x, table.y + 40, () => {
-      // Customer may have gotten angry while player was walking over
       if (customer.state !== 'waiting_food') {
-        this.tray.drop(order.id);
-        const remaining = this.tray.getSlots().map(s => s.emoji);
-        remaining.length > 0 ? this.player.carryItems(remaining) : this.player.clearCarry();
-        this.kitchenOrders = this.kitchenOrders.filter(o => o.id !== order.id);
+        this.tray.drop(orderId);
+        this.syncTrayDisplay();
+        this.kitchenOrders = this.kitchenOrders.filter(o => o.id !== orderId);
         this.playerBusy = false;
         return;
       }
@@ -1052,21 +1180,19 @@ export class GameScene extends Phaser.Scene {
       customer.refillPatience();
       table.setStateVisual('plate');
 
-      // Drop this order from tray; keep carrying if second item still in tray
-      this.tray.drop(order.id);
-      const remainingEmojis = this.tray.getSlots().map(s => s.emoji);
-      remainingEmojis.length > 0 ? this.player.carryItems(remainingEmojis) : this.player.clearCarry();
-      this.kitchenOrders = this.kitchenOrders.filter(o => o.id !== order.id);
+      this.tray.drop(orderId);
+      this.syncTrayDisplay();
+      this.kitchenOrders = this.kitchenOrders.filter(o => o.id !== orderId);
 
       const speedMult = this.getSpeedMultiplier(customer.patienceAtDelivery);
       const deliveryScore = Math.floor(customer.order!.price * 10 * speedMult * this.comboMultiplier);
       this.addScore(deliveryScore);
 
-      const pickupTime = this.orderStartTimes.get(order.id);
+      const pickupTime = this.orderStartTimes.get(orderId);
       if (pickupTime !== undefined) {
         const deliveryMs = this.time.now - pickupTime;
         if (deliveryMs < this.fastestDeliveryMs) this.fastestDeliveryMs = deliveryMs;
-        this.orderStartTimes.delete(order.id);
+        this.orderStartTimes.delete(orderId);
       }
 
       if (customer.patienceAtDelivery < 0.08) {
@@ -1573,17 +1699,16 @@ export class GameScene extends Phaser.Scene {
       }
     }
 
-    // 3. Carrying food: point at first table in tray that has a waiting customer
+    // 3. Carrying food: point at first table whose customer ordered what we're carrying
     if (primaryTableId === -1 && !this.tray.isEmpty()) {
-      for (const slot of this.tray.getSlots()) {
-        const cust = this.getCustomerAtTable(slot.tableId);
-        if (cust?.state === 'waiting_food') {
-          primaryTableId = slot.tableId;
+      const carryEmojis = new Set(this.tray.getSlots().map(s => s.emoji));
+      for (const table of this.tables) {
+        const cust = this.getCustomerAtTable(table.id);
+        if (cust?.state === 'waiting_food' && cust.order && carryEmojis.has(cust.order.emoji)) {
+          primaryTableId = table.id;
           break;
         }
       }
-      // Fall back to the tableId of the first slot if no waiting_food found yet
-      if (primaryTableId === -1) primaryTableId = this.tray.getSlots()[0]?.tableId ?? -1;
     }
 
     // 4. Kitchen has ready order to pick up (and tray has room)
@@ -1671,13 +1796,10 @@ export class GameScene extends Phaser.Scene {
     const angryOrder = this.kitchenOrders.find(o => o.customerId === id);
     if (angryOrder) {
       this.removeTicket(angryOrder.id);
-      this.readyPlateSprites.get(angryOrder.id)?.destroy();
-      this.readyPlateSprites.delete(angryOrder.id);
+      this.destroyReadyPlate(angryOrder.id);
       this.tray.drop(angryOrder.id);
       this.kitchenOrders = this.kitchenOrders.filter(o => o.id !== angryOrder.id);
-      // Re-render tray if item was dropped from it
-      const remaining = this.tray.getSlots().map(s => s.emoji);
-      remaining.length > 0 ? this.player.carryItems(remaining) : this.player.clearCarry();
+      this.syncTrayDisplay();
     }
 
     customer.stopIdleBehavior();

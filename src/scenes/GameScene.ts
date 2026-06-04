@@ -2199,11 +2199,24 @@ export class GameScene extends Phaser.Scene {
     this.clearTutorialSpotlight();
     ProgressionSystem.markTutorialDone();
 
+    const successTxt = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 60, "✅  You're all set!", {
+      fontSize: '28px', fontFamily: 'Arial Black', color: '#66FF99',
+      stroke: '#003300', strokeThickness: 5,
+    }).setOrigin(0.5).setDepth(55).setScale(0);
+    SoundManager.orderTaken();
     this.tweens.add({
-      targets: this.tutorialOverlay, alpha: 0, duration: 500,
+      targets: successTxt, scale: 1, duration: 300, ease: 'Back.easeOut',
       onComplete: () => {
-        this.tutorialOverlay.destroy();
-        this.startSpawnCycle();
+        this.time.delayedCall(900, () => {
+          this.tweens.add({
+            targets: [this.tutorialOverlay, successTxt], alpha: 0, duration: 420,
+            onComplete: () => {
+              successTxt.destroy();
+              this.tutorialOverlay.destroy();
+              this.startSpawnCycle();
+            },
+          });
+        });
       },
     });
   }

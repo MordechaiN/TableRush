@@ -58,6 +58,7 @@ export class GameScene extends Phaser.Scene {
   private comboProgressGfx!: Phaser.GameObjects.Graphics;
   private hudTimerPill!: Phaser.GameObjects.Graphics;
   private hudComboPill!: Phaser.GameObjects.Graphics;
+  private queueCountTxt!: Phaser.GameObjects.Text;
 
   private gameTimeMs = GAME_DURATION * 1000;
   private gameStartMs = 0;
@@ -726,6 +727,22 @@ export class GameScene extends Phaser.Scene {
     // Combo progress strip — bottom 4px of HUD panel
     this.comboProgressGfx = this.add.graphics().setDepth(4);
     this.updateComboProgress();
+
+    // Queue waiting count — shown above the waiting area when guests are queued
+    this.queueCountTxt = this.add.text(GAME_WIDTH / 2, 738, '', {
+      fontSize: '13px', fontFamily: 'Arial Black', color: '#FFEECC',
+      stroke: '#3A1A00', strokeThickness: 3,
+    }).setOrigin(0.5).setDepth(20).setVisible(false);
+  }
+
+  private updateQueueDisplay() {
+    const n = this.waitingQueue.length;
+    if (n === 0) {
+      this.queueCountTxt.setVisible(false);
+    } else {
+      this.queueCountTxt.setText(n === 1 ? '1 GUEST WAITING' : `${n} GUESTS WAITING`);
+      this.queueCountTxt.setVisible(true);
+    }
   }
 
   // ─── Spawning ─────────────────────────────────────────────────────────────
@@ -796,6 +813,7 @@ export class GameScene extends Phaser.Scene {
         });
 
         this.updateSeatingArrows();
+        this.updateQueueDisplay();
       },
     });
   }
@@ -806,6 +824,7 @@ export class GameScene extends Phaser.Scene {
     this.waitingQueue.splice(idx, 1);
     this.repositionQueue();
     this.updateSeatingArrows();
+    this.updateQueueDisplay();
 
     customer.stopIdleBehavior();
     customer.state = 'leaving';
@@ -872,6 +891,7 @@ export class GameScene extends Phaser.Scene {
     if (customer.queueTimeout) { customer.queueTimeout.remove(); customer.queueTimeout = null; }
     this.repositionQueue();
     this.updateSeatingArrows();
+    this.updateQueueDisplay();
 
     const customerId = this.getCustomerIdByInstance(customer);
     table.setOccupied(customerId);
@@ -1082,6 +1102,7 @@ export class GameScene extends Phaser.Scene {
       customer.showOrderFlash();
       this.player.setEmotion('happy', 900);
       table.setStateVisual('ticket');
+      table.setFloatEmoji(order.emoji, true);
       this.showFloating('✓ ORDER!', table.x, table.y - 70, '#4CAF50');
       SoundManager.orderTaken();
 
@@ -1125,6 +1146,8 @@ export class GameScene extends Phaser.Scene {
         duration: 160, ease: 'Back.easeOut', yoyo: true,
       });
       SoundManager.foodReady();
+      // Green flash: unmistakable "food is ready, go get it" signal
+      this.cameras.main.flash(110, 80, 255, 80, false);
     }
 
     // Spawn a physical plate on the READY counter zone
@@ -1224,6 +1247,7 @@ export class GameScene extends Phaser.Scene {
       customer.stopPatience();
       customer.refillPatience();
       table.setStateVisual('plate');
+      table.clearFloatEmoji();
 
       this.tray.drop(orderId);
       this.syncTrayDisplay();
@@ -1503,6 +1527,19 @@ export class GameScene extends Phaser.Scene {
     if (isNewMilestone) {
       const tier = this.comboMultiplier >= 5 ? 4 : this.comboMultiplier >= 4 ? 3 : this.comboMultiplier >= 3 ? 2 : 1;
       SoundManager.comboUp(tier);
+      // Camera effects scale with combo tier
+      if (this.comboMultiplier >= 5) {
+        this.cameras.main.shake(260, 0.010);
+        this.cameras.main.flash(200, 255, 215, 0, false);
+      } else if (this.comboMultiplier >= 4) {
+        this.cameras.main.shake(180, 0.007);
+        this.cameras.main.flash(150, 255, 200, 50, false);
+      } else if (this.comboMultiplier >= 3) {
+        this.cameras.main.shake(120, 0.005);
+        this.cameras.main.flash(100, 255, 230, 80, false);
+      } else {
+        this.cameras.main.flash(80, 255, 245, 120, false);
+      }
     }
     this.updateComboDisplay();
     this.tweens.add({
@@ -1516,8 +1553,10 @@ export class GameScene extends Phaser.Scene {
     // Waiter reactions at combo milestones
     this.player.celebrateCombo(this.comboCount);
     if (this.comboCount === 15) {
+      this.cameras.main.shake(350, 0.013);
       this.triggerCelebration('💫 TABLE MASTER! 💫', '#FFD700');
     } else if (this.comboCount === 10) {
+      this.cameras.main.shake(250, 0.009);
       this.triggerCelebration('⭐ TABLE LEGEND! ⭐', COLORS.TEXT_GOLD);
     } else if (this.comboCount === 6) {
       this.spawnStarBurst(this.player.x, this.player.y - 20);
@@ -2084,29 +2123,42 @@ export class GameScene extends Phaser.Scene {
   }
 
   private triggerCelebration(message = '🌟 TABLE LEGEND! 🌟', color = COLORS.TEXT_GOLD) {
-    this.cameras.main.flash(250, 255, 230, 100, false);
+    this.cameras.main.flash(300, 255, 230, 100, false);
 
+    // Big announcement text with stroke
     const txt = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 60, message, {
-      fontSize: '26px', fontFamily: 'Arial Black', color,
+      fontSize: '34px', fontFamily: 'Arial Black', color,
+      stroke: '#000000', strokeThickness: 5,
     }).setOrigin(0.5).setDepth(40).setScale(0);
 
     this.tweens.add({
-      targets: txt, scale: 1.1,
-      duration: 350, ease: 'Back.easeOut',
+      targets: txt, scale: 1.15,
+      duration: 380, ease: 'Back.easeOut',
       onComplete: () => {
-        this.time.delayedCall(1200, () => {
-          this.tweens.add({ targets: txt, alpha: 0, duration: 300, onComplete: () => txt.destroy() });
+        this.tweens.add({
+          targets: txt, scaleX: 1.0, scaleY: 1.0,
+          duration: 140,
+          onComplete: () => {
+            this.time.delayedCall(1400, () => {
+              this.tweens.add({ targets: txt, alpha: 0, y: txt.y - 30, duration: 400, onComplete: () => txt.destroy() });
+            });
+          },
         });
       },
     });
 
-    for (let i = 0; i < 14; i++) {
-      const sx = Phaser.Math.Between(40, GAME_WIDTH - 40);
-      const sy = Phaser.Math.Between(GAME_HEIGHT / 3, GAME_HEIGHT * 2 / 3);
-      const star = this.add.text(sx, sy, '✨', { fontSize: '20px' }).setOrigin(0.5).setDepth(35);
+    // Confetti burst
+    for (let i = 0; i < 22; i++) {
+      const sx = Phaser.Math.Between(30, GAME_WIDTH - 30);
+      const sy = Phaser.Math.Between(GAME_HEIGHT / 4, GAME_HEIGHT * 3 / 4);
+      const icons = ['⭐', '✨', '🌟', '💫'];
+      const star = this.add.text(sx, sy, icons[i % icons.length], {
+        fontSize: `${Phaser.Math.Between(16, 26)}px`,
+      }).setOrigin(0.5).setDepth(35).setAlpha(0.9);
       this.tweens.add({
-        targets: star, y: sy - 130, alpha: 0,
-        duration: 900, delay: i * 55, ease: 'Quad.easeOut',
+        targets: star, y: sy - Phaser.Math.Between(100, 180), alpha: 0,
+        angle: Phaser.Math.Between(-180, 180),
+        duration: 800 + i * 40, delay: i * 35, ease: 'Quad.easeOut',
         onComplete: () => star.destroy(),
       });
     }

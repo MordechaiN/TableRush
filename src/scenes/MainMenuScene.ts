@@ -51,13 +51,13 @@ export class MainMenuScene extends Phaser.Scene {
     shafts.fillTriangle(GAME_WIDTH - 24, 90, GAME_WIDTH - 180, 90, GAME_WIDTH - 110, 500);
 
     // ── Background table silhouettes — very subtle atmosphere ───────────────
-    const bgTables = this.add.graphics().setAlpha(0.07);
+    const bgTables = this.add.graphics().setAlpha(0.10);
     [[100, 590], [380, 590], [240, 730]].forEach(([tx, ty]) => {
       // Table body
       bgTables.fillStyle(0x8B4513, 1);
       bgTables.fillRoundedRect(tx - 52, ty - 30, 104, 60, 8);
-      // Tablecloth
-      bgTables.fillStyle(0xFDFAF6, 1);
+      // Tablecloth (matches in-game burgundy)
+      bgTables.fillStyle(0x9B1C2A, 1);
       bgTables.fillRoundedRect(tx - 48, ty - 28, 96, 48, 6);
       // Chair silhouettes
       bgTables.fillStyle(0x5C3317, 1);
@@ -149,6 +149,22 @@ export class MainMenuScene extends Phaser.Scene {
       const fe = this.add.text(ex, ey, emoji, { fontSize: '26px' }).setOrigin(0.5).setAlpha(0.5);
       this.tweens.add({ targets: fe, y: ey - 8, duration: 1200 + i * 150, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     });
+
+    // Ambient rising particles (steam/sparkle) — gives menu breathing life
+    const particleEmojis = ['✨', '⭐', '💫', '🌟'];
+    const spawnMenuParticle = () => {
+      const px = Phaser.Math.Between(30, GAME_WIDTH - 30);
+      const py = GAME_HEIGHT - 40;
+      const p = this.add.text(px, py, particleEmojis[Phaser.Math.Between(0, particleEmojis.length - 1)], {
+        fontSize: `${Phaser.Math.Between(10, 18)}px`,
+      }).setOrigin(0.5).setAlpha(0).setDepth(2);
+      this.tweens.add({
+        targets: p, y: py - Phaser.Math.Between(160, 300), alpha: { from: 0.7, to: 0 },
+        duration: Phaser.Math.Between(2000, 3500), ease: 'Quad.easeOut',
+        onComplete: () => p.destroy(),
+      });
+    };
+    this.time.addEvent({ delay: 600, loop: true, callback: spawnMenuParticle });
 
     // Version watermark
     this.add.text(cx, GAME_HEIGHT - 10, 'v1.0.0', {

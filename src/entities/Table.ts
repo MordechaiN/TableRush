@@ -19,7 +19,15 @@ export class Table extends Phaser.GameObjects.Container {
   private arrowTween: Phaser.Tweens.Tween | null = null;
   private urgentAlphaTween: Phaser.Tweens.Tween | null = null;
   private currentPriority: TablePriority = 'none';
-  private arrowBaseScale = 1.0; // 1.0 = primary, 0.35 = secondary
+  private arrowBaseScale = 1.0;
+
+  // Scene-level floating emoji (above table, below arrow) — shows ordered food, dirty state, etc.
+  private floatEmoji: Phaser.GameObjects.Text | null = null;
+  private floatEmojiTween: Phaser.Tweens.Tween | null = null;
+
+  // Scene-level seat indicator ring — visible ring around customer position when occupied
+  private seatRing: Phaser.GameObjects.Graphics | null = null;
+  private seatRingTween: Phaser.Tweens.Tween | null = null;
 
   // World position of arrow anchor (above and outside customer sprite area)
   private arrowWorldX: number;
@@ -77,6 +85,8 @@ export class Table extends Phaser.GameObjects.Container {
     this.tableBody.clearTint();
     this.setGlowState('empty');
     this.clearPulse();
+    this.clearFloatEmoji();
+    this.clearSeatRing();
   }
 
   setOccupied(customerId: number) {
@@ -87,6 +97,8 @@ export class Table extends Phaser.GameObjects.Container {
     this.tableBody.clearTint();
     this.setGlowState('seated');
     this.clearPulse();
+    this.clearFloatEmoji();
+    this.showSeatRing();
   }
 
   setDirty() {
@@ -98,6 +110,8 @@ export class Table extends Phaser.GameObjects.Container {
     this.tableBody.clearTint();
     this.setGlowState('dirty');
     this.setPriority('dirty');
+    this.clearSeatRing();
+    this.setFloatEmoji('🍽️', false);
   }
 
   setPayingGlow() { this.setGlowState('paying'); }
@@ -115,7 +129,7 @@ export class Table extends Phaser.GameObjects.Container {
     const color = colors[state] ?? 0xFFFFFF;
     this.stateGlow.fillStyle(color, 1);
     this.stateGlow.fillEllipse(0, 6, 168, 128);
-    const maxA = state === 'paying' ? 0.60 : state === 'dirty' ? 0.52 : 0.38;
+    const maxA = state === 'paying' ? 0.60 : state === 'dirty' ? 0.52 : 0.55;
     const minA = maxA * 0.38;
     this.stateGlow.setAlpha(maxA);
     this.stateGlowTween = this.scene.tweens.add({
@@ -361,6 +375,45 @@ export class Table extends Phaser.GameObjects.Container {
     // Bold black outline
     this.actionArrow.lineStyle(2.5, 0x1A1A1A, 1.0);
     this.actionArrow.strokeTriangle(-w, -10, w, -10, 0, h);
+  }
+
+  // Floating emoji above the table surface — communicates food order, dirty state, etc.
+  setFloatEmoji(emoji: string, bouncing = false) {
+    this.clearFloatEmoji();
+    const ey = this.y - 72;
+    this.floatEmoji = this.scene.add.text(this.x, ey, emoji, {
+      fontSize: '26px',
+    }).setOrigin(0.5).setDepth(14);
+    if (bouncing) {
+      this.floatEmojiTween = this.scene.tweens.add({
+        targets: this.floatEmoji,
+        y: { from: ey, to: ey - 10 },
+        duration: 650, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
+      });
+    }
+  }
+
+  clearFloatEmoji() {
+    if (this.floatEmojiTween) { this.floatEmojiTween.stop(); this.floatEmojiTween = null; }
+    if (this.floatEmoji) { this.floatEmoji.destroy(); this.floatEmoji = null; }
+  }
+
+  // Pulsing seat ring — makes customer position scannable at a glance
+  private showSeatRing() {
+    this.clearSeatRing();
+    this.seatRing = this.scene.add.graphics().setDepth(8);
+    this.seatRing.lineStyle(3, 0xFFCC44, 0.85);
+    this.seatRing.strokeCircle(this.x, this.y - 6, 30);
+    this.seatRingTween = this.scene.tweens.add({
+      targets: this.seatRing,
+      alpha: { from: 0.85, to: 0.25 },
+      duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
+    });
+  }
+
+  clearSeatRing() {
+    if (this.seatRingTween) { this.seatRingTween.stop(); this.seatRingTween = null; }
+    if (this.seatRing) { this.seatRing.destroy(); this.seatRing = null; }
   }
 
   flashClean() {

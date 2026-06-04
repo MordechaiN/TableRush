@@ -198,14 +198,20 @@ export class GameScene extends Phaser.Scene {
     lWall.fillStyle(0x4A2410, 1);
     lWall.fillRect(0, GAME_HEIGHT - 16, wallW, 16); // baseboard
     // Left wall sconces (depth 2 so they appear above the wall strip)
-    [240, 490].forEach(sy => {
+    [240, 490].forEach((sy, si) => {
       const sc = this.add.graphics().setDepth(2);
       sc.fillStyle(0xC8A060, 1);
       sc.fillRect(wallW - 4, sy - 4, 4, 8); // bracket arm
       sc.fillStyle(0xFFEE88, 0.9);
       sc.fillTriangle(wallW - 6, sy - 8, wallW + 4, sy - 8, wallW + 1, sy + 8); // shade
-      sc.fillStyle(0xFFFF88, 0.25);
-      sc.fillCircle(wallW, sy + 4, 18); // glow pool
+      // Glow pool as separate object so it can flicker
+      const glow = this.add.graphics().setDepth(2);
+      glow.fillStyle(0xFFFF88, 0.25);
+      glow.fillCircle(wallW, sy + 4, 18);
+      this.tweens.add({
+        targets: glow, alpha: { from: 0.85, to: 1.0 },
+        duration: 600 + si * 220, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
+      });
     });
     // Right wall
     const rWall = this.add.graphics().setDepth(1);
@@ -217,14 +223,19 @@ export class GameScene extends Phaser.Scene {
     rWall.fillRect(GAME_WIDTH - wallW, 88 + Math.floor(wallH * 0.56), wallW, 5);
     rWall.fillStyle(0x4A2410, 1);
     rWall.fillRect(GAME_WIDTH - wallW, GAME_HEIGHT - 16, wallW, 16);
-    [240, 490].forEach(sy => {
+    [240, 490].forEach((sy, si) => {
       const sc = this.add.graphics().setDepth(2);
       sc.fillStyle(0xC8A060, 1);
       sc.fillRect(GAME_WIDTH - wallW, sy - 4, 4, 8);
       sc.fillStyle(0xFFEE88, 0.9);
       sc.fillTriangle(GAME_WIDTH - wallW - 4, sy - 8, GAME_WIDTH + 4, sy - 8, GAME_WIDTH - 1, sy + 8);
-      sc.fillStyle(0xFFFF88, 0.25);
-      sc.fillCircle(GAME_WIDTH - wallW, sy + 4, 18);
+      const rglow = this.add.graphics().setDepth(2);
+      rglow.fillStyle(0xFFFF88, 0.25);
+      rglow.fillCircle(GAME_WIDTH - wallW, sy + 4, 18);
+      this.tweens.add({
+        targets: rglow, alpha: { from: 0.85, to: 1.0 },
+        duration: 700 + si * 180, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
+      });
     });
 
     // ── Wall art ──────────────────────────────────────────────────────────────
@@ -749,6 +760,7 @@ export class GameScene extends Phaser.Scene {
       table.setStateVisual('menu');
       table.setPriority('requesting');
       SoundManager.seatCustomer();
+      this.player.setEmotion('happy', 800);
       this.playerBusy = false;
 
       if (this.tutorialActive && this.tutorialStep === 0) this.advanceTutorial();
@@ -1461,13 +1473,21 @@ export class GameScene extends Phaser.Scene {
     const bg = this.add.image(0, 0, 'ticket');
     const emoji = this.add.text(0, 2, order.item.emoji, { fontSize: '22px' }).setOrigin(0.5);
 
+    // Table number badge on ticket — tells player which table to deliver to
+    const numBg = this.add.graphics();
+    numBg.fillStyle(0x7A3C10, 1);
+    numBg.fillRoundedRect(10, -22, 14, 12, 3);
+    const numTxt = this.add.text(17, -16, `${order.tableId + 1}`, {
+      fontSize: '8px', fontFamily: 'Arial Black', color: '#FFD700',
+    }).setOrigin(0.5);
+
     const progressTrack = this.add.graphics();
     progressTrack.fillStyle(0x2C1810, 0.25);
     progressTrack.fillRoundedRect(-20, 14, 40, 5, 2);
 
     const progressBar = this.add.graphics();
 
-    container.add([bg, emoji, progressTrack, progressBar]);
+    container.add([bg, emoji, numBg, numTxt, progressTrack, progressBar]);
     this.ticketRail.add(container);
     order.ticketObj = container;
     order.progressBar = progressBar;

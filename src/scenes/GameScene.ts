@@ -401,7 +401,7 @@ export class GameScene extends Phaser.Scene {
 
     // COOKING label
     this.add.text(KITCHEN_X / 2, KITCHEN_Y - 22, '🔥 COOKING', {
-      fontSize: '10px', fontFamily: 'Arial Black', color: '#FF9944', letterSpacing: 1,
+      fontSize: '13px', fontFamily: 'Arial Black', color: '#FFBB55', letterSpacing: 1,
     }).setOrigin(0.5).setDepth(4);
 
     // ── PASS / READY ZONE (right half) ──────────────────────────────────────
@@ -434,7 +434,7 @@ export class GameScene extends Phaser.Scene {
 
     // READY label
     this.add.text(KITCHEN_X + (GAME_WIDTH - KITCHEN_X) / 2, KITCHEN_Y - 22, '✅ READY', {
-      fontSize: '10px', fontFamily: 'Arial Black', color: '#22AA55', letterSpacing: 1,
+      fontSize: '13px', fontFamily: 'Arial Black', color: '#44DD77', letterSpacing: 1,
     }).setOrigin(0.5).setDepth(4);
 
     // Zone divider — amber gold chrome strip
@@ -1238,21 +1238,26 @@ export class GameScene extends Phaser.Scene {
     this.cookingOnBurner.forEach(c => usedSlots.add((c as any)._slot ?? 0));
     const slot = usedSlots.has(0) ? 1 : 0;
     const bx = burnerSlots[slot] ?? 70;
-    const by = KITCHEN_Y - 18;
+    const by = KITCHEN_Y - 20;
 
     const container = this.add.container(bx, by).setDepth(4);
     (container as any)._slot = slot;
 
-    // Pot silhouette behind emoji
+    // Pot silhouette (bigger for readability)
     const pot = this.add.graphics();
-    pot.fillStyle(0x1A1A1A, 0.7);
-    pot.fillRoundedRect(-13, -6, 26, 18, 4);
-    pot.fillStyle(0x333333, 0.8);
-    pot.fillRoundedRect(-10, -10, 6, 8, 2); // left handle
-    pot.fillRoundedRect(4, -10, 6, 8, 2);   // right handle
+    pot.fillStyle(0x111111, 0.85);
+    pot.fillRoundedRect(-16, -4, 32, 20, 5);
+    pot.fillStyle(0x444444, 0.9);
+    pot.fillRoundedRect(-14, -12, 8, 10, 3); // left handle
+    pot.fillRoundedRect(6, -12, 8, 10, 3);   // right handle
+    // Lid
+    pot.fillStyle(0x555555, 0.9);
+    pot.fillRoundedRect(-14, -8, 28, 6, 3);
+    pot.lineStyle(1.5, 0x888888, 0.7);
+    pot.strokeRoundedRect(-16, -4, 32, 20, 5);
     container.add(pot);
 
-    const foodTxt = this.add.text(0, 4, order.item.emoji, { fontSize: '14px' }).setOrigin(0.5);
+    const foodTxt = this.add.text(0, 6, order.item.emoji, { fontSize: '18px' }).setOrigin(0.5);
     container.add(foodTxt);
 
     // Boiling bob animation
@@ -1278,23 +1283,23 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  // Pops a big "READY!" announcement above kitchen — visible from dining area
+  // Pops a big "READY!" announcement visible from dining area
   private showReadyPop(emoji: string) {
-    // Appears just below the kitchen counter — visible from the dining floor
     const rx = GAME_WIDTH * 0.75;
-    const ry = KITCHEN_Y + 78;
-    const pop = this.add.text(rx, ry, `${emoji} READY!`, {
-      fontSize: '24px', fontFamily: 'Arial Black', color: '#44FF88',
-      stroke: '#002200', strokeThickness: 5,
-    }).setOrigin(0.5).setDepth(22).setAlpha(0).setScale(0.4);
+    const ry = KITCHEN_Y + 80;
+    const pop = this.add.text(rx, ry, `${emoji}  READY!`, {
+      fontSize: '26px', fontFamily: 'Arial Black', color: '#66FFAA',
+      stroke: '#003300', strokeThickness: 6,
+    }).setOrigin(0.5).setDepth(22).setAlpha(0).setScale(0.3);
 
     this.tweens.add({
-      targets: pop, alpha: 1, scale: 1.15, y: ry - 12,
-      duration: 200, ease: 'Back.easeOut',
+      targets: pop, alpha: 1, scale: 1.2, y: ry - 14,
+      duration: 220, ease: 'Back.easeOut',
       onComplete: () => {
+        // Hold, then fade
         this.tweens.add({
-          targets: pop, alpha: 0, y: ry - 38,
-          duration: 550, delay: 700, ease: 'Quad.easeIn',
+          targets: pop, alpha: 0, y: ry - 48, scale: 0.9,
+          duration: 600, delay: 1100, ease: 'Quad.easeIn',
           onComplete: () => pop.destroy(),
         });
       },
@@ -1317,7 +1322,7 @@ export class GameScene extends Phaser.Scene {
       }
 
       this.player.deliverAnim();
-      this.player.setEmotion('happy', 1200);
+      this.player.setEmotion('happy', 2500);
       SoundManager.deliverFood();
       customer.patienceAtDelivery = customer.getPatienceFraction();
       customer.hideBubble();
@@ -1365,7 +1370,7 @@ export class GameScene extends Phaser.Scene {
       this.showFloating(`+${deliveryScore}`, table.x, table.y - 35, COLORS.TEXT_ORANGE, deliverSize);
       this.playerBusy = false;
 
-      const eatTime = 2000 + Math.random() * 2000;
+      const eatTime = 5000 + Math.random() * 3000;
       customer.startEating(eatTime);
 
       this.time.delayedCall(eatTime, () => {
@@ -1423,7 +1428,7 @@ export class GameScene extends Phaser.Scene {
 
       this.customersHappy++;
       this.incrementCombo();
-      this.player.setEmotion('proud', 1800);
+      this.player.setEmotion('proud', 3500);
 
       if (customer.patienceAtDelivery >= 0.75) {
         this.time.delayedCall(300, () => {
@@ -2034,33 +2039,54 @@ export class GameScene extends Phaser.Scene {
   private showTutorialStep(step: number, text: string) {
     this.tutorialOverlay.removeAll(true);
 
-    // Compact floating card — not a full-screen overlay
-    const cardY = GAME_HEIGHT - 60;
-    const bg = this.add.graphics();
-    bg.fillStyle(0x120804, 0.92);
-    bg.fillRoundedRect(16, cardY - 26, GAME_WIDTH - 32, 54, 10);
-    bg.lineStyle(2, 0xCC8833, 0.65);
-    bg.strokeRoundedRect(16, cardY - 26, GAME_WIDTH - 32, 54, 10);
+    const cardY = GAME_HEIGHT - 58;
+    const cardW = GAME_WIDTH - 32;
+    const cardX = 16;
+    const cardH = 62;
+    const radius = 12;
 
-    const txt = this.add.text(GAME_WIDTH / 2, cardY - 6, text, {
-      fontSize: '14px', fontFamily: 'Arial Black', color: '#FFFFFF',
-      align: 'center', wordWrap: { width: GAME_WIDTH - 56 },
+    // Warm cream notepad card
+    const bg = this.add.graphics();
+    bg.fillStyle(0xFFF8EC, 1);
+    bg.fillRoundedRect(cardX, cardY - 28, cardW, cardH, radius);
+    // Top accent stripe — warm amber, notepad-style
+    bg.fillStyle(0xD4821A, 1);
+    bg.fillRoundedRect(cardX, cardY - 28, cardW, 6, { tl: radius, tr: radius, bl: 0, br: 0 });
+    // Subtle left line (notepad margin)
+    bg.lineStyle(1.5, 0xE8C88A, 1);
+    bg.lineBetween(cardX + 38, cardY - 22, cardX + 38, cardY + 28);
+    // Light inner shadow
+    bg.lineStyle(1, 0xE0C898, 0.7);
+    bg.strokeRoundedRect(cardX, cardY - 28, cardW, cardH, radius);
+
+    // Step icon (emoji) on left margin
+    const stepEmojis = ['🪑', '📋', '🍳', '🍽️', '😋', '🧹', '🚿'];
+    const icon = this.add.text(cardX + 19, cardY - 2, stepEmojis[step] ?? '⭐', {
+      fontSize: '20px',
     }).setOrigin(0.5);
 
-    // Progress dots
+    // Instruction text — dark ink on cream
+    const txt = this.add.text(cardX + 48, cardY - 2, text, {
+      fontSize: '14px', fontFamily: 'Arial', color: '#2C1A08', fontStyle: 'bold',
+      wordWrap: { width: cardW - 62 },
+    }).setOrigin(0, 0.5);
+
+    // Progress dots at bottom
     const total = 7;
-    const gap = 14;
+    const gap = 16;
     const dotsX = GAME_WIDTH / 2 - (total - 1) * gap / 2;
     for (let d = 0; d < total; d++) {
       const dot = this.add.graphics();
-      dot.fillStyle(d < step ? 0xFF9900 : d === step ? 0xFFCC44 : 0x555555, 1);
-      dot.fillCircle(dotsX + d * gap, cardY + 18, d === step ? 4.5 : 3);
+      const filled = d < step;
+      const active = d === step;
+      dot.fillStyle(filled ? 0xD4821A : active ? 0xFF9900 : 0xCCBB99, 1);
+      dot.fillCircle(dotsX + d * gap, cardY + 24, active ? 5 : 3.5);
       this.tutorialOverlay.add(dot);
     }
 
-    this.tutorialOverlay.add([bg, txt]);
+    this.tutorialOverlay.add([bg, icon, txt]);
     this.tutorialOverlay.setAlpha(0);
-    this.tweens.add({ targets: this.tutorialOverlay, alpha: 1, duration: 240, ease: 'Quad.easeOut' });
+    this.tweens.add({ targets: this.tutorialOverlay, alpha: 1, duration: 200, ease: 'Quad.easeOut' });
   }
 
   private advanceTutorial() {

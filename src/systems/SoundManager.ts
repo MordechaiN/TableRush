@@ -1,6 +1,8 @@
 // Web Audio API synthesis — no external audio files required.
 // All sounds are procedurally generated via oscillators and envelope shaping.
 let ctx: AudioContext | null = null;
+let musicLoopTimer: ReturnType<typeof setTimeout> | null = null;
+let musicPlaying = false;
 
 function getCtx(): AudioContext | null {
   if (typeof window === 'undefined') return null;
@@ -54,9 +56,81 @@ function noise(ac: AudioContext, dest: AudioNode, vol: number, startAt: number, 
   src.start(startAt);
 }
 
+function isMusicEnabled(): boolean {
+  return localStorage.getItem('tablerush_music') !== 'off';
+}
+
+function playMusicBar(ac: AudioContext, barIdx: number, startT: number) {
+  const bpm = 108;
+  const beat = 60 / bpm;
+  const bar = beat * 4;
+
+  // 4-chord loop: Cmaj7 | Am7 | Fmaj7 | G7
+  const bassRoots  = [130.81, 110.00, 174.61, 196.00];
+  const bassOctave = [261.63, 220.00, 349.23, 392.00];
+  // Chord tones (upper structure) per bar — two per beat
+  const chordTones: number[][] = [
+    [329.63, 392.00, 493.88, 392.00, 329.63, 392.00, 493.88, 523.25],  // Cmaj7
+    [220.00, 261.63, 329.63, 392.00, 329.63, 261.63, 220.00, 246.94],  // Am7
+    [261.63, 349.23, 440.00, 349.23, 261.63, 392.00, 349.23, 261.63],  // Fmaj7
+    [392.00, 493.88, 587.33, 493.88, 392.00, 349.23, 392.00, 440.00],  // G7
+  ];
+  const b = barIdx % 4;
+
+  const m = ac.createGain();
+  m.gain.value = 0.13;
+  m.connect(ac.destination);
+
+  // Bass: root on beat 1, octave on beat 3
+  tone(ac, m, 'sine', bassRoots[b], 0.9, startT,              beat * 0.7);
+  tone(ac, m, 'sine', bassOctave[b], 0.6, startT + 2 * beat,  beat * 0.6);
+
+  // Chord stabs: 8 even subdivisions per bar (8th notes)
+  const tones = chordTones[b];
+  tones.forEach((freq, i) => {
+    const st = startT + i * (bar / 8);
+    // Soft muted attack — triangle oscillator for warm piano-like timbre
+    const osc = ac.createOscillator();
+    const g = ac.createGain();
+    osc.type = 'triangle';
+    osc.frequency.value = freq;
+    g.gain.setValueAtTime(0, st);
+    g.gain.linearRampToValueAtTime(0.28, st + 0.015);
+    g.gain.exponentialRampToValueAtTime(0.001, st + beat * 0.55);
+    osc.connect(g); g.connect(m);
+    osc.start(st); osc.stop(st + beat * 0.6);
+  });
+
+  return bar; // return bar duration in seconds
+}
+
 export const SoundManager = {
   isEnabled(): boolean {
     return localStorage.getItem('tablerush_sfx') !== 'off';
+  },
+
+  startMusic() {
+    if (musicPlaying) return;
+    if (!isMusicEnabled()) return;
+    const ac = getCtx(); if (!ac) return;
+    musicPlaying = true;
+    let barIdx = 0;
+    const bpm = 108;
+    const barDuration = (60 / bpm) * 4 * 1000; // ms per bar
+
+    const tick = () => {
+      if (!musicPlaying) return;
+      const a = getCtx(); if (!a) return;
+      playMusicBar(a, barIdx, a.currentTime + 0.05);
+      barIdx++;
+      musicLoopTimer = setTimeout(tick, barDuration - 20);
+    };
+    tick();
+  },
+
+  stopMusic() {
+    musicPlaying = false;
+    if (musicLoopTimer) { clearTimeout(musicLoopTimer); musicLoopTimer = null; }
   },
 
   uiClick() {

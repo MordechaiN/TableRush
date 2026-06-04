@@ -139,6 +139,8 @@ export class GameScene extends Phaser.Scene {
 
     this.input.keyboard?.addKey('ESC').on('down', () => this.pauseGame());
 
+    SoundManager.startMusic();
+
     const isTutorial = !ProgressionSystem.isTutorialDone();
     if (isTutorial) {
       this.startTutorial();
@@ -2249,8 +2251,13 @@ export class GameScene extends Phaser.Scene {
   }
 
   private pauseGame() {
+    SoundManager.stopMusic();
     this.scene.pause();
     this.scene.launch('PauseScene');
+  }
+
+  resumeMusic() {
+    SoundManager.startMusic();
   }
 
   private spawnKitchenSteam() {
@@ -2301,6 +2308,7 @@ export class GameScene extends Phaser.Scene {
     this.gameTimer?.remove();
     this.steamTimer?.remove();
     this.steamTimer = null;
+    SoundManager.stopMusic();
     SoundManager.roundEnd();
 
     const total = this.customersHappy + this.customersAngry;

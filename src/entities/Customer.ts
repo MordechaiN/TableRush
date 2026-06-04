@@ -82,6 +82,8 @@ export class Customer extends Phaser.GameObjects.Container {
     this.bubble.setVisible(false);
     this.add(this.bubble);
 
+    // Depth 12: above table surface/glow (2-3), below table front face overlay (16) and arrows (15)
+    this.setDepth(12);
     scene.add.existing(this);
     this.drawFace('neutral');
   }

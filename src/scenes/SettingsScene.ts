@@ -74,11 +74,8 @@ export class SettingsScene extends Phaser.Scene {
     this.renderToggle(cx, 290, 'Music', this.musicOn, (val) => {
       this.musicOn = val;
       localStorage.setItem('tablerush_music', val ? 'on' : 'off');
+      if (!val) SoundManager.stopMusic();
     });
-
-    this.add.text(cx, 338, '🎵 Music coming in a future update', {
-      fontSize: '13px', fontFamily: 'Arial', color: '#BBAA88',
-    }).setOrigin(0.5);
 
     // Divider
     const div = this.add.graphics();

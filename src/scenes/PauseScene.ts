@@ -24,6 +24,7 @@ export class PauseScene extends Phaser.Scene {
     this.makeBtn(cx, cy - 10, 'RESUME', COLORS.UI_GREEN, () => {
       this.scene.resume('GameScene');
       this.scene.stop();
+      SoundManager.startMusic();
     });
 
     this.makeBtn(cx, cy + 60, 'RESTART', COLORS.UI_ORANGE, () => {
@@ -41,6 +42,7 @@ export class PauseScene extends Phaser.Scene {
     this.input.keyboard?.addKey('ESC').on('down', () => {
       this.scene.resume('GameScene');
       this.scene.stop();
+      SoundManager.startMusic();
     });
   }
 

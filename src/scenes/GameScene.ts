@@ -51,6 +51,8 @@ export class GameScene extends Phaser.Scene {
   private fastestDeliveryMs = Infinity;
   private nearMissSaves = 0;
   private orderStartTimes: Map<number, number> = new Map();
+  private prevHighScore = 0;
+  private newRecordAnnounced = false;
 
   private scoreTxt!: Phaser.GameObjects.Text;
   private comboTxt!: Phaser.GameObjects.Text;
@@ -103,10 +105,12 @@ export class GameScene extends Phaser.Scene {
     this.customersAngry = 0;
     this.fastestDeliveryMs = Infinity;
     this.nearMissSaves = 0;
+    this.newRecordAnnounced = false;
     this.orderStartTimes.clear();
     this.playerBusy = false;
     // Tray capacity scales with player level: 2 → 3 → 4 slots
-    const { level } = ProgressionSystem.getData();
+    const { level, highScore } = ProgressionSystem.getData();
+    this.prevHighScore = highScore;
     const trayCapacity = level >= 5 ? 4 : level >= 3 ? 3 : 2;
     this.tray = new CarrySystem(trayCapacity);
     this.carryingDirty = false;
@@ -1639,6 +1643,12 @@ export class GameScene extends Phaser.Scene {
       duration: dur, yoyo: true, ease: 'Back.easeOut',
       onComplete: () => this.scoreTxt.setColor('#FFFFFF'),
     });
+    // First time the score beats the previous high score — celebrate live
+    if (!this.newRecordAnnounced && this.prevHighScore > 0 && this.score > this.prevHighScore) {
+      this.newRecordAnnounced = true;
+      this.cameras.main.flash(180, 255, 215, 0, false);
+      this.showFloating('🏆 NEW RECORD!', GAME_WIDTH / 2, GAME_HEIGHT / 2, COLORS.TEXT_GOLD, 1.2);
+    }
   }
 
   private getSpeedMultiplier(patienceFrac: number): number {

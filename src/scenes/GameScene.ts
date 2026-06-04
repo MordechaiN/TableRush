@@ -160,7 +160,7 @@ export class GameScene extends Phaser.Scene {
     }
     // Grout lines
     const grout = this.add.graphics().setDepth(0);
-    grout.lineStyle(1, 0xD4C4A8, 0.45);
+    grout.lineStyle(1, 0x7A4A18, 0.55);
     for (let col = 1; col < 7; col++) grout.lineBetween(col * 70, 88, col * 70, GAME_HEIGHT);
     for (let row = 2; row < 13; row++) grout.lineBetween(0, row * 70 - 2, GAME_WIDTH, row * 70 - 2);
     // Tile depth shadow (bottom-right edge of each tile)
@@ -1975,37 +1975,38 @@ export class GameScene extends Phaser.Scene {
   // ─── Helpers ──────────────────────────────────────────────────────────────
 
   private spawnFoodBurst(x: number, y: number, emoji: string) {
-    // 5 emoji pieces burst outward then fade
-    for (let i = 0; i < 5; i++) {
-      const angle = (Math.PI * 2 / 5) * i - Math.PI / 2;
-      const dist = 38 + Math.random() * 18;
-      const piece = this.add.text(x, y, emoji, { fontSize: '14px' }).setOrigin(0.5).setDepth(22).setAlpha(0.9);
+    // 8 large emoji pieces burst outward then fade
+    for (let i = 0; i < 8; i++) {
+      const angle = (Math.PI * 2 / 8) * i - Math.PI / 2;
+      const dist = 55 + Math.random() * 28;
+      const piece = this.add.text(x, y, emoji, { fontSize: '22px' }).setOrigin(0.5).setDepth(22).setAlpha(0.95);
       this.tweens.add({
         targets: piece,
         x: x + Math.cos(angle) * dist,
-        y: y + Math.sin(angle) * dist - 12,
-        alpha: 0, scale: 0.4,
-        duration: 520 + i * 40,
-        delay: i * 30,
+        y: y + Math.sin(angle) * dist - 18,
+        alpha: 0, scale: 0.3,
+        duration: 600 + i * 40,
+        delay: i * 25,
         ease: 'Quad.easeOut',
         onComplete: () => piece.destroy(),
       });
     }
-    // Bright starburst ring
+    // Large bright starburst ring
     const ring = this.add.graphics().setDepth(21);
-    ring.lineStyle(3, 0xFFEE44, 0.9);
-    ring.strokeCircle(x, y, 8);
+    ring.lineStyle(5, 0xFFEE44, 1.0);
+    ring.strokeCircle(x, y, 12);
     this.tweens.add({
-      targets: ring, scaleX: 3.5, scaleY: 3.5, alpha: 0,
-      duration: 400, ease: 'Quad.easeOut',
+      targets: ring, scaleX: 5, scaleY: 5, alpha: 0,
+      duration: 500, ease: 'Quad.easeOut',
       onComplete: () => ring.destroy(),
     });
   }
 
   private showFloating(text: string, x: number, y: number, color: string, sizeMult = 1) {
-    const px = Math.round(24 * sizeMult);
+    const px = Math.round(36 * sizeMult);
     const t = this.add.text(x, y, text, {
       fontSize: `${px}px`, fontFamily: 'Arial Black', color,
+      stroke: '#000000', strokeThickness: Math.round(4 * sizeMult),
     }).setOrigin(0.5).setDepth(25).setScale(0);
     this.tweens.add({
       targets: t, scale: 1.25,
@@ -2027,36 +2028,33 @@ export class GameScene extends Phaser.Scene {
   }
 
   private spawnCoins(x: number, y: number) {
-    // Gold burst flash
+    // Large gold burst flash
     const flash = this.add.graphics().setDepth(19);
-    flash.fillStyle(0xFFD700, 0.4);
-    flash.fillCircle(x, y, 30);
+    flash.fillStyle(0xFFD700, 0.55);
+    flash.fillCircle(x, y, 44);
     this.tweens.add({
-      targets: flash, alpha: 0, scaleX: 2.8, scaleY: 2.8,
-      duration: 380, ease: 'Quad.easeOut',
+      targets: flash, alpha: 0, scaleX: 3.8, scaleY: 3.8,
+      duration: 480, ease: 'Quad.easeOut',
       onComplete: () => flash.destroy(),
     });
-    // 8 gold coins arc outward
-    for (let i = 0; i < 8; i++) {
-      const angle = (Math.PI * 2 / 8) * i - Math.PI / 2;
-      const dist = 52 + (i % 2) * 14; // alternating distances
+    // 10 big gold coins arc outward
+    for (let i = 0; i < 10; i++) {
+      const angle = (Math.PI * 2 / 10) * i - Math.PI / 2;
+      const dist = 66 + (i % 2) * 18;
       const coin = this.add.graphics().setDepth(20);
       coin.fillStyle(0xFFD700, 1);
-      coin.fillCircle(0, 0, 8);
+      coin.fillCircle(0, 0, 11);
       coin.fillStyle(0xFFFF99, 0.55);
-      coin.fillCircle(-2, -2, 4);
-      coin.lineStyle(1.5, 0xCC9900, 1);
-      coin.strokeCircle(0, 0, 8);
+      coin.fillCircle(-3, -3, 5);
+      coin.lineStyle(2, 0xCC9900, 1);
+      coin.strokeCircle(0, 0, 11);
       coin.setPosition(x, y).setScale(0.4);
       this.tweens.add({
         targets: coin,
         x: x + Math.cos(angle) * dist,
-        y: y + Math.sin(angle) * dist - 10,
-        alpha: 0,
-        scaleX: 0,
-        scaleY: 0,
-        duration: 660,
-        delay: i * 45,
+        y: y + Math.sin(angle) * dist - 14,
+        alpha: 0, scaleX: 0, scaleY: 0,
+        duration: 750, delay: i * 40,
         ease: 'Quad.easeOut',
         onComplete: () => coin.destroy(),
       });

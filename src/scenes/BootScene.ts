@@ -279,31 +279,31 @@ export class BootScene extends Phaser.Scene {
     // Tablecloth base
     g.fillStyle(COLORS.TABLE_CLOTH);
     g.fillRoundedRect(8, 6, 94, 64, 8);
-    // Subtle checkered linen pattern (8×8 grid of alternating shaded squares)
+    // Subtle damask-style pattern (alternating darker squares)
     const cSize = 8;
     for (let row = 0; row < 8; row++) {
       for (let col = 0; col < 12; col++) {
         if ((row + col) % 2 === 0) {
-          g.fillStyle(0xEEE8DF, 0.5);
+          g.fillStyle(0x7A1520, 0.38);
           g.fillRect(9 + col * cSize, 7 + row * cSize, cSize, cSize);
         }
       }
     }
-    // Cloth border detail (re-draw over pattern)
-    g.lineStyle(1.5, 0xEBE5DC, 0.6);
+    // Cloth border detail
+    g.lineStyle(1.5, 0xCC3344, 0.5);
     g.strokeRoundedRect(11, 9, 88, 58, 6);
-    // Place setting circles
-    g.fillStyle(0xF0EDE8, 0.3);
+    // Place setting circles (white on burgundy)
+    g.fillStyle(0xFFFFFF, 0.18);
     g.fillCircle(32, 38, 17);
     g.fillCircle(78, 38, 17);
-    g.lineStyle(1, 0xDDD8D0, 0.45);
+    g.lineStyle(1, 0xFFDDDD, 0.35);
     g.strokeCircle(32, 38, 17);
     g.strokeCircle(78, 38, 17);
     // Center crease
-    g.lineStyle(0.5, 0xE0DAD4, 0.3);
+    g.lineStyle(0.5, 0xCC2233, 0.4);
     g.lineBetween(55, 10, 55, 66);
     // Cloth highlight
-    g.fillStyle(0xFFFFFF, 0.15);
+    g.fillStyle(0xFFFFFF, 0.12);
     g.fillRoundedRect(12, 10, 38, 5, 3);
     g.generateTexture('table', 110, 76);
 

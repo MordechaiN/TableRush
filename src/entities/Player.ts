@@ -27,7 +27,7 @@ export class Player extends Phaser.GameObjects.Container {
     this.face = scene.add.graphics();
     this.add(this.face);
     this.setDepth(17);
-    this.setScale(1.5);
+    this.setScale(2.0);
     scene.add.existing(this);
     this.drawFace('normal');
     this.startIdleAnim();

@@ -3,15 +3,15 @@ export const GAME_HEIGHT = 854;
 
 export const COLORS = {
   // Floor / environment
-  FLOOR_WARM:    0xF5E6C8,
-  FLOOR_ALT:     0xEDD9A3,
+  FLOOR_WARM:    0xC4813A,  // rich warm golden oak
+  FLOOR_ALT:     0xAA6A28,  // darker oak for tile contrast
   WALL:          0xFFF8F0,
   WALL_ACCENT:   0xC17B3A,
 
   // Table
   TABLE_BODY:    0x8B4513,
   TABLE_TOP:     0xA0522D,
-  TABLE_CLOTH:   0xFDFAF6,
+  TABLE_CLOTH:   0x9B1C2A,  // deep restaurant burgundy
   CHAIR:         0x5C3317,
 
   // Characters

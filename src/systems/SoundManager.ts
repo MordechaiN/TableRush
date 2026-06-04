@@ -310,6 +310,28 @@ export const SoundManager = {
     tone(ac, master, 'square', 660, 0.5, t + 0.15, 0.08);
   },
 
+  customerArrival() {
+    if (!this.isEnabled()) return;
+    const ac = getCtx(); if (!ac) return;
+    const t = ac.currentTime;
+    const master = gain(ac, 0.16);
+    master.connect(ac.destination);
+    // Soft doorbell ding-dong (D6 → A5) — welcoming, not intrusive
+    tone(ac, master, 'sine', 1175, 0.9, t, 0.30);
+    tone(ac, master, 'sine', 880, 0.65, t + 0.24, 0.32);
+  },
+
+  nearMiss() {
+    if (!this.isEnabled()) return;
+    const ac = getCtx(); if (!ac) return;
+    const t = ac.currentTime;
+    const master = gain(ac, 0.22);
+    master.connect(ac.destination);
+    // Relief exhale: quick descending tone + breath noise
+    tone(ac, master, 'sine', 660, 0.85, t, 0.22, 420);
+    noise(ac, master, 0.14, t + 0.04, 0.22);
+  },
+
   // starReveal(n): bell tone pitched up for each star (1=C5, 2=E5, 3=G5+sparkle)
   starReveal(starNum: number) {
     if (!this.isEnabled()) return;

@@ -140,9 +140,9 @@ export class MainMenuScene extends Phaser.Scene {
     waiterGfx.fillStyle(0xC4874A, 0.5);
     waiterGfx.fillRoundedRect(wx + 17, wc - 9, 32, 3, 1);
     // Food on tray
-    this.add.text(wx + 33, wc - 16, '🍔', { fontSize: '16px' }).setOrigin(0.5).setAlpha(0).setDepth(2);
+    const foodLeft = this.add.text(wx + 33, wc - 16, '🍔', { fontSize: '16px' }).setOrigin(0.5).setAlpha(0).setDepth(2);
 
-    this.tweens.add({ targets: waiterGfx, alpha: 1, duration: 380, delay: 600, ease: 'Quad.easeOut' });
+    this.tweens.add({ targets: [waiterGfx, foodLeft], alpha: 1, duration: 380, delay: 600, ease: 'Quad.easeOut' });
     // Idle bob
     this.tweens.add({ targets: waiterGfx, y: { from: 0, to: -6 }, duration: 1100, yoyo: true, repeat: -1, ease: 'Sine.easeInOut', delay: 700 });
 
@@ -173,15 +173,10 @@ export class MainMenuScene extends Phaser.Scene {
     waiterGfx2.fillRoundedRect(wx2 - 50, wc - 10, 34, 6, 2);
     waiterGfx2.fillStyle(0xC4874A, 0.5);
     waiterGfx2.fillRoundedRect(wx2 - 49, wc - 9, 32, 3, 1);
-    this.add.text(wx2 - 34, wc - 16, '🍕', { fontSize: '16px' }).setOrigin(0.5).setAlpha(0).setDepth(2);
+    const foodRight = this.add.text(wx2 - 34, wc - 16, '🍕', { fontSize: '16px' }).setOrigin(0.5).setAlpha(0).setDepth(2);
 
-    this.tweens.add({ targets: waiterGfx2, alpha: 1, duration: 380, delay: 750, ease: 'Quad.easeOut' });
+    this.tweens.add({ targets: [waiterGfx2, foodRight], alpha: 1, duration: 380, delay: 750, ease: 'Quad.easeOut' });
     this.tweens.add({ targets: waiterGfx2, y: { from: 0, to: -6 }, duration: 1300, yoyo: true, repeat: -1, ease: 'Sine.easeInOut', delay: 900 });
-
-    // Floating side food emojis (smaller, overlap with waiters)
-    const d1 = this.add.text(cx - 178, logoY + 105, '🍔', { fontSize: '20px' }).setOrigin(0.5).setAlpha(0);
-    const d2 = this.add.text(cx + 178, logoY + 105, '🍕', { fontSize: '20px' }).setOrigin(0.5).setAlpha(0);
-    void d1; void d2;
 
     // ── Stats row ─────────────────────────────────────────────────────────────
     const statsY = 424;

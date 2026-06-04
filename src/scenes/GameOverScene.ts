@@ -233,6 +233,24 @@ export class GameOverScene extends Phaser.Scene {
           }
         },
       });
+
+      // Tray upgrade callout for levels 3 and 5
+      const newTray = summary.levelAfter >= 5 ? 4 : summary.levelAfter >= 3 ? 3 : 0;
+      const oldTray = summary.levelBefore >= 5 ? 4 : summary.levelBefore >= 3 ? 3 : 2;
+      if (newTray > 0 && newTray > oldTray) {
+        y += 34;
+        const trayBg = this.add.graphics().setAlpha(0);
+        trayBg.fillStyle(0x1A4A1A, 0.9);
+        trayBg.fillRoundedRect(cx - 120, y - 12, 240, 30, 8);
+        const trayUpgTxt = this.add.text(cx, y + 3, `🍽️  Tray upgraded — carry ${newTray} items!`, {
+          fontSize: '13px', fontFamily: 'Arial Black', color: '#66FF88',
+        }).setOrigin(0.5).setAlpha(0);
+        this.tweens.add({ targets: [trayBg, trayUpgTxt], alpha: 1, duration: 350, delay: 1900 });
+        this.tweens.add({
+          targets: trayUpgTxt, scaleX: { from: 0.6, to: 1 }, scaleY: { from: 0.6, to: 1 },
+          duration: 300, delay: 1900, ease: 'Back.easeOut',
+        });
+      }
     }
 
     y += 30;

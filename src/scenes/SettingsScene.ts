@@ -92,7 +92,7 @@ export class SettingsScene extends Phaser.Scene {
       fontSize: '16px', fontFamily: 'Arial Black', color: COLORS.TEXT_DARK,
     }).setOrigin(0.5);
 
-    const resetTxt = this.add.text(cx, 462, '🗑️  Reset Progress', {
+    const resetTxt = this.add.text(cx, 462, '🗑️  Reset High Score', {
       fontSize: '18px', fontFamily: 'Arial', color: COLORS.TEXT_RED,
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
     resetTxt.on('pointerover', () => resetTxt.setAlpha(0.7));
@@ -100,7 +100,7 @@ export class SettingsScene extends Phaser.Scene {
     resetTxt.on('pointerdown', () => {
       SoundManager.uiClick();
       ProgressionSystem.resetHighScore();
-      this.showToast('Progress reset!');
+      this.showToast('High score cleared!');
     });
 
     // Version info at bottom of card

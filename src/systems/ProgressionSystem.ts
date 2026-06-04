@@ -2,16 +2,16 @@ const XP_THRESHOLDS = [0, 300, 700, 1300, 2200, 3500, 5500, 8000, 11000, 15000];
 const MAX_LEVEL = XP_THRESHOLDS.length - 1;
 
 const UNLOCK_HINTS = [
-  'Keep playing to level up!',
-  'Level 2: New customer variant unlocked!',
-  'Level 3: New menu item unlocked!',
-  'Level 4: New restaurant theme unlocked!',
-  'Level 5: Hard mode unlocked!',
-  'Level 6: Expert customers unlocked!',
-  'Level 7: Speed challenge unlocked!',
-  'Level 8: VIP customers unlocked!',
-  'Level 9: Master chef mode unlocked!',
-  'Level 10: TABLE MASTER — you are legendary!',
+  'Complete rounds to earn XP and reach Level 2!',
+  'Level 2 — building momentum. Chain 3 serves to ignite your combo meter!',
+  'Level 3 — tray upgraded! You can now carry 3 items at once.',
+  'Level 4 — the combo meter is your secret weapon. ×4.0 is within reach.',
+  'Level 5 — tray upgraded! You can now carry 4 items at once.',
+  'Level 6 — lightning service. Deliver fast for ⚡ speed bonus multipliers.',
+  'Level 7 — rush hour mastery. Two waves per shift — chain big combos through them.',
+  'Level 8 — near-miss saves earn you mention in the shift report. Push the edge.',
+  'Level 9 — every second with a full tray and active combo is peak efficiency.',
+  'Level 10 — TABLE MASTER. You know the kitchen, the floor, and the rush. Legend.',
 ];
 
 interface ProgressData {

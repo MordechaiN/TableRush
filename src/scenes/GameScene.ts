@@ -821,6 +821,7 @@ export class GameScene extends Phaser.Scene {
       customer.makeVIP();
     }
 
+    SoundManager.customerArrival();
     this.tweens.add({
       targets: customer,
       x: qPos.x, y: qPos.y,
@@ -966,6 +967,10 @@ export class GameScene extends Phaser.Scene {
         const m = Math.floor(remaining / 60);
         const s = Math.floor(remaining % 60);
         this.timeTxt.setText(`${m}:${s.toString().padStart(2, '0')}`);
+        // Final-minute callout at the tier-3 transition (guests are least patient now)
+        if (remaining <= 60 && remaining > 59) {
+          this.showFloating('🌶️ Final minute!', GAME_WIDTH / 2, 90, COLORS.TEXT_ORANGE);
+        }
         if (remaining <= 30) {
           if (remaining <= 30 && remaining > 29) {
             // Switch timer pill to danger red
@@ -1382,6 +1387,7 @@ export class GameScene extends Phaser.Scene {
 
       if (customer.patienceAtDelivery < 0.08) {
         this.nearMissSaves++;
+        SoundManager.nearMiss();
         this.showFloating('💪 CLOSE CALL!', table.x, table.y - 85, '#FF4444');
       }
 

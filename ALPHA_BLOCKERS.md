@@ -99,3 +99,28 @@ When `onOrderReady()` fires, a plate graphic with food emoji appears on the READ
 
 ### ✅ Blocker 5: Non-blocking dirty dish workflow
 Removed `carryingDirty` gates from `onTableClick()` and `onKitchenClick()`. Dirty dishes shown as a small badge on player (independent of food tray). Player can serve food while carrying dirty dishes. Dishwasher interaction clears the badge.
+
+---
+
+## PARTIAL FIXES — BLOCKERS 6–10
+
+### ✅ Blocker 7: Dirty table visual noise
+Removed `tableBody.setTint(0xFF6622)` from `setDirty()`. The dirty overlay (plates, glass, crumbs) communicates the state alone. No redundant orange tint.
+
+### ↗ Blocker 6: Waiter agency
+- Player shows `happy` emotion on: seating a customer, taking an order, delivering food
+- Player shows `proud` emotion on payment collection (was already present)
+- `Customer.faceDirection(toX)` flips bodySprite during escort — customer faces the table
+- `Customer.walkBob(duration)` adds a scale bob during escort tween — looks like walking, not sliding
+Remaining: player still feels like a cursor during idle. Physical weight from directional behavior not fully addressed.
+
+### ↗ Blocker 8: Kitchen state ambiguous
+Kitchen tickets now show table number badge (dark brown pill, gold number) so player can immediately match ready food to its table without reading emojis. Physical plates on counter (from Blocker 4) already show table number.
+
+### ↗ Blocker 9: Seating escort looks like teleportation
+Customer now faces escort direction and bobs during the 700ms escort tween. Significantly less like teleportation. A full multi-step escort (customer walks toward player first) remains as a future improvement.
+
+### ↗ Blocker 10: Restaurant doesn't feel alive
+- Kitchen emits ambient steam (25% chance) even with no active cooking orders
+- Sconce glow pools now gently flicker (separate animated objects, 600–900ms alpha pulse)
+- Candle flicker was already present; table glow pools are static (intentional)

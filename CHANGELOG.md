@@ -1,5 +1,21 @@
 # CHANGELOG
 
+## System Redesign Pass (2026-06-04)
+
+### Top 5 Alpha Blockers Resolved
+- **Single-focus indicator**: Secondary arrows now `alpha=0` (was `scale=0.25`). Only the #1 priority arrow is visible at any time — no more visual chaos of 5 simultaneous pulsing arrows.
+- **Customer seated position**: Seated Y moved from `table.y - 24` → `table.y - 6`. Front-face overlay covers lower body; only head + upper chest visible above the table surface. Chair back (at `table.y - 54`) now visible above the customer.
+- **Two-item tray carry**: `CarrySystem(2)` fully integrated. `carryingOrderId` removed. One kitchen trip picks up up to 2 ready orders. Tray shows both items side-by-side. Delivering one item leaves the other on the tray — player goes to second table without returning to kitchen.
+- **Physical food on counter**: `spawnReadyPlate()` — when an order finishes cooking, a plate graphic with food emoji + table number badge appears on the READY counter. Pop-in animation. Plate removed when player picks it up.
+- **Non-blocking dirty dishes**: `carryingDirty` gates removed from all click handlers. Dirty dishes shown as `showDirtyDish()` badge on player (small 🍽️, lower-right, independent of food tray). Player can serve food while carrying dirty dishes. Server workflow is now a flow, not a full stop.
+
+### Architecture
+- `CarrySystem.ts` — was a stub with no callers. Now drives all carry logic: `tray.pickUp()`, `tray.drop()`, `tray.isEmpty()`, `tray.hasOrder()`, `tray.canPickUp()`, `tray.getSlots()`
+- `Player.carryItems(emojis[])` — replaces `carryItem(emoji)`. Accepts 1 or 2 items, positions side-by-side
+- `Player.showDirtyDish()` / `hideDirtyDish()` — dirty badge completely independent of food tray
+
+---
+
 ## Visual Environment Pass (2026-06-04)
 
 ### Restaurant Environment Overhaul

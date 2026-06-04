@@ -38,7 +38,9 @@ Fast-paced restaurant management game. Premium casual — think Overcooked/Good 
 
 ---
 
-## Current State: v1.0.0 RC1 — Visual Environment Pass
+## Current State: v1.0.0 RC1 — System Redesign Pass
+
+**System Redesign Pass (2026-06-04): Implemented top 5 alpha blockers. Single-focus indicator (alpha=0 on secondary arrows), customer seated position (table.y-6), two-item tray carry (CarrySystem 2-slot), physical food on counter (ready plate sprites), non-blocking dirty dish workflow (badge independent of food tray).**
 
 **Visual Environment Pass (2026-06-04): Removed all prototype text labels, replaced kitchen pill badges with subtle inline labels, replaced thin ledge with thick granite service counter, added pendant lamp fixtures above all 5 dining tables with warm floor glow pools.**
 
@@ -48,6 +50,15 @@ Fast-paced restaurant management game. Premium casual — think Overcooked/Good 
 **v1.2 Living restaurant — idle customer behaviors, rush hour waves, VIP customers, queue patience, player 1.25×, dishwasher steam.**
 **v1.1: Entrance queue, dirty dish carry to dishwasher, 7-step tutorial.**
 **v1.0 Restaurant Immersion: side walls, chairs, kitchen zone badges, entrance door, candle flicker, table numbers, gold coins, main menu.**
+
+### System Redesign Pass Changes (2026-06-04)
+- **Single-focus indicator**: `setUrgencyLevel(false)` → `actionArrow.setAlpha(0)`. Only the #1 priority arrow visible. Secondary arrows completely hidden until they become primary.
+- **Customer seated position**: `table.y - 24` → `table.y - 6`. Front-face overlay covers lower body; only head + shoulders visible above table. Chair back now visible above customer head.
+- **Two-item tray carry**: `CarrySystem(2)` integrated. `carryingOrderId` removed. One kitchen trip picks up up to 2 ready dishes. `player.carryItems(['🍔', '🍜'])` shows side-by-side. After delivering one item, remaining item stays on tray.
+- **Physical food on counter**: `spawnReadyPlate()` called from `onOrderReady()` — spawns a plate container at the READY zone with food emoji + table number badge. Pop-in animation. Plate disappears when player picks it up.
+- **Non-blocking dirty dishes**: `carryingDirty` gates removed from `onTableClick()`, `onKitchenClick()`, `updateSeatingArrows()`. Dirty dishes shown as `player.showDirtyDish()` badge (small 🍽️ at player lower-right) independent of food tray. Player can deliver food while carrying dirty dishes. Dishwasher click calls `player.hideDirtyDish()`.
+- **CarrySystem integration**: `tray.pickUp(order)`, `tray.drop(orderId)`, `tray.isEmpty()`, `tray.hasOrder(id)`, `tray.canPickUp()`, `tray.getSlots()` — all used in GameScene. `updateActionPriority()` updated to use tray slots instead of carryingOrderId.
+- **Angry customer cleanup**: `customerLeaveAngry()` now cancels the kitchen order, removes ready plate sprite if present, drops from tray, re-renders player tray.
 
 ### Visual Environment Pass Changes (2026-06-04)
 - **Kitchen badges**: Removed big orange/green pill badges from COOKING/READY zones → replaced with small 9px/50%-alpha inline labels. Kitchen reads as a workspace, not a UI.

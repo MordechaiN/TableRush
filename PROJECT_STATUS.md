@@ -1,12 +1,25 @@
 # PROJECT STATUS
 
 **Last Updated:** 2026-06-04
-**Current Version:** v1.0.0 RC1 (Visual Environment Pass)
+**Current Version:** v1.0.0 RC1 (System Redesign Pass)
 
 ---
 
 ## Current Focus
-Visual Environment Pass (2026-06-04) — replacing prototype markers with real environmental storytelling:
+System Redesign Pass (2026-06-04) — top 5 alpha blockers resolved completely:
+- ✅ Single focus indicator: only #1 priority arrow visible; all others alpha=0
+- ✅ Customer seated position: moved from table.y-24 → table.y-6 — head+shoulders above table, chair back visible
+- ✅ Two-item tray carry: CarrySystem(2) integrated; one kitchen trip picks up 2 dishes
+- ✅ Physical food on counter: ready plates spawn with food emoji + table number, disappear on pickup
+- ✅ Non-blocking dirty dishes: carryingDirty no longer blocks; player.showDirtyDish() badge independent of tray
+
+Previous Visual Environment Pass — replacing prototype markers:
+- ✅ Pendant lamps above all 5 dining tables, warm floor glow pools
+- ✅ Thick granite service counter (no PICK UP label)
+- ✅ Kitchen labels → small 50%-alpha inline text (no pill buttons)
+- ✅ DISHWASHER / HOST / WAIT HERE text labels removed
+
+Previous RC1 Sprint — 5 phases complete:
 - ✅ Removed text labels: "DISHWASHER", "HOST", "WAIT HERE" — space communicates itself
 - ✅ Replaced kitchen COOKING/READY pill badges with small 50%-alpha inline labels
 - ✅ Replaced thin ledge + "PICK UP" text with thick granite service counter

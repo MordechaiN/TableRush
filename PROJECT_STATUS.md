@@ -1,12 +1,27 @@
 # PROJECT STATUS
 
 **Last Updated:** 2026-06-04
-**Current Version:** v1.0.0 RC1 (System Redesign Pass)
+**Current Version:** v1.1.0 (Final Product Sprint)
 
 ---
 
 ## Current Focus
-System Redesign Pass (2026-06-04) — top 5 alpha blockers resolved completely:
+Final Product Sprint (2026-06-04) — full commercial polish pass:
+- ✅ Float emojis depth 19 (above player/arrows): ordered food, 😋 eating, 💳 paying, 🍽️ dirty
+- ✅ Pulsing seat ring: yellow circle marks customer position at table
+- ✅ Queue count display: "N GUESTS WAITING" updated on every queue change
+- ✅ Cooking-on-burner visual: food in pot bobbing on active burner
+- ✅ READY pop text: bright green announcement below kitchen counter
+- ✅ Escalating camera shake+flash at combo milestones ×2/3/4/5
+- ✅ Green camera flash when food is ready
+- ✅ Eating/paying state emojis (😋/💳) bouncing above table
+- ✅ Player scale 2.0 (hero scale)
+- ✅ Burgundy tablecloths (0x9B1C2A)
+- ✅ Floor color overhaul (amber/terracotta)
+- ✅ Main menu ambient sparkle particles
+- ✅ Combo celebration: 34px text + 22 confetti pieces
+
+## Previous: System Redesign Pass (2026-06-04) — top 5 alpha blockers resolved completely:
 - ✅ Single focus indicator: only #1 priority arrow visible; all others alpha=0
 - ✅ Customer seated position: moved from table.y-24 → table.y-6 — head+shoulders above table, chair back visible
 - ✅ Two-item tray carry: CarrySystem(2) integrated; one kitchen trip picks up 2 dishes

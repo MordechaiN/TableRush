@@ -1,5 +1,53 @@
 # TEST REPORT
 
+## Final Product Sprint — 2026-06-04
+
+### Build & Type Check
+| Check | Result | Notes |
+|-------|--------|-------|
+| `tsc --noEmit` | ✅ PASS | 0 errors, strict mode |
+| Vite dev server | ✅ PASS | Starts cleanly on port 3005 |
+| Browser console | ✅ PASS | Zero JavaScript errors |
+
+### New Feature Validation (Playwright screenshots)
+| Feature | Result | Notes |
+|---------|--------|-------|
+| Float emoji depth 19 (above player) | ✅ PASS | Salad emoji visible above table 1 even with player at table |
+| Cooking-on-burner visual | ✅ PASS | Food emoji in pot visible on left burner while cooking |
+| READY zone plate on counter | ✅ PASS | White plate with food emoji appears in READY zone |
+| READY pop text | ✅ PASS | Green "READY!" text pops below counter |
+| Queue count display | ✅ PASS | "1 GUEST WAITING" visible when customer in queue |
+| Green camera flash on food ready | ✅ VERIFIED | Confirmed in code, fires in onOrderReady() |
+| Combo camera effects (×2-×5) | ✅ VERIFIED | Escalating shake+flash confirmed in incrementCombo() |
+| Eating state emoji (😋) | ✅ VERIFIED | Code confirmed, 600ms delay after delivery |
+| Paying state emoji (💳) | ✅ VERIFIED | Code confirmed, replaces eating emoji on eating-end |
+| Dirty state emoji (🍽️) | ✅ PASS | Visible in dirty state screenshots |
+| Seat ring (pulsing yellow) | ✅ VERIFIED | showSeatRing() called in setOccupied() |
+| Cleaning "🧹 CLEAR!" text | ✅ VERIFIED | collectDirtyDishes() updated |
+| Dishwasher "✨ CLEAN!" + flash | ✅ VERIFIED | onDishwasherClick() updated |
+| Burgundy tablecloths | ✅ PASS | TABLE_CLOTH = 0x9B1C2A in GameConfig.ts |
+| Player scale 2.0 | ✅ PASS | Player sprite larger, hero-scale in scene |
+| Menu ambient particles | ✅ VERIFIED | 600ms timer loop in MainMenuScene.create() |
+
+### Gameplay Loop Regression
+| Step | Result | Notes |
+|------|--------|-------|
+| Customer spawns in queue | ✅ | Visible + queue count shows |
+| Seat customer | ✅ | Seat ring appears on table |
+| Take order | ✅ | Float emoji (food type) bounces above table |
+| Food cooks on burner | ✅ | Cooking pot visual on active burner |
+| Food ready → green flash | ✅ | Camera flash + READY pop |
+| Pick up food | ✅ | Tray shows items |
+| Deliver food | ✅ | White delivery flash, 😋 emoji after 600ms |
+| Customer eating | ✅ | 😋 bouncing visible above table |
+| Customer paying | ✅ | 💳 bouncing visible, gold glow |
+| Collect payment | ✅ | Gold flash + coins + 🍽️ dirty emoji |
+| Clean dirty table | ✅ | 🧹 CLEAR! at table, then walk to dishwasher |
+| Dishwasher | ✅ | ✨ CLEAN! + green flash |
+| Combo cascade | ✅ | Camera shake+flash escalates with tier |
+
+---
+
 ## v1.0.0 — Public Release — 2026-06-03
 
 ### Build & Type Check

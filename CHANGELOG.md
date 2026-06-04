@@ -1,5 +1,38 @@
 # CHANGELOG
 
+## Final Product Sprint — Commercial Polish (2026-06-04)
+
+### Phase 2-3: Customer Visibility + Queue Display
+- **Float emoji (depth 19)**: Bouncing food emoji above each table showing ordered item. Shows 😋 (eating), 💳 (paying), 🍽️ (dirty). Depth 19 keeps it visible above player (17) and arrows (15) at all times.
+- **Seat ring**: Pulsing yellow ring (radius 30, depth 8) marks customer position at table — scannable at a glance without reading table state.
+- **Queue count**: "1 GUEST WAITING" / "N GUESTS WAITING" text at bottom of screen, updated on every queue change. Disappears when queue is empty.
+- **Seated glow alpha**: 0.38 → 0.55 for better occupied table contrast.
+
+### Phase 4: Kitchen Alive
+- **Cooking-on-burner visual**: When an order starts cooking, its food emoji appears in a pot container bobbing above the active burner. Two burner slots (x=70, x=185). Removed when food is ready.
+- **READY pop text**: Bright green "🍕 READY!" announcement pops below the kitchen counter when food finishes cooking — stays visible 700ms. Positioned at right side of dining area (x=360, y=198) so visible from across the room.
+
+### Phase 5: Table State Rework
+- **Eating state emoji**: 600ms after food delivery, 😋 bounces above the table if customer is eating — signals "leave me alone, I'm happy."
+- **Paying state emoji**: 💳 bounces above table when customer finishes eating and wants to pay.
+
+### Phase 7: Game Feel
+- **Escalating camera effects at combo milestones**: Flash only at ×2; shake+flash at ×3/4/5 with increasing intensity. Extra shakes at combo counts 10 and 15.
+- **Green camera flash on food ready**: Unmissable green pulse when any order finishes cooking.
+- **Cleaning satisfaction**: Bigger "🧹 CLEAR!" text at table position. Dishwasher completion shows "✨ CLEAN!" at 1.3× + green flash.
+- **Delivery flash**: Warm white camera flash on food delivery.
+- **Combo triggerCelebration**: 34px text with stroke, 22 confetti pieces with random rotation.
+- **Payment**: Gold camera flash + light shake on collection.
+
+### Visual Polish
+- **Floor color**: FLOOR_WARM 0xF5E6C8 → 0xC4813A (rich amber), FLOOR_ALT 0xEDD9A3 → 0xAA6A28.
+- **Table cloth**: TABLE_CLOTH 0xFDFAF6 → 0x9B1C2A (deep burgundy). Matches all table states.
+- **Player scale**: 1.5 → 2.0 — waiter is the hero, readable from anywhere.
+- **Main menu particles**: Ambient ✨⭐💫🌟 sparkle particles rise from the bottom every 600ms — menu feels alive.
+- **Main menu silhouettes**: Background table silhouettes now use burgundy cloth (matches in-game).
+
+---
+
 ## System Redesign Pass (2026-06-04)
 
 ### Top 5 Alpha Blockers Resolved

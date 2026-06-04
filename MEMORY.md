@@ -38,7 +38,9 @@ Fast-paced restaurant management game. Premium casual — think Overcooked/Good 
 
 ---
 
-## Current State: v1.0.0 RC1 — System Redesign Pass
+## Current State: v1.1.0 — Final Product Sprint
+
+**Final Product Sprint (2026-06-04): Full commercial polish pass. Float emojis (depth 19) above each table showing current state (ordered food bouncing, 😋 eating, 💳 paying, 🍽️ dirty). Cooking-on-burner visual (pot + food emoji bobbing on active burner). READY pop text below kitchen counter. Queue count display. Escalating camera effects at combo milestones. Player scale 2.0. Burgundy tablecloths. Menu ambient particles.**
 
 **System Redesign Pass (2026-06-04): Implemented top 5 alpha blockers. Single-focus indicator (alpha=0 on secondary arrows), customer seated position (table.y-6), two-item tray carry (CarrySystem 2-slot), physical food on counter (ready plate sprites), non-blocking dirty dish workflow (badge independent of food tray).**
 

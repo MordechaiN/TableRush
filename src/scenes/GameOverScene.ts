@@ -123,7 +123,7 @@ export class GameOverScene extends Phaser.Scene {
     }).setOrigin(0.5);
     y += 20;
 
-    const headline = this.getShiftHeadline(data, summary.isNewHighScore);
+    const headline = this.getShiftHeadline(data, summary.isNewHighScore, isNewBestStars);
     this.add.text(cx, y, headline, {
       fontSize: '13px', fontFamily: 'Arial', color: '#555555',
       wordWrap: { width: 270 }, align: 'center',
@@ -276,13 +276,16 @@ export class GameOverScene extends Phaser.Scene {
     }
   }
 
-  private getShiftHeadline(data: GameOverData, isNewHighScore: boolean): string {
+  private getShiftHeadline(data: GameOverData, isNewHighScore: boolean, isNewBestStars: boolean): string {
     const total = data.customersHappy + data.customersAngry;
     if (isNewHighScore && data.customersAngry === 0) {
       return 'Personal best — and not a single upset guest. Exceptional.';
     }
     if (isNewHighScore) {
       return "New personal best. You've never played this well.";
+    }
+    if (isNewBestStars) {
+      return 'Your best star rating yet. The room noticed.';
     }
     if (data.comboRecord >= 15) {
       return `${data.comboRecord}-serve streak. The entire room fell silent. That's mastery.`;

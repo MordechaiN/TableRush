@@ -53,8 +53,8 @@ export class Player extends Phaser.GameObjects.Container {
   }
 
   // Always-visible tray: shows all capacity slots, filled or empty.
-  // Call with emojis=[] to show an empty tray. capacity=0 hides tray entirely.
-  showTray(emojis: string[], capacity: number) {
+  // Call with itemIds=[] to show an empty tray. capacity=0 hides tray entirely.
+  showTray(itemIds: number[], capacity: number) {
     this.clearCarry();
     if (capacity === 0) return;
 
@@ -80,12 +80,20 @@ export class Player extends Phaser.GameObjects.Container {
     const totalW = (capacity - 1) * slotSpacing;
     const startX = -totalW / 2;
     const slotY = -12;
-    const fontSize = capacity <= 2 ? '18px' : capacity === 3 ? '15px' : '13px';
+    const foodScale = capacity <= 2 ? 0.38 : capacity === 3 ? 0.32 : 0.27;
 
     for (let i = 0; i < capacity; i++) {
       const sx = startX + i * slotSpacing;
-      if (i < emojis.length) {
-        tray.add(this.scene.add.text(sx, slotY, emojis[i], { fontSize }).setOrigin(0.5));
+      if (i < itemIds.length) {
+        const foodKey = `food_${itemIds[i]}`;
+        if (this.scene.textures.exists(foodKey)) {
+          tray.add(this.scene.add.image(sx, slotY, foodKey).setScale(foodScale).setOrigin(0.5));
+        } else {
+          const dot = this.scene.add.graphics();
+          dot.fillStyle(0xFFFFFF, 0.8);
+          dot.fillCircle(sx, slotY, 6);
+          tray.add(dot);
+        }
       } else {
         const ring = this.scene.add.graphics();
         ring.lineStyle(1.5, 0xFFFFFF, 0.45);
@@ -99,11 +107,6 @@ export class Player extends Phaser.GameObjects.Container {
     tray.setScale(0);
     this.scene.tweens.add({ targets: tray, scale: 1, duration: 150, ease: 'Back.easeOut' });
   }
-
-  // Legacy wrappers
-  carryItems(emojis: string[]) { this.showTray(emojis, Math.max(emojis.length, 2)); }
-  carryItem(emoji: string)     { this.showTray([emoji], 2); }
-  carryDishes()                { this.showTray(['🍽️'], 2); }
 
   clearCarry() {
     if (this.trayContainer) { this.trayContainer.destroy(); this.trayContainer = null; }

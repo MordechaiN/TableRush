@@ -328,9 +328,10 @@ export class GameScene extends Phaser.Scene {
     this.add.text(KITCHEN_X, 66, 'MENU:', {
       fontSize: '7px', fontFamily: 'Arial Black', color: '#88DD88', letterSpacing: 1,
     }).setOrigin(1, 0).setDepth(3).setAlpha(0.85);
-    this.add.text(KITCHEN_X + 2, 64, '🥗 🍔 🍝 🍣 🍕', {
-      fontSize: '13px',
-    }).setOrigin(0, 0).setDepth(3);
+    [0, 1, 2, 3, 4].forEach((itemId, i) => {
+      this.add.image(KITCHEN_X + 8 + i * 46, 76, `food_${itemId}`)
+        .setScale(0.38).setOrigin(0.5).setDepth(3);
+    });
 
     // ── Kitchen ───────────────────────────────────────────────────────────────
 
@@ -1073,7 +1074,7 @@ export class GameScene extends Phaser.Scene {
       const slots = Math.min(readyOrders.length, this.tray.maxCapacity - this.tray.count);
       for (let i = 0; i < slots; i++) {
         const order = readyOrders[i];
-        this.tray.pickUp(order.id, order.item.emoji);
+        this.tray.pickUp(order.id, order.item.emoji, order.item.itemId);
         this.orderStartTimes.set(order.id, this.time.now);
         this.removeTicket(order.id);
         this.destroyReadyPlate(order.id);
@@ -1082,10 +1083,10 @@ export class GameScene extends Phaser.Scene {
       this.syncTrayDisplay();
 
       // Highlight tables whose customers ordered what we're carrying
-      const carryEmojis = new Set(this.tray.getSlots().map(s => s.emoji));
+      const carryItemIds = new Set(this.tray.getSlots().map(s => s.itemId));
       for (const t of this.tables) {
         const cust = this.getCustomerAtTable(t.id);
-        if (cust?.state === 'waiting_food' && cust.order && carryEmojis.has(cust.order.emoji)) {
+        if (cust?.state === 'waiting_food' && cust.order && carryItemIds.has(cust.order.itemId)) {
           t.setPriority('kitchen_ready');
         }
       }
@@ -1112,8 +1113,8 @@ export class GameScene extends Phaser.Scene {
 
   // Single source of truth for tray display. Call after every pick/drop.
   private syncTrayDisplay() {
-    const emojis = this.tray.getSlots().map(s => s.emoji);
-    this.player.showTray(emojis, this.tray.maxCapacity);
+    const itemIds = this.tray.getSlots().map(s => s.itemId);
+    this.player.showTray(itemIds, this.tray.maxCapacity);
     if (this.carryingDirty) this.player.showDirtyDish();
   }
 
@@ -1143,7 +1144,7 @@ export class GameScene extends Phaser.Scene {
       customer.showOrderFlash();
       this.player.setEmotion('happy', 900);
       table.setStateVisual('ticket');
-      table.setFloatEmoji(order.emoji, true);
+      table.setFloatFoodImage(order.itemId, true);
       this.showFloating('✓ ORDER!', table.x, table.y - 70, '#4CAF50');
       SoundManager.orderTaken();
 
@@ -1195,7 +1196,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     // Big READY pop above the kitchen — can't miss it
-    this.showReadyPop(order.item.emoji);
+    this.showReadyPop(order.item.itemId);
 
     // Spawn a physical plate on the READY counter zone
     this.spawnReadyPlate(order);
@@ -1230,8 +1231,8 @@ export class GameScene extends Phaser.Scene {
     plateBg.fillEllipse(-5, -8, 10, 6);
     plate.add(plateBg);
 
-    // Food emoji — large and clear
-    plate.add(this.add.text(0, 1, order.item.emoji, { fontSize: '20px' }).setOrigin(0.5));
+    // Food image — large and clear
+    plate.add(this.add.image(0, 1, `food_${order.item.itemId}`).setScale(0.5).setOrigin(0.5));
 
     // "READY" indicator ring pulse
     const readyRing = this.add.graphics().setDepth(3.4);
@@ -1295,8 +1296,8 @@ export class GameScene extends Phaser.Scene {
     pot.strokeRoundedRect(-16, -4, 32, 20, 5);
     container.add(pot);
 
-    const foodTxt = this.add.text(0, 6, order.item.emoji, { fontSize: '18px' }).setOrigin(0.5);
-    container.add(foodTxt);
+    const foodImg = this.add.image(0, 6, `food_${order.item.itemId}`).setScale(0.42).setOrigin(0.5);
+    container.add(foodImg);
 
     // Boiling bob animation
     this.tweens.add({
@@ -1322,23 +1323,25 @@ export class GameScene extends Phaser.Scene {
   }
 
   // Pops a big "READY!" announcement visible from dining area
-  private showReadyPop(emoji: string) {
+  private showReadyPop(itemId: number) {
     const rx = GAME_WIDTH * 0.75;
     const ry = KITCHEN_Y + 80;
-    const pop = this.add.text(rx, ry, `${emoji}  READY!`, {
-      fontSize: '26px', fontFamily: 'Arial Black', color: '#66FFAA',
-      stroke: '#003300', strokeThickness: 6,
-    }).setOrigin(0.5).setDepth(22).setAlpha(0).setScale(0.3);
+    const container = this.add.container(rx, ry).setDepth(22).setAlpha(0).setScale(0.3);
+    const foodImg = this.add.image(-22, 0, `food_${itemId}`).setScale(0.5).setOrigin(0.5);
+    const pop = this.add.text(4, 0, ' READY!', {
+      fontSize: '22px', fontFamily: 'Arial Black', color: '#66FFAA',
+      stroke: '#003300', strokeThickness: 5,
+    }).setOrigin(0, 0.5);
+    container.add([foodImg, pop]);
 
     this.tweens.add({
-      targets: pop, alpha: 1, scale: 1.2, y: ry - 14,
+      targets: container, alpha: 1, scale: 1.2, y: ry - 14,
       duration: 220, ease: 'Back.easeOut',
       onComplete: () => {
-        // Hold, then fade
         this.tweens.add({
-          targets: pop, alpha: 0, y: ry - 48, scale: 0.9,
+          targets: container, alpha: 0, y: ry - 48, scale: 0.9,
           duration: 600, delay: 1100, ease: 'Quad.easeIn',
-          onComplete: () => pop.destroy(),
+          onComplete: () => container.destroy(),
         });
       },
     });
@@ -1385,7 +1388,7 @@ export class GameScene extends Phaser.Scene {
 
       // Delivery flash — warm white burst
       this.cameras.main.flash(120, 255, 255, 200, false);
-      this.spawnFoodBurst(table.x, table.y - 20, customer.order!.emoji);
+      this.spawnFoodBurst(table.x, table.y - 20, customer.order!.itemId);
 
       const pickupTime = this.orderStartTimes.get(orderId);
       if (pickupTime !== undefined) {
@@ -1852,7 +1855,7 @@ export class GameScene extends Phaser.Scene {
 
     const container = this.add.container(x, 0);
     const bg = this.add.image(0, 0, 'ticket');
-    const emoji = this.add.text(0, 2, order.item.emoji, { fontSize: '22px' }).setOrigin(0.5);
+    const emoji = this.add.image(0, 2, `food_${order.item.itemId}`).setScale(0.5).setOrigin(0.5);
 
     // Table number badge on ticket — tells player which table to deliver to
     const numBg = this.add.graphics();
@@ -2240,12 +2243,12 @@ export class GameScene extends Phaser.Scene {
 
   // ─── Helpers ──────────────────────────────────────────────────────────────
 
-  private spawnFoodBurst(x: number, y: number, emoji: string) {
-    // 8 large emoji pieces burst outward then fade
+  private spawnFoodBurst(x: number, y: number, itemId: number) {
+    // 8 food image pieces burst outward then fade
     for (let i = 0; i < 8; i++) {
       const angle = (Math.PI * 2 / 8) * i - Math.PI / 2;
       const dist = 55 + Math.random() * 28;
-      const piece = this.add.text(x, y, emoji, { fontSize: '22px' }).setOrigin(0.5).setDepth(22).setAlpha(0.95);
+      const piece = this.add.image(x, y, `food_${itemId}`).setScale(0.45).setOrigin(0.5).setDepth(22).setAlpha(0.95);
       this.tweens.add({
         targets: piece,
         x: x + Math.cos(angle) * dist,

@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 72">
+  <!-- Shadow -->
+  <ellipse cx="24" cy="70" rx="12" ry="3" fill="#0000001A"/>
+  <!-- Sneakers white -->
+  <ellipse cx="19.5" cy="68" rx="6" ry="2.5" fill="#EEEEEE"/>
+  <ellipse cx="28.5" cy="68" rx="6" ry="2.5" fill="#EEEEEE"/>
+  <ellipse cx="18.5" cy="67" rx="3" ry="1" fill="#BDBDBD" opacity="0.5"/>
+  <ellipse cx="27.5" cy="67" rx="3" ry="1" fill="#BDBDBD" opacity="0.5"/>
+  <path d="M14 68 Q19.5 66 25 68" fill="none" stroke="#9E9E9E" stroke-width="0.6"/>
+  <path d="M23 68 Q28.5 66 34 68" fill="none" stroke="#9E9E9E" stroke-width="0.6"/>
+  <!-- Jeans blue -->
+  <rect x="16" y="50" width="7" height="20" rx="3" fill="#1565C0"/>
+  <rect x="25" y="50" width="7" height="20" rx="3" fill="#1565C0"/>
+  <path d="M19.5 52 L19.5 68" stroke="#0D47A1" stroke-width="0.5" opacity="0.5"/>
+  <path d="M28.5 52 L28.5 68" stroke="#0D47A1" stroke-width="0.5" opacity="0.5"/>
+  <!-- T-shirt teal -->
+  <rect x="12" y="28" width="24" height="24" rx="6" fill="#00897B"/>
+  <!-- Collar -->
+  <path d="M19 28 Q24 32 29 28" fill="none" stroke="#006B5F" stroke-width="1.5"/>
+  <!-- Left arm casual -->
+  <path d="M12 30 Q5 38 7 47 L12 46 L12 30 Z" fill="#00897B"/>
+  <ellipse cx="9" cy="48" rx="3.5" ry="2.5" fill="#F0B88A"/>
+  <!-- Right arm -->
+  <path d="M36 30 Q43 38 41 47 L36 46 L36 30 Z" fill="#00897B"/>
+  <ellipse cx="39" cy="48" rx="3.5" ry="2.5" fill="#F0B88A"/>
+  <!-- Neck -->
+  <rect x="21" y="22" width="6" height="8" rx="3" fill="#F0B88A"/>
+  <!-- Head -->
+  <circle cx="24" cy="14" r="12" fill="#F0B88A"/>
+  <!-- Ears -->
+  <path d="M12 16 Q10 13 11 18 Q13 20 14 16 Z" fill="#D4946A"/>
+  <path d="M36 16 Q38 13 37 18 Q35 20 34 16 Z" fill="#D4946A"/>
+  <!-- Wavy medium hair -->
+  <path d="M12 11 Q14 3 24 2 Q34 3 36 11 L36 15 Q32 7 24 6 Q16 7 12 15 Z" fill="#5D4037"/>
+  <rect x="12" y="11" width="3" height="6" rx="1.5" fill="#5D4037"/>
+  <rect x="33" y="11" width="3" height="6" rx="1.5" fill="#5D4037"/>
+  <path d="M12 14 Q14 12 16 14 Q18 12 20 14" fill="none" stroke="#7B5E57" stroke-width="1"/>
+  <!-- Left eye -->
+  <circle cx="19.5" cy="14" r="3" fill="white"/>
+  <circle cx="20" cy="14.5" r="1.9" fill="#5D4037"/>
+  <circle cx="20.5" cy="13.8" r="0.6" fill="white"/>
+  <!-- Right eye -->
+  <circle cx="28.5" cy="14" r="3" fill="white"/>
+  <circle cx="28" cy="14.5" r="1.9" fill="#5D4037"/>
+  <circle cx="28.5" cy="13.8" r="0.6" fill="white"/>
+  <!-- Eyebrows relaxed -->
+  <path d="M17 10.5 Q19.5 9.5 22 10.5" stroke="#5D4037" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <path d="M26 10.5 Q28.5 9.5 31 10.5" stroke="#5D4037" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <!-- Nose -->
+  <path d="M23 17.5 Q24 19 25 17.5" stroke="#B07050" stroke-width="1" fill="none" stroke-linecap="round"/>
+  <!-- Friendly smile -->
+  <path d="M20.5 20.5 Q24 23 27.5 20.5" stroke="#B07050" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+  <!-- Cheeks -->
+  <circle cx="17" cy="19" r="2.5" fill="#FFB08A" opacity="0.3"/>
+  <circle cx="31" cy="19" r="2.5" fill="#FFB08A" opacity="0.3"/>
+  <!-- Outline -->
+  <circle cx="24" cy="14" r="12" fill="none" stroke="#8B4A25" stroke-width="1.5"/>
+</svg>

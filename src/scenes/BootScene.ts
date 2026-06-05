@@ -1,272 +1,24 @@
 import Phaser from 'phaser';
-import { COLORS, CUSTOMER_VARIANTS, GAME_WIDTH, GAME_HEIGHT } from '../config/GameConfig';
+import { COLORS, GAME_WIDTH, GAME_HEIGHT } from '../config/GameConfig';
 
 export class BootScene extends Phaser.Scene {
   constructor() { super({ key: 'BootScene' }); }
 
   preload() {
-    this.createTextures();
+    this.load.svg('player', 'assets/characters/waiter.svg', { width: 48, height: 76 });
+    this.load.svg('player_walk', 'assets/characters/waiter_walk.svg', { width: 48, height: 76 });
+    for (let i = 0; i < 7; i++) {
+      this.load.svg(`customer_${i}`, `assets/characters/customer_${i}.svg`, { width: 48, height: 72 });
+    }
+    this.load.svg('food_0', 'assets/food/salad.svg', { width: 48, height: 48 });
+    this.load.svg('food_1', 'assets/food/burger.svg', { width: 48, height: 48 });
+    this.load.svg('food_2', 'assets/food/pasta.svg', { width: 48, height: 48 });
+    this.load.svg('food_3', 'assets/food/sushi.svg', { width: 48, height: 48 });
+    this.load.svg('food_4', 'assets/food/pizza.svg', { width: 48, height: 48 });
   }
 
   private createTextures() {
     const g = this.make.graphics({ x: 0, y: 0 });
-
-    // ─── PLAYER (waiter) ─────────────────────────────────────────────────────
-    // 48×76 — larger, more expressive sprite. Head center at (24,16) r=15
-    // In container (origin 0.5): head center = (0, 16−38) = (0, −22)
-    const drawWaiter = (isWalking: boolean) => {
-      g.clear();
-      // Drop shadow
-      g.fillStyle(0x000000, 0.14);
-      g.fillEllipse(24, 72, isWalking ? 44 : 38, 11);
-
-      // Legs
-      g.fillStyle(0x14143A);
-      if (isWalking) {
-        g.fillRoundedRect(11, 52, 10, 17, 3);  // left leg forward
-        g.fillRoundedRect(27, 56, 10, 13, 3);  // right leg back
-        g.fillStyle(0x0A0A14);
-        g.fillRoundedRect(9, 68, 13, 6, 3);
-        g.fillRoundedRect(27, 68, 11, 5, 3);
-      } else {
-        g.fillRoundedRect(13, 52, 10, 17, 3);
-        g.fillRoundedRect(25, 52, 10, 17, 3);
-        g.fillStyle(0x0A0A14);
-        g.fillRoundedRect(11, 67, 13, 6, 3);
-        g.fillRoundedRect(25, 67, 13, 6, 3);
-      }
-
-      // Body (navy jacket — wider & taller for presence)
-      g.fillStyle(0x1A2472);  // rich navy
-      g.fillRoundedRect(9, 28, 30, 26, 8);
-      g.lineStyle(2, 0x0D1550, 0.9);
-      g.strokeRoundedRect(9, 28, 30, 26, 8);
-
-      // Jacket lapels
-      g.fillStyle(0x243090, 0.7);
-      g.fillTriangle(24, 28, 19, 35, 24, 38);
-      g.fillTriangle(24, 28, 29, 35, 24, 38);
-
-      // White shirt / apron
-      g.fillStyle(0xFAFAFA, 0.95);
-      g.fillRoundedRect(14, 32, 20, 20, 4);
-      // Apron pocket
-      g.fillStyle(0xECECEC);
-      g.fillRoundedRect(16, 48, 14, 5, 2);
-      g.lineStyle(0.5, 0xCCCCCC, 0.5);
-      g.strokeRoundedRect(16, 48, 14, 5, 2);
-
-      // Collar & bow tie
-      g.fillStyle(0xFFFFFF);
-      g.fillTriangle(24, 28, 20, 33, 28, 33);
-      g.fillStyle(0x0A0A0A);
-      g.fillTriangle(21, 33, 24, 37, 27, 33);
-      // Bow tie wings
-      g.fillTriangle(18, 32, 21, 34, 18, 36);
-      g.fillTriangle(27, 32, 30, 34, 27, 36);
-
-      // Neck
-      g.fillStyle(0xFDBA8C);
-      g.fillRoundedRect(21, 24, 6, 8, 2);
-
-      // Head — larger radius (15 vs 12 before = 56% more area)
-      g.fillStyle(0xFDBA8C);
-      g.fillCircle(24, 16, 15);
-      // Ears
-      g.fillStyle(0xE8A070);
-      g.fillCircle(8, 16, 5);
-      g.fillCircle(40, 16, 5);
-      // Head outline
-      g.lineStyle(2, 0x3C2010, 0.8);
-      g.strokeCircle(24, 16, 15);
-
-      // Hair (dark, swept back)
-      g.fillStyle(0x3A1E08);
-      g.fillRoundedRect(10, 3, 28, 12, 6);
-      g.fillRoundedRect(9, 6, 6, 8, 3);   // left sideburn
-      g.fillRoundedRect(33, 6, 6, 8, 3);  // right sideburn
-      // Hair highlight
-      g.fillStyle(0x5A3012, 0.6);
-      g.fillRoundedRect(12, 4, 14, 5, 3);
-      // Forehead shine
-      g.fillStyle(0xFFFFFF, 0.18);
-      g.fillCircle(18, 12, 5);
-    };
-
-    drawWaiter(false);
-    g.generateTexture('player', 48, 76);
-    drawWaiter(true);
-    g.generateTexture('player_walk', 48, 76);
-
-    // ─── CUSTOMER VARIANTS ────────────────────────────────────────────────────
-    // 48×72 — head circle at (24,14) radius 14
-    // In container (origin 0.5): head center = (0, 14−36) = (0, −22)
-    CUSTOMER_VARIANTS.forEach((variant, i) => {
-      g.clear();
-
-      const isElder    = variant.accessory === 'glasses';
-      const isBusiness = variant.accessory === 'briefcase';
-      const isElegant  = variant.accessory === 'necklace';
-      const isRomantic = variant.accessory === 'flower';
-      const isTrendy   = variant.accessory === 'sunglasses';
-      const isTeen     = variant.accessory === 'cap';
-
-      const legH = isElder ? 10 : 14;
-      const legY = isElder ? 52 : 52;
-      const bodyW = isBusiness ? 30 : 26;
-      const bodyX = 24 - bodyW / 2;
-
-      // Shadow
-      g.fillStyle(0x000000, 0.12);
-      g.fillEllipse(24, 70, 40, 10);
-
-      // Shoes
-      g.fillStyle(0x2C1810);
-      g.fillRoundedRect(12, legY + legH - 1, 10, 6, 2.5);
-      g.fillRoundedRect(26, legY + legH - 1, 10, 6, 2.5);
-
-      // Legs
-      g.fillStyle(0x1A1A2A);
-      g.fillRoundedRect(13, legY, 9, legH, 2.5);
-      g.fillRoundedRect(26, legY, 9, legH, 2.5);
-
-      // Body
-      g.fillStyle(variant.outfit);
-      g.fillRoundedRect(bodyX, 26, bodyW, 26, 7);
-      // Body outline (2.5px bold)
-      g.lineStyle(2.5, 0x1A1A1A, 0.85);
-      g.strokeRoundedRect(bodyX, 26, bodyW, 26, 7);
-
-      // Collar V
-      g.fillStyle(0xFFFFFF, 0.25);
-      g.fillTriangle(24, 26, 19, 34, 29, 34);
-
-      // Body accessories (before head)
-      if (isBusiness) {
-        // Bold tie
-        g.fillStyle(0xCC1111);
-        g.fillTriangle(24, 30, 21, 46, 27, 46);
-        g.fillRect(22, 46, 5, 5);
-      } else if (isElegant) {
-        // Thick gold necklace arc + large pendant — must read at a glance
-        g.lineStyle(3.5, 0xFFD700, 1.0);
-        g.beginPath();
-        g.arc(24, 32, 9, 0.25, Math.PI - 0.25, false);
-        g.strokePath();
-        // Large pendant
-        g.fillStyle(0xFFD700);
-        g.fillCircle(24, 42, 5.5);
-        g.fillStyle(0xFFFFFF, 0.45);
-        g.fillCircle(22, 40, 1.8);  // pendant highlight
-        g.lineStyle(1.5, 0xCC9900);
-        g.strokeCircle(24, 42, 5.5);
-      } else if (!isTrendy && !isRomantic && !isElder && !isTeen) {
-        // Casual: horizontal shirt stripes — "I'm dressed casually" silhouette
-        g.fillStyle(0xFFFFFF, 0.28);
-        g.fillRect(bodyX + 2, 32, bodyW - 4, 4);
-        g.fillRect(bodyX + 2, 41, bodyW - 4, 4);
-      }
-
-      // Elegant: cream collar wings (contrasting with outfit, clearly formal)
-      if (isElegant) {
-        g.fillStyle(0xFFF8F0);  // cream, not outfit color
-        g.fillRoundedRect(13, 21, 9, 13, 2);
-        g.fillRoundedRect(26, 21, 9, 13, 2);
-        g.lineStyle(2, 0xE8D0A0, 0.9);
-        g.strokeRoundedRect(13, 21, 9, 13, 2);
-        g.strokeRoundedRect(26, 21, 9, 13, 2);
-      }
-
-      // Head
-      g.fillStyle(0xFFCB9A);
-      g.fillCircle(24, 14, 14);
-
-      // Ears
-      g.fillStyle(0xE8A070);
-      g.fillCircle(9, 14, 4.5);
-      g.fillCircle(39, 14, 4.5);
-
-      // Head highlight
-      g.fillStyle(0xFFFFFF, 0.18);
-      g.fillCircle(18, 9, 6);
-
-      // Head outline (2.5px bold)
-      g.lineStyle(2.5, 0x1A1A1A, 0.9);
-      g.strokeCircle(24, 14, 14);
-
-      // Hair
-      if (isTeen) {
-        // Cap crown + wide brim
-        g.fillStyle(0x223366);
-        g.fillRoundedRect(11, 0, 26, 9, 5);
-        g.fillRect(6, 8, 36, 5);
-        g.fillStyle(0x334488, 0.6);
-        g.fillRoundedRect(13, 1, 9, 5, 2);
-        g.lineStyle(1.5, 0x111133, 0.6);
-        g.strokeRect(6, 8, 36, 5);
-      } else if (isRomantic) {
-        // Hair + large flower extending right
-        g.fillStyle(variant.hair);
-        g.fillRoundedRect(10, 0, 28, 10, 5);
-        g.fillStyle(0xFFFFFF, 0.22);
-        g.fillRoundedRect(12, 1, 10, 4, 2);
-        // Flower (extends well beyond head right edge at x=38)
-        g.fillStyle(0xFF85C2);
-        g.fillCircle(40, 4, 7);
-        g.fillStyle(0xFF4499);
-        g.fillCircle(37, 1, 5);
-        g.fillCircle(43, 1, 5);
-        g.fillStyle(0xFFFF55);
-        g.fillCircle(40, 4, 3);
-      } else if (isElder) {
-        // White/gray hair
-        g.fillStyle(0xCCCCCC);
-        g.fillRoundedRect(10, 0, 28, 11, 5);
-        g.fillStyle(0xFFFFFF, 0.55);
-        g.fillRoundedRect(12, 1, 10, 5, 2);
-      } else {
-        // Standard hair
-        g.fillStyle(variant.hair);
-        g.fillRoundedRect(10, 0, 28, 10, 5);
-        g.fillStyle(0xFFFFFF, 0.25);
-        g.fillRoundedRect(12, 1, 10, 4, 2);
-      }
-
-      // Face accessories (on top of hair)
-      if (isElegant) {
-        // Gold drop earrings — visible below ear on both sides
-        g.fillStyle(0xFFD700);
-        g.fillCircle(8, 20, 4.5);
-        g.fillCircle(40, 20, 4.5);
-        g.lineStyle(1.5, 0xCC9900);
-        g.strokeCircle(8, 20, 4.5);
-        g.strokeCircle(40, 20, 4.5);
-        // Earring highlight
-        g.fillStyle(0xFFFFFF, 0.45);
-        g.fillCircle(7, 19, 1.5);
-        g.fillCircle(39, 19, 1.5);
-      } else if (isElder) {
-        // Glasses with temples beyond head edges
-        g.lineStyle(2, 0x555555);
-        g.strokeCircle(17, 12, 5.5);
-        g.strokeCircle(31, 12, 5.5);
-        g.lineBetween(22.5, 12, 25.5, 12);
-        g.lineBetween(11.5, 12, 4, 12);   // left temple
-        g.lineBetween(36.5, 12, 44, 12);  // right temple
-      } else if (isTrendy) {
-        // Oversized sunglasses extending beyond head edges
-        g.fillStyle(0x111111, 0.93);
-        g.fillRoundedRect(5, 9, 14, 9, 3);   // left lens (extends to x=5, head left at x=10)
-        g.fillRoundedRect(21, 9, 14, 9, 3);  // right lens (ends x=35, head right at x=38)
-        g.lineStyle(1.5, 0x555555);
-        g.lineBetween(19, 13.5, 21, 13.5);   // bridge
-        g.lineStyle(1.5, 0x444444);
-        g.lineBetween(5, 13, 2, 13);          // left arm
-        g.lineBetween(35, 13, 38, 13);        // right arm
-      }
-
-      g.generateTexture(`customer_${i}`, 48, 72);
-    });
 
     // ─── TABLE (mahogany + checkered linen) ───────────────────────────────────
     g.clear();
@@ -604,6 +356,7 @@ export class BootScene extends Phaser.Scene {
   }
 
   create() {
+    this.createTextures();
     this.scene.start('MainMenuScene');
   }
 }

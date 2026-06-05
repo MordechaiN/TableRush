@@ -22,7 +22,7 @@ export class Table extends Phaser.GameObjects.Container {
   private arrowBaseScale = 1.0;
 
   // Scene-level floating emoji (above table, below arrow) — shows ordered food, dirty state, etc.
-  private floatEmoji: Phaser.GameObjects.Text | null = null;
+  private floatEmoji: Phaser.GameObjects.Text | Phaser.GameObjects.Image | null = null;
   private floatEmojiTween: Phaser.Tweens.Tween | null = null;
 
   // Scene-level seat indicator ring — visible ring around customer position when occupied
@@ -382,7 +382,7 @@ export class Table extends Phaser.GameObjects.Container {
     this.actionArrow.strokeTriangle(-w, -10, w, -10, 0, h);
   }
 
-  // Floating emoji above the table surface — communicates food order, dirty state, etc.
+  // Floating emoji above the table surface — communicates dirty state, paying, eating etc.
   // Depth 19 puts it above the player (17) and action arrows (15) for always-on legibility.
   setFloatEmoji(emoji: string, bouncing = false) {
     this.clearFloatEmoji();
@@ -390,6 +390,21 @@ export class Table extends Phaser.GameObjects.Container {
     this.floatEmoji = this.scene.add.text(this.x, ey, emoji, {
       fontSize: '28px',
     }).setOrigin(0.5).setDepth(19);
+    if (bouncing) {
+      this.floatEmojiTween = this.scene.tweens.add({
+        targets: this.floatEmoji,
+        y: { from: ey, to: ey - 10 },
+        duration: 650, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
+      });
+    }
+  }
+
+  // Floating food image above table — shows the ordered item
+  setFloatFoodImage(itemId: number, bouncing = false) {
+    this.clearFloatEmoji();
+    const ey = this.y - 78;
+    this.floatEmoji = this.scene.add.image(this.x, ey, `food_${itemId}`)
+      .setScale(0.6).setOrigin(0.5).setDepth(19);
     if (bouncing) {
       this.floatEmojiTween = this.scene.tweens.add({
         targets: this.floatEmoji,

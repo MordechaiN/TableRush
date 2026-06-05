@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+  <!-- Shadow -->
+  <ellipse cx="24" cy="44" rx="16" ry="4" fill="#00000020"/>
+  <!-- Bowl body -->
+  <path d="M7 26 Q7 43 24 43 Q41 43 41 26 Z" fill="#EDE0CE"/>
+  <!-- Bowl interior -->
+  <path d="M9 27 Q9 41 24 41 Q39 41 39 27 Z" fill="#E2D4BE"/>
+  <!-- Pasta bed -->
+  <ellipse cx="24" cy="30" rx="13" ry="8" fill="#F9A825" opacity="0.9"/>
+  <!-- Pasta strands -->
+  <path d="M12 28 Q16 25 20 29 Q24 25 28 29 Q32 25 36 28" fill="none" stroke="#E65100" stroke-width="2" stroke-linecap="round"/>
+  <path d="M13 32 Q17 29 21 33 Q25 29 29 33 Q33 30 35 32" fill="none" stroke="#E65100" stroke-width="1.8" stroke-linecap="round"/>
+  <path d="M15 35 Q18 33 21 36 Q24 33 27 36 Q30 34 33 35" fill="none" stroke="#BF360C" stroke-width="1.5" stroke-linecap="round" opacity="0.7"/>
+  <!-- Tomato sauce -->
+  <ellipse cx="24" cy="28" rx="7" ry="5" fill="#E53935" opacity="0.88"/>
+  <ellipse cx="22" cy="27" rx="3" ry="2" fill="#EF9A9A" opacity="0.45"/>
+  <!-- Basil leaf -->
+  <path d="M27 25 Q32 21 34 25 Q31 28 27 25 Z" fill="#2E7D32"/>
+  <path d="M28 25 L31 22.5" stroke="#43A047" stroke-width="0.8" fill="none"/>
+  <!-- Bowl rim -->
+  <ellipse cx="24" cy="26" rx="17" ry="5" fill="#F5EFE5"/>
+  <ellipse cx="24" cy="26" rx="15" ry="3.5" fill="#EDE0CE"/>
+  <path d="M12 24 Q24 22 36 24" fill="none" stroke="#FFFFFF" stroke-width="1.5" opacity="0.45"/>
+  <!-- Bowl outline -->
+  <path d="M7 26 Q7 43 24 43 Q41 43 41 26" fill="none" stroke="#8D6E63" stroke-width="1.8" stroke-linecap="round"/>
+  <ellipse cx="24" cy="26" rx="17" ry="5" fill="none" stroke="#8D6E63" stroke-width="1.5"/>
+</svg>

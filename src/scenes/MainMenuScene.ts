@@ -142,7 +142,7 @@ export class MainMenuScene extends Phaser.Scene {
     waiterGfx.fillStyle(0xC4874A, 0.5);
     waiterGfx.fillRoundedRect(wx + 17, wc - 9, 32, 3, 1);
     // Food on tray
-    const foodLeft = this.add.text(wx + 33, wc - 16, '🍔', { fontSize: '16px' }).setOrigin(0.5).setAlpha(0).setDepth(2);
+    const foodLeft = this.add.image(wx + 33, wc - 16, 'food_1').setScale(0.28).setOrigin(0.5).setAlpha(0).setDepth(2);
 
     this.tweens.add({ targets: [waiterGfx, foodLeft], alpha: 1, duration: 380, delay: 600, ease: 'Quad.easeOut' });
     // Idle bob
@@ -175,7 +175,7 @@ export class MainMenuScene extends Phaser.Scene {
     waiterGfx2.fillRoundedRect(wx2 - 50, wc - 10, 34, 6, 2);
     waiterGfx2.fillStyle(0xC4874A, 0.5);
     waiterGfx2.fillRoundedRect(wx2 - 49, wc - 9, 32, 3, 1);
-    const foodRight = this.add.text(wx2 - 34, wc - 16, '🍕', { fontSize: '16px' }).setOrigin(0.5).setAlpha(0).setDepth(2);
+    const foodRight = this.add.image(wx2 - 34, wc - 16, 'food_4').setScale(0.28).setOrigin(0.5).setAlpha(0).setDepth(2);
 
     this.tweens.add({ targets: [waiterGfx2, foodRight], alpha: 1, duration: 380, delay: 750, ease: 'Quad.easeOut' });
     this.tweens.add({ targets: waiterGfx2, y: { from: 0, to: -6 }, duration: 1300, yoyo: true, repeat: -1, ease: 'Sine.easeInOut', delay: 900 });
@@ -221,11 +221,10 @@ export class MainMenuScene extends Phaser.Scene {
     void playBtn;
 
     // ── Bottom food row ───────────────────────────────────────────────────────
-    const foodRow = ['🥗', '🍔', '🍝', '🍣', '🍕'];
-    foodRow.forEach((emoji, i) => {
+    [0, 1, 2, 3, 4].forEach((itemId, i) => {
       const ex = 52 + i * 92;
       const ey = 726 + (i % 2 === 0 ? 0 : 14);
-      const fe = this.add.text(ex, ey, emoji, { fontSize: '26px' }).setOrigin(0.5).setAlpha(0.5);
+      const fe = this.add.image(ex, ey, `food_${itemId}`).setScale(0.55).setOrigin(0.5).setAlpha(0.5);
       this.tweens.add({ targets: fe, y: ey - 8, duration: 1200 + i * 150, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     });
 

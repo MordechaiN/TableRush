@@ -38,7 +38,9 @@ Fast-paced restaurant management game. Premium casual — think Overcooked/Good 
 
 ---
 
-## Current State: v1.1.0 — Final Product Sprint
+## Current State: v1.2.0 — Visual Art Overhaul
+
+**Visual Art Overhaul (2026-06-05): Complete SVG art pipeline. All emoji food removed. 17 SVG assets: 5 food items (salad/burger/pasta/sushi/pizza), 7 customer characters (Elegant/Business/Casual/Trendy/Romantic/Elder/Teen), 2 waiter sprites (standing/walking). BootScene.preload() loads all SVGs. Food images replace emoji in: order bubbles, tray, kitchen tickets, cooking pots, ready plates, READY pop, delivery burst, table float, menu strip, main menu. CarrySlot.itemId added. Player.showTray() now accepts item IDs.**
 
 **Final Product Sprint (2026-06-04): Full commercial polish pass. Float emojis (depth 19) above each table showing current state (ordered food bouncing, 😋 eating, 💳 paying, 🍽️ dirty). Cooking-on-burner visual (pot + food emoji bobbing on active burner). READY pop text below kitchen counter. Queue count display. Escalating camera effects at combo milestones. Player scale 2.0. Burgundy tablecloths. Menu ambient particles.**
 

@@ -1,5 +1,32 @@
 # CHANGELOG
 
+## Visual Art Overhaul — Phase A+B+C+D (2026-06-05)
+
+### SVG Asset Pipeline — Complete
+- **17 custom SVG assets created**: 5 food items, 7 customer characters, 2 waiter variants (standing + walking)
+- **Food assets**: salad, burger, pasta, sushi, pizza — all fully illustrated SVG sprites replacing all emoji food
+- **Waiter assets**: detailed navy jacket, bow tie, face with expressions, walking animation variant
+- **Customer assets**: 7 distinct character types — Elegant (purple dress, updo), Business (charcoal suit, briefcase), Casual (teal tee + jeans), Trendy (orange jacket, sunglasses, bleached streak), Romantic (pink dress, long hair), Elder (cardigan, glasses, cane), Teen (teal hoodie, spiky hair)
+- **BootScene restructured**: `preload()` now loads 17 SVGs; `createTextures()` only generates procedural UI elements (tables, chairs, HUD, buttons)
+
+### Emoji Food Completely Removed
+- **Order bubbles**: food SVG image shown in customer speech bubble instead of emoji
+- **Kitchen tickets**: food SVG image on ticket instead of emoji
+- **Cooking burners**: food SVG image visible inside cooking pot visual
+- **Ready plates**: food SVG image on plate in kitchen ready zone
+- **READY! pop**: food image + "READY!" text, no emoji
+- **Delivery burst**: 8 food image pieces burst outward on delivery
+- **Table float**: `setFloatFoodImage()` shows food SVG above table when order placed (was emoji)
+- **Tray display**: food images rendered on player tray instead of emoji text
+- **Menu strip**: 5 food images in kitchen zone label instead of emoji row
+- **Main menu**: bottom food row and waiter tray foods are now SVG images
+
+### Architecture
+- `CarrySlot` now stores `itemId: number` alongside `emoji` for image key resolution
+- `Player.showTray(itemIds: number[], capacity)` accepts item IDs, renders food images at correct scale
+- `Customer.buildBubbleWithFood(itemId, borderColor)` renders food image in speech bubble
+- `Table.setFloatFoodImage(itemId, bouncing)` displays food image above table
+
 ## Final Product Sprint — Commercial Polish (2026-06-04)
 
 ### Phase 2-3: Customer Visibility + Queue Display

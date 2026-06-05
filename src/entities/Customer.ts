@@ -123,8 +123,7 @@ export class Customer extends Phaser.GameObjects.Container {
   }
 
   showOrderBubble(item: OrderItem) {
-    this.buildBubble(item.emoji, 0xFF6B35);
-    this.bubble.setVisible(true);
+    this.buildBubbleWithFood(item.itemId, 0xFF6B35);
   }
 
   showPayBubble(price: number) {
@@ -335,6 +334,40 @@ export class Customer extends Phaser.GameObjects.Container {
       targets: this.bubble, scaleX: 1, scaleY: 1,
       duration: 220, ease: 'Back.easeOut',
     });
+  }
+
+  private buildBubbleWithFood(itemId: number, borderColor: number) {
+    if (this.bubbleTween) { this.bubbleTween.stop(); this.bubbleTween = null; }
+    this.bubble.removeAll(true);
+
+    const bg = this.scene.add.graphics();
+
+    bg.fillStyle(0x000000, 0.15);
+    bg.fillRoundedRect(-26, -16, 58, 38, 9);
+
+    bg.fillStyle(0xFFF8F0);
+    bg.fillRoundedRect(-28, -18, 58, 38, 9);
+
+    bg.lineStyle(2, borderColor);
+    bg.strokeRoundedRect(-28, -18, 58, 38, 9);
+
+    bg.fillStyle(0xFFF8F0);
+    bg.fillTriangle(-7, 16, 7, 16, 0, 34);
+    bg.lineStyle(2, borderColor);
+    bg.lineBetween(-7, 16, 0, 34);
+    bg.lineBetween(7, 16, 0, 34);
+
+    const foodKey = `food_${itemId}`;
+    const foodImg = this.scene.add.image(0, -1, foodKey).setScale(0.55).setOrigin(0.5);
+
+    this.bubble.add([bg, foodImg]);
+    this.bubble.setScale(0);
+    this.bubble.setVisible(true);
+    this.scene.tweens.add({
+      targets: this.bubble, scaleX: 1, scaleY: 1,
+      duration: 220, ease: 'Back.easeOut',
+    });
+    this.bubblePulse();
   }
 
   private bubblePulse() {

@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 72">
+  <!-- Shadow -->
+  <ellipse cx="24" cy="70" rx="12" ry="3" fill="#0000001A"/>
+  <!-- Comfortable wide shoes -->
+  <ellipse cx="19.5" cy="68" rx="6" ry="2.8" fill="#4E342E"/>
+  <ellipse cx="28.5" cy="68" rx="6" ry="2.8" fill="#4E342E"/>
+  <!-- Navy dress pants -->
+  <rect x="15" y="50" width="7" height="20" rx="3" fill="#263238"/>
+  <rect x="26" y="50" width="7" height="20" rx="3" fill="#263238"/>
+  <!-- Beige cardigan (slightly wider body) -->
+  <rect x="10" y="28" width="28" height="24" rx="7" fill="#D7CCC8"/>
+  <!-- Cardigan front opening -->
+  <path d="M21 28 L27 28 L27 44 Q24 46 21 44 Z" fill="#EFEBE9"/>
+  <!-- Left panel -->
+  <path d="M10 28 L21 28 L21 44 Q16 43 10 37 Z" fill="#BCAAA4"/>
+  <!-- Right panel -->
+  <path d="M38 28 L27 28 L27 44 Q32 43 38 37 Z" fill="#BCAAA4"/>
+  <!-- Shirt collar visible -->
+  <path d="M20 28 Q24 30 28 28" fill="none" stroke="#FFFFFF" stroke-width="1.2"/>
+  <!-- Cardigan buttons -->
+  <circle cx="24" cy="32" r="1.2" fill="#A1887F"/>
+  <circle cx="24" cy="37" r="1.2" fill="#A1887F"/>
+  <circle cx="24" cy="42" r="1.2" fill="#A1887F"/>
+  <!-- Left arm with cane -->
+  <path d="M10 32 Q3 38 4 48 L9 47 L10 32 Z" fill="#D7CCC8"/>
+  <rect x="3" y="45" width="8" height="4" rx="2" fill="#EFEBE9" opacity="0.85"/>
+  <ellipse cx="7" cy="49" rx="3.5" ry="2.5" fill="#E8A87C"/>
+  <!-- Cane -->
+  <line x1="6" y1="49" x2="3" y2="68" stroke="#5D4037" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M3 49 Q1 47 3 45 Q5 43 7 45" fill="none" stroke="#5D4037" stroke-width="1.8" stroke-linecap="round"/>
+  <!-- Right arm -->
+  <path d="M38 32 Q45 38 44 48 L39 47 L38 32 Z" fill="#D7CCC8"/>
+  <rect x="38" y="45" width="8" height="4" rx="2" fill="#EFEBE9" opacity="0.85"/>
+  <ellipse cx="42" cy="49" rx="3.5" ry="2.5" fill="#E8A87C"/>
+  <!-- Neck -->
+  <rect x="21" y="22" width="6" height="8" rx="3" fill="#E8A87C"/>
+  <!-- Head slightly fuller -->
+  <ellipse cx="24" cy="14" rx="12" ry="12.5" fill="#E8A87C"/>
+  <!-- Ears -->
+  <path d="M12 16 Q10 13 11 18 Q13 21 14 16 Z" fill="#CC7A56"/>
+  <path d="M36 16 Q38 13 37 18 Q35 21 34 16 Z" fill="#CC7A56"/>
+  <!-- Gray/white hair full sides -->
+  <path d="M12 12 Q14 4 24 3 Q34 4 36 12 L36 16 Q30 9 24 8 Q18 9 12 16 Z" fill="#B0BEC5"/>
+  <rect x="12" y="12" width="3.5" height="7" rx="1.7" fill="#B0BEC5"/>
+  <rect x="32.5" y="12" width="3.5" height="7" rx="1.7" fill="#B0BEC5"/>
+  <path d="M14 8 Q19 6 24 7 Q29 6 34 8" fill="none" stroke="#CFD8DC" stroke-width="1.5"/>
+  <!-- Glasses -->
+  <rect x="15" y="11.5" width="7" height="5.5" rx="2.5" fill="none" stroke="#795548" stroke-width="1.2"/>
+  <rect x="26" y="11.5" width="7" height="5.5" rx="2.5" fill="none" stroke="#795548" stroke-width="1.2"/>
+  <line x1="22" y1="14" x2="26" y2="14" stroke="#795548" stroke-width="1"/>
+  <line x1="15" y1="14" x2="12" y2="14" stroke="#795548" stroke-width="1"/>
+  <line x1="33" y1="14" x2="36" y2="14" stroke="#795548" stroke-width="1"/>
+  <!-- Eyes behind glasses -->
+  <circle cx="18.5" cy="14.5" r="2" fill="white"/>
+  <circle cx="19" cy="15" r="1.2" fill="#5D4037"/>
+  <circle cx="19.5" cy="14.5" r="0.4" fill="white"/>
+  <circle cx="29.5" cy="14.5" r="2" fill="white"/>
+  <circle cx="29" cy="15" r="1.2" fill="#5D4037"/>
+  <circle cx="29.5" cy="14.5" r="0.4" fill="white"/>
+  <!-- White/gray eyebrows -->
+  <path d="M16 11 Q19 10 22 11" stroke="#CFD8DC" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <path d="M26 11 Q29 10 32 11" stroke="#CFD8DC" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <!-- Nose -->
+  <path d="M23 18 Q24 19.5 25 18" stroke="#A07060" stroke-width="1" fill="none" stroke-linecap="round"/>
+  <!-- Warm smile with laugh lines -->
+  <path d="M20 21 Q24 23.5 28 21" stroke="#A07060" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <path d="M16 21 Q17 20 17 21.5" stroke="#CC9980" stroke-width="0.8" fill="none" opacity="0.6"/>
+  <path d="M32 21 Q31 20 31 21.5" stroke="#CC9980" stroke-width="0.8" fill="none" opacity="0.6"/>
+  <!-- Cheeks -->
+  <circle cx="16.5" cy="19" r="3" fill="#FFAA88" opacity="0.25"/>
+  <circle cx="31.5" cy="19" r="3" fill="#FFAA88" opacity="0.25"/>
+  <!-- Outline -->
+  <ellipse cx="24" cy="14" rx="12" ry="12.5" fill="none" stroke="#8B4A25" stroke-width="1.5"/>
+</svg>

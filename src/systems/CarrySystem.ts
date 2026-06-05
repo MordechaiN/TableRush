@@ -1,6 +1,7 @@
 export interface CarrySlot {
   orderId: number;
   emoji: string;
+  itemId: number;
 }
 
 export class CarrySystem {
@@ -15,9 +16,9 @@ export class CarrySystem {
     return this.slots.length < this.capacity;
   }
 
-  pickUp(orderId: number, emoji: string): boolean {
+  pickUp(orderId: number, emoji: string, itemId: number): boolean {
     if (!this.canPickUp()) return false;
-    this.slots.push({ orderId, emoji });
+    this.slots.push({ orderId, emoji, itemId });
     return true;
   }
 

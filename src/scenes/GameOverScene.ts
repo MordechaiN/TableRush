@@ -257,29 +257,55 @@ export class GameOverScene extends Phaser.Scene {
         },
       });
 
-      // Tray upgrade callout for levels 3 and 5
-      const newTray = summary.levelAfter >= 5 ? 4 : summary.levelAfter >= 3 ? 3 : 0;
-      const oldTray = summary.levelBefore >= 5 ? 4 : summary.levelBefore >= 3 ? 3 : 2;
-      if (newTray > 0 && newTray > oldTray) {
-        y += 34;
-        const trayBg = this.add.graphics().setAlpha(0);
-        trayBg.fillStyle(0x1A4A1A, 0.9);
-        trayBg.fillRoundedRect(cx - 120, y - 12, 240, 30, 8);
-        const trayUpgTxt = this.add.text(cx, y + 3, `Tray upgraded — carry ${newTray} items!`, {
-          fontSize: '13px', fontFamily: 'Arial Black', color: '#66FF88',
+      // Show what was just unlocked
+      if (summary.unlockedAbility) {
+        y += 38;
+        const abilityBg = this.add.graphics().setAlpha(0);
+        abilityBg.fillStyle(0x0D0820, 0.92);
+        abilityBg.fillRoundedRect(cx - 148, y - 14, 296, 34, 10);
+        abilityBg.lineStyle(1.5, 0x9966CC, 0.7);
+        abilityBg.strokeRoundedRect(cx - 148, y - 14, 296, 34, 10);
+        const abilityTxt = this.add.text(cx, y + 3, `UNLOCKED: ${summary.unlockedAbility}`, {
+          fontSize: '13px', fontFamily: 'Arial Black', color: '#CC99FF',
         }).setOrigin(0.5).setAlpha(0);
-        this.tweens.add({ targets: [trayBg, trayUpgTxt], alpha: 1, duration: 350, delay: 1900 });
+        this.tweens.add({ targets: [abilityBg, abilityTxt], alpha: 1, duration: 350, delay: 2100 });
         this.tweens.add({
-          targets: trayUpgTxt, scaleX: { from: 0.6, to: 1 }, scaleY: { from: 0.6, to: 1 },
-          duration: 300, delay: 1900, ease: 'Back.easeOut',
+          targets: abilityTxt, scaleX: { from: 0.6, to: 1 }, scaleY: { from: 0.6, to: 1 },
+          duration: 320, delay: 2100, ease: 'Back.easeOut',
         });
       }
     }
 
+    // Next unlock — the reason to come back
     y += 30;
-    this.add.text(cx, y, summary.nextUnlockHint, {
-      fontSize: '12px', color: '#888888', wordWrap: { width: 300 }, align: 'center',
-    }).setOrigin(0.5);
+    const isClose = summary.xpToNextLevel > 0 && summary.xpToNextLevel <= 200;
+    const isMaxLevel = summary.levelAfter >= 10;
+    if (!isMaxLevel) {
+      if (isClose) {
+        const closeBg = this.add.graphics();
+        closeBg.fillStyle(0x2A1A00, 0.8);
+        closeBg.fillRoundedRect(cx - 160, y - 8, 320, 46, 8);
+        closeBg.lineStyle(1, 0xFFCC44, 0.5);
+        closeBg.strokeRoundedRect(cx - 160, y - 8, 320, 46, 8);
+        this.add.text(cx, y + 6, `SO CLOSE! ${summary.xpToNextLevel} XP away:`, {
+          fontSize: '11px', fontFamily: 'Arial Black', color: '#FFCC44',
+        }).setOrigin(0.5);
+        this.add.text(cx, y + 24, summary.nextUnlockHint, {
+          fontSize: '12px', fontFamily: 'Arial Black', color: '#FFEE88',
+          wordWrap: { width: 300 }, align: 'center',
+        }).setOrigin(0.5);
+        // Pulse the text to draw attention
+        this.tweens.add({ targets: closeBg, alpha: { from: 1, to: 0.6 }, duration: 700, yoyo: true, repeat: -1, delay: 800 });
+      } else {
+        this.add.text(cx, y, `NEXT UNLOCK: ${summary.nextUnlockHint}`, {
+          fontSize: '11px', color: '#888888', wordWrap: { width: 300 }, align: 'center',
+        }).setOrigin(0.5);
+      }
+    } else {
+      this.add.text(cx, y, 'Level 10 — TABLE MASTER. Maximum unlocked.', {
+        fontSize: '12px', color: COLORS.TEXT_GOLD,
+      }).setOrigin(0.5);
+    }
 
     // Buttons
     const btnY = GAME_HEIGHT - 160;

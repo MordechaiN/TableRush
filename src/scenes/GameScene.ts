@@ -86,6 +86,8 @@ export class GameScene extends Phaser.Scene {
   private rushEndTime = 0;
   private comboHeatOverlay!: Phaser.GameObjects.Graphics;
   private ticketRail!: Phaser.GameObjects.Container;
+  private playerLevel = 1;
+  private comboShieldReady = false;
 
   private steamTimer: Phaser.Time.TimerEvent | null = null;
   private priorityLastUpdate = 0;
@@ -115,6 +117,7 @@ export class GameScene extends Phaser.Scene {
     this.playerBusy = false;
     // Tray capacity scales with player level: 2 → 3 → 4 slots
     const { level, highScore } = ProgressionSystem.getData();
+    this.playerLevel = level;
     this.prevHighScore = highScore;
     const trayCapacity = level >= 5 ? 4 : level >= 3 ? 3 : 2;
     this.tray = new CarrySystem(trayCapacity);
@@ -133,6 +136,7 @@ export class GameScene extends Phaser.Scene {
     this.rushBorderTween = null;
     this.rushCountdownTxt = null;
     this.rushEndTime = 0;
+    this.comboShieldReady = false;
     this.kitchenOrders = [];
     this.nextOrderId = 0;
     this.nextCustomerId = 0;
@@ -144,6 +148,8 @@ export class GameScene extends Phaser.Scene {
     this.buildUI();
 
     this.player = new Player(this, GAME_WIDTH / 2, 700);
+    // Level 4+: speed boost
+    if (level >= 4) this.player.setWalkSpeed(1.15);
     // Show empty tray slots immediately so player sees their capacity from the start
     this.player.showTray([], this.tray.maxCapacity);
 
@@ -820,6 +826,7 @@ export class GameScene extends Phaser.Scene {
   // ─── Spawning ─────────────────────────────────────────────────────────────
 
   private startSpawnCycle() {
+    this.showAbilitiesPanel();
     this.time.delayedCall(2000, () => this.tryEnqueueCustomer());
     this.scheduleNextSpawn();
   }
@@ -1427,8 +1434,12 @@ export class GameScene extends Phaser.Scene {
       this.kitchenOrders = this.kitchenOrders.filter(o => o.id !== orderId);
 
       const speedMult = this.getSpeedMultiplier(customer.patienceAtDelivery);
-      const deliveryScore = Math.floor(customer.order!.price * 10 * speedMult * this.comboMultiplier);
+      const rushMult = (this.rushHourActive && this.playerLevel >= 7) ? 1.4 : 1.0;
+      const deliveryScore = Math.floor(customer.order!.price * 10 * speedMult * this.comboMultiplier * rushMult);
       this.addScore(deliveryScore);
+      if (rushMult > 1) {
+        this.time.delayedCall(180, () => this.showFloating('RUSH +40%!', table.x, table.y - 100, '#FF9944', 0.75));
+      }
 
       // Delivery flash — warm white burst
       this.cameras.main.flash(120, 255, 255, 200, false);
@@ -1485,7 +1496,8 @@ export class GameScene extends Phaser.Scene {
 
       const tip = Math.floor(customer.order!.price * customer.patienceAtDelivery * 0.3);
       const vipMult = customer.isVIP ? 2.5 : 1.0;
-      const payScore = Math.floor((customer.order!.price + tip) * 5 * this.comboMultiplier * vipMult);
+      const rushPayMult = (this.rushHourActive && this.playerLevel >= 7) ? 1.4 : 1.0;
+      const payScore = Math.floor((customer.order!.price + tip) * 5 * this.comboMultiplier * vipMult * rushPayMult);
       this.addScore(payScore);
       SoundManager.paymentCollected();
 
@@ -1728,8 +1740,8 @@ export class GameScene extends Phaser.Scene {
       },
     });
 
-    // Save bonus
-    const saveBonus = 200;
+    // Save bonus (Level 8+ earns master timing bonus)
+    const saveBonus = this.playerLevel >= 8 ? 300 : 200;
     this.addScore(saveBonus);
     this.time.delayedCall(300, () => {
       this.showFloating(`+${saveBonus} SAVED!`, tableX, tableY - 80, '#FF9900', 1.3);
@@ -1861,6 +1873,11 @@ export class GameScene extends Phaser.Scene {
         this.cameras.main.flash(80, 255, 245, 120, false);
       }
     }
+    // Arm combo shield when reaching ×3 tier (Level 6+)
+    if (this.playerLevel >= 6 && this.comboMultiplier >= 3.0) {
+      this.comboShieldReady = true;
+    }
+
     this.updateComboDisplay();
     this.tweens.add({
       targets: this.comboTxt,
@@ -1886,29 +1903,42 @@ export class GameScene extends Phaser.Scene {
   private resetCombo() {
     const wasCombo = this.comboCount >= 3;
     const lostMult = this.comboMultiplier;
+
+    // Combo Shield (Level 6+): first break from ×3+ falls to ×2 instead of ×1
+    if (this.playerLevel >= 6 && this.comboShieldReady && wasCombo) {
+      this.comboShieldReady = false;
+      this.comboCount = 3;
+      this.comboMultiplier = 2.0;
+      this.updateComboHeat();
+      this.showFloating('SHIELDED!', GAME_WIDTH / 2, 75, '#BB88FF', 0.9);
+      SoundManager.comboLost();
+      this.tweens.add({
+        targets: this.comboTxt, scaleX: { from: 1.3, to: 1.0 }, scaleY: { from: 1.3, to: 1.0 },
+        duration: 280, ease: 'Quad.easeOut',
+        onComplete: () => this.updateComboDisplay(),
+      });
+      this.cameras.main.shake(80, 0.002);
+      return;
+    }
+
     this.comboCount = 0;
     this.comboMultiplier = 1.0;
+    this.comboShieldReady = false;
     this.updateComboHeat();
+
     if (wasCombo) {
       SoundManager.comboLost();
       this.showFloating(`×${lostMult.toFixed(1)} LOST!`, GAME_WIDTH / 2, 80, '#FF4444');
       this.comboTxt.setStyle({ color: '#FF4444' });
-      // Flash the progress bar red, then clear it
       this.comboProgressGfx.clear();
       this.comboProgressGfx.fillStyle(0xFF4444, 0.85);
       this.comboProgressGfx.fillRoundedRect(100, 52, GAME_WIDTH - 200, 4, 2);
       this.tweens.add({
-        targets: this.comboProgressGfx, alpha: 0,
-        duration: 500,
-        onComplete: () => {
-          this.comboProgressGfx.setAlpha(1);
-          this.updateComboDisplay();
-        },
+        targets: this.comboProgressGfx, alpha: 0, duration: 500,
+        onComplete: () => { this.comboProgressGfx.setAlpha(1); this.updateComboDisplay(); },
       });
       this.tweens.add({
-        targets: this.comboTxt,
-        scaleX: { from: 1.3, to: 1.0 },
-        scaleY: { from: 1.3, to: 1.0 },
+        targets: this.comboTxt, scaleX: { from: 1.3, to: 1.0 }, scaleY: { from: 1.3, to: 1.0 },
         duration: 320, ease: 'Quad.easeOut',
         onComplete: () => this.updateComboDisplay(),
       });
@@ -2357,6 +2387,44 @@ export class GameScene extends Phaser.Scene {
         },
       });
     }
+  }
+
+  private showAbilitiesPanel() {
+    const level = this.playerLevel;
+    if (level <= 2) return;
+
+    const abilities: string[] = [];
+    const traySlots = level >= 5 ? 4 : level >= 3 ? 3 : 2;
+    abilities.push(`Tray: ${traySlots} slots`);
+    if (level >= 4) abilities.push('Speed Boost: +15%');
+    if (level >= 6) abilities.push('Combo Shield');
+    if (level >= 7) abilities.push('Rush Bonus: +40%');
+    if (level >= 8) abilities.push('Master Saves: +300');
+
+    const panelH = 32 + abilities.length * 24;
+    const panel = this.add.container(GAME_WIDTH / 2, GAME_HEIGHT / 2 - panelH / 2).setDepth(55).setAlpha(0);
+
+    const bg = this.add.graphics();
+    bg.fillStyle(0x08060F, 0.88);
+    bg.fillRoundedRect(-150, -10, 300, panelH + 20, 12);
+    bg.lineStyle(1.5, 0x8866CC, 0.5);
+    bg.strokeRoundedRect(-150, -10, 300, panelH + 20, 12);
+    panel.add(bg);
+
+    panel.add(this.add.text(0, 8, 'YOUR ABILITIES', {
+      fontSize: '10px', fontFamily: 'Arial Black', color: '#9966CC', letterSpacing: 3,
+    }).setOrigin(0.5));
+
+    abilities.forEach((a, i) => {
+      panel.add(this.add.text(0, 30 + i * 24, `★  ${a}`, {
+        fontSize: '14px', fontFamily: 'Arial Black', color: '#CCAAFF',
+      }).setOrigin(0.5));
+    });
+
+    this.tweens.add({ targets: panel, alpha: 1, duration: 320, delay: 400, ease: 'Quad.easeOut' });
+    this.time.delayedCall(3000, () => {
+      this.tweens.add({ targets: panel, alpha: 0, duration: 400, ease: 'Quad.easeIn', onComplete: () => panel.destroy() });
+    });
   }
 
   private clearTutorialSpotlight() {

@@ -19,6 +19,7 @@ export class Player extends Phaser.GameObjects.Container {
   private revertTimer: Phaser.Time.TimerEvent | null = null;
   public isWalking = false;
   private currentEmotion: PlayerEmotion = 'normal';
+  private walkSpeedMultiplier = 1.0;
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y);
@@ -33,6 +34,10 @@ export class Player extends Phaser.GameObjects.Container {
     this.startIdleAnim();
   }
 
+  setWalkSpeed(multiplier: number) {
+    this.walkSpeedMultiplier = multiplier;
+  }
+
   walkTo(x: number, y: number, onComplete?: () => void) {
     if (this.walkTween) this.walkTween.stop();
     this.stopIdleAnim();
@@ -42,7 +47,7 @@ export class Player extends Phaser.GameObjects.Container {
     const dist = Math.hypot(x - this.x, y - this.y);
     this.walkTween = this.scene.tweens.add({
       targets: this, x, y,
-      duration: dist * 1.15, ease: 'Quad.easeOut',
+      duration: dist * 1.15 / this.walkSpeedMultiplier, ease: 'Quad.easeOut',
       onComplete: () => {
         this.stopWalkAnim();
         this.isWalking = false;

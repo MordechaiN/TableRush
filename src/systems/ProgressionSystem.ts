@@ -4,15 +4,24 @@ const MAX_LEVEL = XP_THRESHOLDS.length - 1;
 const UNLOCK_HINTS = [
   'Complete rounds to earn XP and reach Level 2!',
   'Level 2 — building momentum. Chain 3 serves to ignite your combo meter!',
-  'Level 3 — tray upgraded! You can now carry 3 items at once.',
-  'Level 4 — the combo meter is your secret weapon. ×4.0 is within reach.',
-  'Level 5 — tray upgraded! You can now carry 4 items at once.',
-  'Level 6 — lightning service. Deliver fast for speed bonus multipliers.',
-  'Level 7 — rush hour mastery. Two waves per shift — chain big combos through them.',
-  'Level 8 — near-miss saves earn you mention in the shift report. Push the edge.',
+  'Level 3 — TRAY UPGRADE: carry 3 items at once.',
+  'Level 4 — SPEED BOOST: you move 15% faster every shift.',
+  'Level 5 — TRAY UPGRADE: carry 4 items at once.',
+  'Level 6 — COMBO SHIELD: your first combo break drops to ×2, not ×1.',
+  'Level 7 — RUSH BONUS: rush hour earns +40% on every serve.',
+  'Level 8 — MASTER TIMING: near-miss saves now award a +300 bonus.',
   'Level 9 — every second with a full tray and active combo is peak efficiency.',
-  'Level 10 — TABLE MASTER. You know the kitchen, the floor, and the rush. Legend.',
+  'Level 10 — TABLE MASTER. The restaurant is yours.',
 ];
+
+const ABILITY_AT_LEVEL: Record<number, string> = {
+  3: 'TRAY UPGRADE — carry 3 items',
+  4: 'SPEED BOOST — 15% faster walks',
+  5: 'TRAY UPGRADE — carry 4 items',
+  6: 'COMBO SHIELD — breaks fall to ×2, not ×1',
+  7: 'RUSH BONUS — rush hour earns +40%',
+  8: 'MASTER TIMING — near-miss saves +300 bonus',
+};
 
 interface ProgressData {
   xp: number;
@@ -70,6 +79,8 @@ export interface RoundSummary {
   isNewHighScore: boolean;
   isNewBestStars: boolean;
   nextUnlockHint: string;
+  unlockedAbility?: string;
+  xpToNextLevel: number;
   thresholdForLevel: (level: number) => number;
 }
 
@@ -98,6 +109,9 @@ export class ProgressionSystem {
     const levelAfter = data.level;
     const nextLevel = Math.min(levelAfter, MAX_LEVEL);
     const nextUnlockHint = UNLOCK_HINTS[nextLevel] ?? UNLOCK_HINTS[MAX_LEVEL];
+    const unlockedAbility = levelAfter > levelBefore ? ABILITY_AT_LEVEL[levelAfter] : undefined;
+    const nextThreshold = XP_THRESHOLDS[levelAfter] ?? XP_THRESHOLDS[MAX_LEVEL];
+    const xpToNextLevel = Math.max(0, nextThreshold - data.xp);
 
     return {
       xpEarned,
@@ -108,6 +122,8 @@ export class ProgressionSystem {
       isNewHighScore,
       isNewBestStars,
       nextUnlockHint,
+      unlockedAbility,
+      xpToNextLevel,
       thresholdForLevel: (lvl: number) => XP_THRESHOLDS[lvl] ?? XP_THRESHOLDS[MAX_LEVEL],
     };
   }

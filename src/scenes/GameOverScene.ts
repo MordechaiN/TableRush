@@ -11,6 +11,7 @@ interface GameOverData {
   comboRecord: number;
   fastestDeliveryMs: number;
   nearMissSaves: number;
+  storyEvents?: string[];
 }
 
 export class GameOverScene extends Phaser.Scene {
@@ -172,6 +173,22 @@ export class GameOverScene extends Phaser.Scene {
     // Close calls
     if (data.nearMissSaves > 0) {
       addStat(`${data.nearMissSaves} close call${data.nearMissSaves > 1 ? 's' : ''} — saved`, '#CC7733');
+    }
+
+    // Shift stories — moments this session was unique
+    const stories = this.buildStoryLines(data.storyEvents ?? []);
+    if (stories.length > 0) {
+      y += 4;
+      const storyBg = this.add.graphics();
+      storyBg.fillStyle(0x100820, 0.55);
+      storyBg.fillRoundedRect(cx - 152, y - 6, 304, 14 + stories.length * 20, 6);
+      stories.forEach(line => {
+        this.add.text(cx, y, line.text, {
+          fontSize: '12px', fontFamily: 'Arial', color: line.color,
+        }).setOrigin(0.5);
+        y += 20;
+      });
+      y += 4;
     }
 
     // XP bar
@@ -449,6 +466,30 @@ export class GameOverScene extends Phaser.Scene {
         this.tweens.add({ targets: banner, alpha: 0, duration: 500, delay: 2200, onComplete: () => banner.destroy() });
       },
     });
+  }
+
+  private buildStoryLines(events: string[]): { text: string; color: string }[] {
+    const map: Record<string, { text: string; color: string }> = {
+      critic_rave:     { text: '★ The food critic gave you a RAVE REVIEW', color: '#66EEBB' },
+      critic_poor:     { text: '✗ The food critic left disappointed',       color: '#FF9977' },
+      critic_angry:    { text: '✗ The food critic walked out angry',        color: '#FF5555' },
+      birthday_served: { text: '🎂 You served a birthday party',            color: '#FF88CC' },
+      family_served:   { text: '♥ You served a full family meal',           color: '#FFBB77' },
+      business_rush:   { text: '💼 You survived a business lunch rush',     color: '#88CCFF' },
+      near_miss:       { text: '⚡ You saved a table from walking out',     color: '#FFAA44' },
+      rush_survived:   { text: '🔥 You powered through rush hour',          color: '#FF6644' },
+      combo_legend:    { text: '↑ You built a 10+ serve streak',            color: COLORS.TEXT_GOLD },
+      combo_master:    { text: '★ You built a 15+ serve streak — LEGEND',  color: COLORS.TEXT_GOLD },
+    };
+    const lines: { text: string; color: string }[] = [];
+    const seen = new Set<string>();
+    for (const ev of events) {
+      if (!seen.has(ev) && map[ev]) {
+        lines.push(map[ev]);
+        seen.add(ev);
+      }
+    }
+    return lines.slice(0, 4); // max 4 story lines
   }
 
   private makeBtn(x: number, y: number, label: string, tex: string, cb: () => void) {

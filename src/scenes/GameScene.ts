@@ -90,13 +90,16 @@ export class GameScene extends Phaser.Scene {
   private comboShieldReady = false;
 
   // Content progression
-  private sessionType: 'normal' | 'vip_night' | 'birthday_night' = 'normal';
+  private sessionType: 'normal' | 'vip_night' | 'birthday_night' | 'critic_night' | 'business_lunch' | 'family_day' = 'normal';
   private criticSpawned = false;
+  private criticPresent = false;
+  private criticAngrySeen = false;
   private criticTimer: Phaser.Time.TimerEvent | null = null;
   private birthdayBoostRemaining = 0;
   private birthdayCustomerQueued = false;
   private scoreMultiplier = 1.0;
   private scoreMultiplierTimer: Phaser.Time.TimerEvent | null = null;
+  private storyEvents: string[] = [];
 
   private steamTimer: Phaser.Time.TimerEvent | null = null;
   private priorityLastUpdate = 0;
@@ -148,11 +151,14 @@ export class GameScene extends Phaser.Scene {
     this.comboShieldReady = false;
     this.sessionType = 'normal';
     this.criticSpawned = false;
+    this.criticPresent = false;
+    this.criticAngrySeen = false;
     this.criticTimer = null;
     this.birthdayBoostRemaining = 0;
     this.birthdayCustomerQueued = false;
     this.scoreMultiplier = 1.0;
     this.scoreMultiplierTimer = null;
+    this.storyEvents = [];
     this.kitchenOrders = [];
     this.nextOrderId = 0;
     this.nextCustomerId = 0;
@@ -777,6 +783,88 @@ export class GameScene extends Phaser.Scene {
     // Kitchen-side herb plants
     this.add.image(28, 178, 'herb_plant').setOrigin(0.5, 1).setDepth(2).setScale(0.9);
     this.add.image(GAME_WIDTH - 28, 178, 'herb_plant').setOrigin(0.5, 1).setDepth(2).setScale(0.9);
+
+    this.buildLevelDecor();
+  }
+
+  private buildLevelDecor() {
+    if (this.playerLevel < 4) return;
+
+    // Level 4+: Coffee bar station (upper right, beside herb plant)
+    if (this.playerLevel >= 4) {
+      const cs = this.add.graphics().setDepth(2.5);
+      // Machine body
+      cs.fillStyle(0x2A1208, 1);
+      cs.fillRoundedRect(GAME_WIDTH - 66, 152, 52, 26, 4);
+      cs.fillStyle(0x1A0A04, 1);
+      cs.fillRoundedRect(GAME_WIDTH - 64, 154, 48, 20, 3);
+      // Boiler tank
+      cs.fillStyle(0x888888, 1);
+      cs.fillCircle(GAME_WIDTH - 48, 157, 7);
+      cs.lineStyle(1.5, 0xAAAAAA, 0.8);
+      cs.strokeCircle(GAME_WIDTH - 48, 157, 7);
+      // Coffee cup spout
+      cs.fillStyle(0xCC6600, 1);
+      cs.fillRect(GAME_WIDTH - 56, 166, 4, 8);
+      // Steam puff
+      const steam = this.add.graphics().setDepth(2.6).setAlpha(0.5);
+      steam.fillStyle(0xFFFFFF, 0.4);
+      steam.fillCircle(GAME_WIDTH - 54, 162, 3);
+      steam.fillCircle(GAME_WIDTH - 52, 159, 2);
+      this.tweens.add({ targets: steam, alpha: { from: 0.2, to: 0.65 }, duration: 800, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+      this.add.text(GAME_WIDTH - 40, 162, 'COFFEE', {
+        fontSize: '6px', fontFamily: 'Arial Black', color: '#AA7733', letterSpacing: 1,
+      }).setOrigin(0.5).setDepth(3);
+    }
+
+    // Level 6+: Dessert display case on right side of kitchen pass
+    if (this.playerLevel >= 6) {
+      const dc = this.add.graphics().setDepth(3.2);
+      const dcX = GAME_WIDTH - 24, dcY = KITCHEN_Y - 10;
+      dc.fillStyle(0xDDEEFF, 0.22);
+      dc.fillRoundedRect(dcX - 20, dcY - 16, 36, 40, 4);
+      dc.lineStyle(1.5, 0x99BBDD, 0.75);
+      dc.strokeRoundedRect(dcX - 20, dcY - 16, 36, 40, 4);
+      // Dessert items
+      dc.fillStyle(0xFF6688, 1); dc.fillCircle(dcX - 8, dcY + 4, 5);   // strawberry tart
+      dc.fillStyle(0xFFBB44, 1); dc.fillCircle(dcX + 7, dcY + 4, 5);   // crème brûlée
+      dc.fillStyle(0x8844AA, 0.85); dc.fillCircle(dcX - 1, dcY - 7, 4); // chocolate mousse
+      // Frosting detail
+      dc.fillStyle(0xFFFFFF, 0.55); dc.fillCircle(dcX - 8, dcY + 2, 2);
+      this.add.text(dcX - 2, dcY + 15, 'DESSERTS', {
+        fontSize: '5px', fontFamily: 'Arial Black', color: '#AACCEE', letterSpacing: 1,
+      }).setOrigin(0.5).setDepth(4);
+    }
+
+    // Level 7+: VIP velvet rope across entry
+    if (this.playerLevel >= 7) {
+      const rope = this.add.graphics().setDepth(1.5);
+      const ry = GAME_HEIGHT - 112;
+      // Left stanchion
+      rope.fillStyle(0xFFD700, 1); rope.fillRect(28, ry, 7, 42); rope.fillRoundedRect(24, ry - 6, 15, 10, 3);
+      rope.fillStyle(0xCC9900, 1); rope.fillRect(28, ry + 36, 10, 6);
+      // Right stanchion
+      rope.fillStyle(0xFFD700, 1); rope.fillRect(GAME_WIDTH - 35, ry, 7, 42); rope.fillRoundedRect(GAME_WIDTH - 39, ry - 6, 15, 10, 3);
+      rope.fillStyle(0xCC9900, 1); rope.fillRect(GAME_WIDTH - 38, ry + 36, 10, 6);
+      // Velvet rope
+      rope.lineStyle(3.5, 0xAA0033, 0.92); rope.lineBetween(43, ry + 6, GAME_WIDTH - 35, ry + 6);
+      rope.fillStyle(0xFF3366, 0.25); rope.fillRect(43, ry + 2, GAME_WIDTH - 78, 8);
+      this.add.text(GAME_WIDTH / 2, ry - 10, 'VIP ENTRANCE', {
+        fontSize: '8px', fontFamily: 'Arial Black', color: '#FFD700', letterSpacing: 2,
+      }).setOrigin(0.5).setDepth(2).setAlpha(0.88);
+    }
+
+    // Level 10: Grand "TABLE MASTER" banner on wall above kitchen
+    if (this.playerLevel >= 10) {
+      const bannerGfx = this.add.graphics().setDepth(2.2);
+      bannerGfx.fillStyle(0x1A0500, 0.88);
+      bannerGfx.fillRoundedRect(GAME_WIDTH / 2 - 140, 68, 280, 18, 4);
+      bannerGfx.lineStyle(1.5, 0xFFD700, 0.55);
+      bannerGfx.strokeRoundedRect(GAME_WIDTH / 2 - 140, 68, 280, 18, 4);
+      this.add.text(GAME_WIDTH / 2, 76, '★  TABLE MASTER EDITION  ★', {
+        fontSize: '9px', fontFamily: 'Arial Black', color: '#FFD700', letterSpacing: 2,
+      }).setOrigin(0.5).setDepth(3).setAlpha(0.9);
+    }
   }
 
   // ─── UI ───────────────────────────────────────────────────────────────────
@@ -846,10 +934,20 @@ export class GameScene extends Phaser.Scene {
     this.showAbilitiesPanel();
     this.time.delayedCall(2000, () => this.tryEnqueueCustomer());
     this.scheduleNextSpawn();
-    // Food critic visits once per shift at Level 5+
-    if (this.playerLevel >= 5) {
+
+    // Critic night: critic arrives early (25-45s). Otherwise normal 5+ visit (45-105s).
+    if (this.sessionType === 'critic_night') {
+      const criticDelay = 25000 + Math.random() * 20000;
+      this.criticTimer = this.time.delayedCall(criticDelay, () => this.enqueueCritic());
+    } else if (this.playerLevel >= 5) {
       const criticDelay = 45000 + Math.random() * 60000;
       this.criticTimer = this.time.delayedCall(criticDelay, () => this.enqueueCritic());
+    }
+
+    // Business lunch: wave of business customers at 40-60s
+    if (this.sessionType === 'business_lunch') {
+      const waveDelay = 40000 + Math.random() * 20000;
+      this.time.delayedCall(waveDelay, () => this.triggerBusinessLunchWave());
     }
   }
 
@@ -905,6 +1003,18 @@ export class GameScene extends Phaser.Scene {
         this.playerLevel >= 4 && !this.birthdayCustomerQueued) {
       this.birthdayCustomerQueued = true;
       customer.makeBirthday();
+    }
+
+    // Family Day: ~45% chance of family table (Level 3+)
+    if (!customer.isVIP && !customer.isBirthday && !this.tutorialActive &&
+        this.playerLevel >= 3 && this.sessionType === 'family_day' && Math.random() < 0.45) {
+      customer.makeFamilyTable();
+    }
+
+    // Business Lunch: ~30% chance of business customer during session
+    if (!customer.isVIP && !customer.isBirthday && !customer.isFamilyTable &&
+        !this.tutorialActive && this.sessionType === 'business_lunch' && Math.random() < 0.30) {
+      customer.makeBusinessCustomer();
     }
 
     SoundManager.customerArrival();
@@ -1028,6 +1138,21 @@ export class GameScene extends Phaser.Scene {
         this.spawnBirthdayConfetti(table.x, table.y);
         this.time.delayedCall(200, () => {
           this.showFloating('HAPPY BIRTHDAY!', table.x, table.y - 80, '#FF88CC', 1.0);
+        });
+      }
+
+      // Critic seated — announce and start tracking
+      if (customer.isCritic) {
+        this.criticPresent = true;
+        this.time.delayedCall(400, () => {
+          this.showFloating('CRITIC IS WATCHING!', GAME_WIDTH / 2, 90, '#AADDFF', 0.85);
+        });
+      }
+
+      // Family seated — welcome annotation
+      if (customer.isFamilyTable) {
+        this.time.delayedCall(300, () => {
+          this.showFloating('FAMILY TABLE', table.x, table.y - 70, '#FFBB77', 0.85);
         });
       }
 
@@ -1508,6 +1633,24 @@ export class GameScene extends Phaser.Scene {
 
       this.time.delayedCall(eatTime, () => {
         if (customer.state !== 'eating') return;
+
+        // Family table dessert round: after first course, they order dessert
+        if (customer.isFamilyTable && !customer.familyDessertDone) {
+          customer.familyDessertDone = true;
+          customer.stopEating();
+          customer.refillPatience();
+          customer.state = 'requesting';
+          customer.startPatience();
+          customer.showRequestBubble();
+          table.setStateVisual('menu');
+          table.clearFloatEmoji();
+          table.setPriority('requesting');
+          this.time.delayedCall(300, () => {
+            this.showFloating('DESSERT TIME!', table.x, table.y - 70, '#FFAACC', 0.95);
+          });
+          return;
+        }
+
         customer.stopEating();
         customer.state = 'paying';
         customer.startPatience();
@@ -1537,7 +1680,11 @@ export class GameScene extends Phaser.Scene {
       const rushPayMult = (this.rushHourActive && this.playerLevel >= 7) ? 1.4 : 1.0;
       // Birthday boost: next 3 payments after a birthday customer double their score
       const birthdayMult = (!customer.isBirthday && this.birthdayBoostRemaining > 0) ? 2.0 : 1.0;
-      const payScore = Math.floor((customer.order!.price + tip) * 5 * this.comboMultiplier * vipMult * rushPayMult * birthdayMult);
+      // Family table: full meal (main + dessert) earns ×2.2
+      const familyMult = (customer.isFamilyTable && customer.familyDessertDone) ? 2.2 : 1.0;
+      // Business customer: quick service earns a generous tip (×1.5)
+      const businessMult = customer.isBusinessCustomer ? 1.5 : 1.0;
+      const payScore = Math.floor((customer.order!.price + tip) * 5 * this.comboMultiplier * vipMult * rushPayMult * birthdayMult * familyMult * businessMult);
       this.addScore(payScore);
       SoundManager.paymentCollected();
 
@@ -1574,12 +1721,29 @@ export class GameScene extends Phaser.Scene {
       if (customer.isBirthday) {
         this.birthdayBoostRemaining = 3;
         this.time.delayedCall(350, () => this.showBirthdayBoostAnnouncement());
+        if (!this.storyEvents.includes('birthday_served')) this.storyEvents.push('birthday_served');
       }
 
-      // Food critic pays → review based on how fresh the food was
+      // Food critic pays → review based on how well the whole shift went
       if (customer.isCritic) {
+        this.criticPresent = false;
         const wasGoodServe = customer.patienceAtDelivery >= 0.6;
         this.time.delayedCall(500, () => this.triggerCriticReview(wasGoodServe));
+      }
+
+      // Family full-meal bonus feedback
+      if (familyMult > 1) {
+        this.time.delayedCall(260, () => {
+          this.showFloating('FAMILY FEAST! ×2.2', table.x, table.y - 115, '#FFBB77', 0.95);
+        });
+        if (!this.storyEvents.includes('family_served')) this.storyEvents.push('family_served');
+      }
+
+      // Business client fast-serve tip
+      if (businessMult > 1) {
+        this.time.delayedCall(240, () => {
+          this.showFloating('BUSINESS TIP! ×1.5', table.x, table.y - 100, '#88CCFF', 0.9);
+        });
       }
 
       this.customersHappy++;
@@ -1773,11 +1937,13 @@ export class GameScene extends Phaser.Scene {
     // "RUSH SURVIVED!" — big celebration
     this.cameras.main.flash(280, 80, 200, 255, false);
     this.triggerCelebration('RUSH SURVIVED!', '#66DDFF');
+    if (!this.storyEvents.includes('rush_survived')) this.storyEvents.push('rush_survived');
   }
 
   private triggerNearMissSave(tableX: number, tableY: number) {
     this.nearMissSaves++;
     SoundManager.nearMiss();
+    if (!this.storyEvents.includes('near_miss')) this.storyEvents.push('near_miss');
 
     // Red vignette flash — the table was SECONDS away from losing
     const vig = this.add.graphics().setDepth(44).setAlpha(0);
@@ -1953,9 +2119,11 @@ export class GameScene extends Phaser.Scene {
     if (this.comboCount === 15) {
       this.cameras.main.shake(350, 0.013);
       this.triggerCelebration('TABLE MASTER!', '#FFD700');
+      this.storyEvents.push('combo_master');
     } else if (this.comboCount === 10) {
       this.cameras.main.shake(250, 0.009);
       this.triggerCelebration('TABLE LEGEND!', COLORS.TEXT_GOLD);
+      if (!this.storyEvents.includes('combo_master')) this.storyEvents.push('combo_legend');
     } else if (this.comboCount === 6) {
       this.spawnStarBurst(this.player.x, this.player.y - 20);
     }
@@ -2317,6 +2485,17 @@ export class GameScene extends Phaser.Scene {
     this.player.reactToAngry();
 
     this.resetCombo();
+
+    // Critic saw an angry customer → guarantees poor review
+    if (this.criticPresent && !customer.isCritic) {
+      this.criticAngrySeen = true;
+    }
+    // Critic left themselves → immediate poor review
+    if (customer.isCritic) {
+      this.criticPresent = false;
+      this.storyEvents.push('critic_angry');
+      this.time.delayedCall(1200, () => this.triggerCriticReview(false));
+    }
 
     // Angry customer → table goes straight to EMPTY (not dirty)
     const table = this.tables[customer.tableId];
@@ -2740,41 +2919,57 @@ export class GameScene extends Phaser.Scene {
   // ─── Content Events ───────────────────────────────────────────────────────
 
   private rollSessionType() {
-    if (this.playerLevel < 6) return;
     const roll = Math.random();
-    if (roll < 0.20) {
-      this.sessionType = 'vip_night';
-    } else if (roll < 0.38) {
-      this.sessionType = 'birthday_night';
+    if (this.playerLevel >= 6) {
+      if      (roll < 0.14) { this.sessionType = 'business_lunch'; }
+      else if (roll < 0.27) { this.sessionType = 'family_day'; }
+      else if (roll < 0.41) { this.sessionType = 'vip_night'; }
+      else if (roll < 0.54) { this.sessionType = 'birthday_night'; }
+      else if (roll < 0.65) { this.sessionType = 'critic_night'; }
+    } else if (this.playerLevel >= 5) {
+      if      (roll < 0.16) { this.sessionType = 'business_lunch'; }
+      else if (roll < 0.30) { this.sessionType = 'family_day'; }
+      else if (roll < 0.44) { this.sessionType = 'birthday_night'; }
+      else if (roll < 0.56) { this.sessionType = 'critic_night'; }
+    } else if (this.playerLevel >= 4) {
+      if      (roll < 0.18) { this.sessionType = 'business_lunch'; }
+      else if (roll < 0.34) { this.sessionType = 'family_day'; }
+      else if (roll < 0.50) { this.sessionType = 'birthday_night'; }
+    } else if (this.playerLevel >= 3) {
+      if (roll < 0.22) { this.sessionType = 'business_lunch'; }
+      else if (roll < 0.42) { this.sessionType = 'family_day'; }
     }
     if (this.sessionType !== 'normal') {
       this.showSessionAnnouncement(this.sessionType);
     }
   }
 
-  private showSessionAnnouncement(type: 'vip_night' | 'birthday_night') {
-    const isVip = type === 'vip_night';
-    const label = isVip ? 'VIP NIGHT' : 'BIRTHDAY NIGHT';
-    const borderCol = isVip ? 0xFFD700 : 0xFF88CC;
-    const textCol = isVip ? '#FFD700' : '#FF88CC';
-    const subtitle = isVip ? 'VIP guests arrive more often tonight' : 'A birthday party is on the way!';
+  private showSessionAnnouncement(type: 'normal' | 'vip_night' | 'birthday_night' | 'critic_night' | 'business_lunch' | 'family_day') {
+    const configs: Record<string, { label: string; col: number; textCol: string; sub: string }> = {
+      vip_night:      { label: 'VIP NIGHT',       col: 0xFFD700, textCol: '#FFD700', sub: 'VIP guests arrive more often tonight' },
+      birthday_night: { label: 'BIRTHDAY NIGHT',  col: 0xFF88CC, textCol: '#FF88CC', sub: 'A birthday party is on the way!' },
+      critic_night:   { label: 'CRITIC NIGHT',    col: 0x7799BB, textCol: '#AADDFF', sub: 'A food critic is visiting. Serve them perfectly.' },
+      business_lunch: { label: 'BUSINESS LUNCH',  col: 0x5599CC, textCol: '#88CCFF', sub: 'Lunch rush — business clients arrive close together.' },
+      family_day:     { label: 'FAMILY DAY',       col: 0xFF9955, textCol: '#FFBB77', sub: 'A family reserved a table. They stay longer and tip well.' },
+    };
+    const cfg = configs[type];
+    if (!cfg) return;
 
     const bg = this.add.graphics().setDepth(55).setAlpha(0);
     bg.fillStyle(0x08040E, 0.92);
     bg.fillRoundedRect(GAME_WIDTH / 2 - 165, GAME_HEIGHT / 2 - 62, 330, 94, 14);
-    bg.lineStyle(2, borderCol, 0.7);
+    bg.lineStyle(2, cfg.col, 0.7);
     bg.strokeRoundedRect(GAME_WIDTH / 2 - 165, GAME_HEIGHT / 2 - 62, 330, 94, 14);
 
-    const title = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 28, label, {
-      fontSize: '32px', fontFamily: 'Arial Black', color: textCol,
+    const title = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 28, cfg.label, {
+      fontSize: '32px', fontFamily: 'Arial Black', color: cfg.textCol,
       stroke: '#000000', strokeThickness: 5,
     }).setOrigin(0.5).setDepth(56).setAlpha(0).setScale(0);
 
-    const sub = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 12, subtitle, {
+    const sub = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 12, cfg.sub, {
       fontSize: '14px', fontFamily: 'Arial', color: '#DDDDDD',
     }).setOrigin(0.5).setDepth(56).setAlpha(0);
 
-    // Show after abilities panel fades (~3.5s in)
     const delay = 3600;
     this.tweens.add({ targets: bg, alpha: 1, duration: 280, delay, ease: 'Quad.easeOut' });
     this.tweens.add({ targets: title, alpha: 1, scale: 1, duration: 350, delay: delay + 100, ease: 'Back.easeOut' });
@@ -2830,6 +3025,53 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
+  private triggerBusinessLunchWave() {
+    if (this.tutorialActive) return;
+    this.cameras.main.flash(200, 80, 130, 200, false);
+    this.showFloating('BUSINESS LUNCH RUSH!', GAME_WIDTH / 2, GAME_HEIGHT / 2 - 50, '#88CCFF', 1.1);
+
+    // Spawn 3-4 business customers in rapid succession
+    const count = 3 + (Math.random() < 0.5 ? 1 : 0);
+    for (let i = 0; i < count; i++) {
+      this.time.delayedCall(i * 1400, () => this.tryEnqueueBusinessCustomer());
+    }
+    if (!this.storyEvents.includes('business_rush')) this.storyEvents.push('business_rush');
+  }
+
+  private tryEnqueueBusinessCustomer() {
+    const MAX_QUEUE = 3;
+    if (this.waitingQueue.length >= MAX_QUEUE) return;
+    if (this.tutorialActive) return;
+
+    const elapsed = (this.time.now - this.gameStartMs) / 1000;
+    const tier = this.getDifficultyTier(elapsed);
+    const patience = Phaser.Math.Between(tier.patienceMin, tier.patienceMax);
+    const id = this.nextCustomerId++;
+    const qIdx = this.waitingQueue.length;
+    const qPos = this.getQueuePosition(qIdx);
+    const customer = new Customer(this, GAME_WIDTH / 2, GAME_HEIGHT + 30, id % 7, patience);
+    this.customers.set(id, customer);
+    this.waitingQueue.push(customer);
+    customer.state = 'entering';
+    customer.makeBusinessCustomer();
+
+    SoundManager.customerArrival();
+    this.tweens.add({
+      targets: customer, x: qPos.x, y: qPos.y,
+      duration: 600, ease: 'Quad.easeOut',
+      onComplete: () => {
+        customer.seatBounce();
+        customer.showNameBanner();
+        customer.startIdleBehavior();
+        customer.queueTimeout = this.time.delayedCall(12000, () => {
+          if (this.waitingQueue.includes(customer)) this.removeCustomerFromQueue(customer);
+        });
+        this.updateSeatingArrows();
+        this.updateQueueDisplay();
+      },
+    });
+  }
+
   private showBirthdayBoostAnnouncement() {
     const bg = this.add.graphics().setDepth(35).setAlpha(0);
     bg.fillStyle(0xAA1155, 0.9);
@@ -2860,7 +3102,11 @@ export class GameScene extends Phaser.Scene {
   private triggerCriticReview(isRave: boolean) {
     if (this.scoreMultiplierTimer) { this.scoreMultiplierTimer.remove(); this.scoreMultiplierTimer = null; }
 
-    if (isRave) {
+    // Any angry customer during critic's visit overrides to poor review
+    const actualRave = isRave && !this.criticAngrySeen;
+
+    if (actualRave) {
+      if (!this.storyEvents.includes('critic_rave')) this.storyEvents.push('critic_rave');
       this.scoreMultiplier = 1.5;
       this.cameras.main.flash(320, 80, 255, 180, false);
       this.showFloating('RAVE REVIEW!', GAME_WIDTH / 2, GAME_HEIGHT / 2 - 70, '#66EEBB', 1.2);
@@ -2870,6 +3116,9 @@ export class GameScene extends Phaser.Scene {
         this.showFloating('Review expired', GAME_WIDTH / 2, 90, '#88BBAA', 0.7);
       });
     } else {
+      if (!this.storyEvents.includes('critic_rave') && !this.storyEvents.includes('critic_angry')) {
+        this.storyEvents.push('critic_poor');
+      }
       this.scoreMultiplier = 0.75;
       this.cameras.main.shake(300, 0.007);
       this.cameras.main.flash(260, 255, 80, 80, false);
@@ -3003,6 +3252,7 @@ export class GameScene extends Phaser.Scene {
         comboRecord: this.comboRecord,
         fastestDeliveryMs: this.fastestDeliveryMs,
         nearMissSaves: this.nearMissSaves,
+        storyEvents: this.storyEvents,
       });
     });
   }

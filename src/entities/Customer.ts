@@ -22,6 +22,9 @@ export class Customer extends Phaser.GameObjects.Container {
   public isVIP = false;
   public isCritic = false;
   public isBirthday = false;
+  public isBusinessCustomer = false;
+  public isFamilyTable = false;
+  public familyDessertDone = false;
   public queueTimeout: Phaser.Time.TimerEvent | null = null;
 
   private bodySprite!: Phaser.GameObjects.Image;
@@ -280,6 +283,47 @@ export class Customer extends Phaser.GameObjects.Container {
       targets: pad, angle: { from: -6, to: 6 },
       duration: 1400, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
     });
+  }
+
+  makeBusinessCustomer() {
+    this.isBusinessCustomer = true;
+    this.maxPatience = Math.floor(this.maxPatience * 0.70);
+    this.patience = this.maxPatience;
+    this.bodySprite.setTint(0x5599CC);
+
+    // Briefcase — signals busy executive
+    const brief = this.scene.add.graphics();
+    brief.fillStyle(0x2A180A, 1);
+    brief.fillRoundedRect(-9, -2, 18, 12, 2);
+    brief.lineStyle(1.5, 0x7A4030, 1);
+    brief.strokeRoundedRect(-9, -2, 18, 12, 2);
+    brief.fillStyle(0x2A180A, 1);
+    brief.fillRoundedRect(-5, -7, 10, 7, 2);
+    brief.lineStyle(1, 0x5A3020, 1);
+    brief.strokeRoundedRect(-5, -7, 10, 7, 2);
+    brief.lineStyle(1.5, 0x5A3020, 0.7);
+    brief.lineBetween(-9, 4, 9, 4);
+    brief.setPosition(18, -6);
+    this.add(brief);
+  }
+
+  makeFamilyTable() {
+    this.isFamilyTable = true;
+    this.maxPatience = Math.floor(this.maxPatience * 1.30);
+    this.patience = this.maxPatience;
+
+    // Small family silhouette icon
+    const fam = this.scene.add.graphics();
+    fam.fillStyle(0xFFCC88, 1);
+    fam.fillCircle(-7, -8, 4.5);
+    fam.fillCircle(2, -7, 4);
+    fam.fillCircle(-13, -5, 3);
+    fam.fillStyle(0xA06040, 1);
+    fam.fillRoundedRect(-11, -4, 8, 8, 2);
+    fam.fillRoundedRect(-2, -3, 7, 7, 2);
+    fam.fillRoundedRect(-15, -2, 5, 6, 2);
+    fam.setPosition(18, -8);
+    this.add(fam);
   }
 
   makeBirthday() {

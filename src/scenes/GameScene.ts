@@ -89,6 +89,15 @@ export class GameScene extends Phaser.Scene {
   private playerLevel = 1;
   private comboShieldReady = false;
 
+  // Content progression
+  private sessionType: 'normal' | 'vip_night' | 'birthday_night' = 'normal';
+  private criticSpawned = false;
+  private criticTimer: Phaser.Time.TimerEvent | null = null;
+  private birthdayBoostRemaining = 0;
+  private birthdayCustomerQueued = false;
+  private scoreMultiplier = 1.0;
+  private scoreMultiplierTimer: Phaser.Time.TimerEvent | null = null;
+
   private steamTimer: Phaser.Time.TimerEvent | null = null;
   private priorityLastUpdate = 0;
   private kitchenGlowPrimary = false;
@@ -137,6 +146,13 @@ export class GameScene extends Phaser.Scene {
     this.rushCountdownTxt = null;
     this.rushEndTime = 0;
     this.comboShieldReady = false;
+    this.sessionType = 'normal';
+    this.criticSpawned = false;
+    this.criticTimer = null;
+    this.birthdayBoostRemaining = 0;
+    this.birthdayCustomerQueued = false;
+    this.scoreMultiplier = 1.0;
+    this.scoreMultiplierTimer = null;
     this.kitchenOrders = [];
     this.nextOrderId = 0;
     this.nextCustomerId = 0;
@@ -826,9 +842,15 @@ export class GameScene extends Phaser.Scene {
   // ─── Spawning ─────────────────────────────────────────────────────────────
 
   private startSpawnCycle() {
+    this.rollSessionType();
     this.showAbilitiesPanel();
     this.time.delayedCall(2000, () => this.tryEnqueueCustomer());
     this.scheduleNextSpawn();
+    // Food critic visits once per shift at Level 5+
+    if (this.playerLevel >= 5) {
+      const criticDelay = 45000 + Math.random() * 60000;
+      this.criticTimer = this.time.delayedCall(criticDelay, () => this.enqueueCritic());
+    }
   }
 
   private scheduleNextSpawn() {
@@ -872,9 +894,17 @@ export class GameScene extends Phaser.Scene {
     this.waitingQueue.push(customer);
     customer.state = 'entering';
 
-    // VIP chance: 10% outside rush hour only
-    if (!this.rushHourActive && !this.tutorialActive && Math.random() < 0.10) {
+    // VIP rate: 10% normally, 30% on VIP Night (Level 6+ session event)
+    const vipRate = this.sessionType === 'vip_night' ? 0.30 : 0.10;
+    if (!this.rushHourActive && !this.tutorialActive && Math.random() < vipRate) {
       customer.makeVIP();
+    }
+
+    // Birthday Night: queue one birthday customer this session (Level 4+)
+    if (!customer.isVIP && !this.tutorialActive && this.sessionType === 'birthday_night' &&
+        this.playerLevel >= 4 && !this.birthdayCustomerQueued) {
+      this.birthdayCustomerQueued = true;
+      customer.makeBirthday();
     }
 
     SoundManager.customerArrival();
@@ -992,6 +1022,14 @@ export class GameScene extends Phaser.Scene {
       SoundManager.seatCustomer();
       this.player.setEmotion('happy', 800);
       this.playerBusy = false;
+
+      // Birthday arrival: confetti burst + announcement
+      if (customer.isBirthday) {
+        this.spawnBirthdayConfetti(table.x, table.y);
+        this.time.delayedCall(200, () => {
+          this.showFloating('HAPPY BIRTHDAY!', table.x, table.y - 80, '#FF88CC', 1.0);
+        });
+      }
 
       if (this.tutorialActive && this.tutorialStep === 0) this.advanceTutorial();
     };
@@ -1497,7 +1535,9 @@ export class GameScene extends Phaser.Scene {
       const tip = Math.floor(customer.order!.price * customer.patienceAtDelivery * 0.3);
       const vipMult = customer.isVIP ? 2.5 : 1.0;
       const rushPayMult = (this.rushHourActive && this.playerLevel >= 7) ? 1.4 : 1.0;
-      const payScore = Math.floor((customer.order!.price + tip) * 5 * this.comboMultiplier * vipMult * rushPayMult);
+      // Birthday boost: next 3 payments after a birthday customer double their score
+      const birthdayMult = (!customer.isBirthday && this.birthdayBoostRemaining > 0) ? 2.0 : 1.0;
+      const payScore = Math.floor((customer.order!.price + tip) * 5 * this.comboMultiplier * vipMult * rushPayMult * birthdayMult);
       this.addScore(payScore);
       SoundManager.paymentCollected();
 
@@ -1520,6 +1560,26 @@ export class GameScene extends Phaser.Scene {
           this.showFloating('VIP! ×2.5', table.x, table.y - 100, COLORS.TEXT_GOLD, 1.3);
           this.cameras.main.flash(180, 255, 220, 0, false);
         });
+      }
+
+      // Birthday boost applied — show feedback and decrement
+      if (birthdayMult > 1) {
+        this.birthdayBoostRemaining--;
+        this.time.delayedCall(260, () => {
+          this.showFloating('BIRTHDAY CHEER! ×2', table.x, table.y - 115, '#FF88CC', 0.95);
+        });
+      }
+
+      // Birthday customer pays → activate 3-payment chain boost
+      if (customer.isBirthday) {
+        this.birthdayBoostRemaining = 3;
+        this.time.delayedCall(350, () => this.showBirthdayBoostAnnouncement());
+      }
+
+      // Food critic pays → review based on how fresh the food was
+      if (customer.isCritic) {
+        const wasGoodServe = customer.patienceAtDelivery >= 0.6;
+        this.time.delayedCall(500, () => this.triggerCriticReview(wasGoodServe));
       }
 
       this.customersHappy++;
@@ -1810,7 +1870,8 @@ export class GameScene extends Phaser.Scene {
   // ─── Score / Combo ────────────────────────────────────────────────────────
 
   private addScore(amount: number) {
-    this.score = Math.max(0, this.score + amount);
+    const adjusted = this.scoreMultiplier !== 1.0 ? Math.floor(amount * this.scoreMultiplier) : amount;
+    this.score = Math.max(0, this.score + adjusted);
     this.scoreTxt.setText(`$  ${fmtScore(this.score)}`);
     this.scoreTxt.setColor(COLORS.TEXT_GOLD);
     const bounce = this.comboMultiplier >= 5 ? 1.7 : this.comboMultiplier >= 4 ? 1.55 : this.comboMultiplier >= 3 ? 1.45 : 1.3;
@@ -2397,7 +2458,12 @@ export class GameScene extends Phaser.Scene {
     const traySlots = level >= 5 ? 4 : level >= 3 ? 3 : 2;
     abilities.push(`Tray: ${traySlots} slots`);
     if (level >= 4) abilities.push('Speed Boost: +15%');
+    if (level >= 4) abilities.push('Birthday Parties active');
+    if (level >= 5) abilities.push('Food Critic may visit');
     if (level >= 6) abilities.push('Combo Shield');
+    if (level >= 6 && this.sessionType !== 'normal') {
+      abilities.push(this.sessionType === 'vip_night' ? 'Tonight: VIP NIGHT!' : 'Tonight: BIRTHDAY NIGHT!');
+    }
     if (level >= 7) abilities.push('Rush Bonus: +40%');
     if (level >= 8) abilities.push('Master Saves: +300');
 
@@ -2671,6 +2737,174 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
+  // ─── Content Events ───────────────────────────────────────────────────────
+
+  private rollSessionType() {
+    if (this.playerLevel < 6) return;
+    const roll = Math.random();
+    if (roll < 0.20) {
+      this.sessionType = 'vip_night';
+    } else if (roll < 0.38) {
+      this.sessionType = 'birthday_night';
+    }
+    if (this.sessionType !== 'normal') {
+      this.showSessionAnnouncement(this.sessionType);
+    }
+  }
+
+  private showSessionAnnouncement(type: 'vip_night' | 'birthday_night') {
+    const isVip = type === 'vip_night';
+    const label = isVip ? 'VIP NIGHT' : 'BIRTHDAY NIGHT';
+    const borderCol = isVip ? 0xFFD700 : 0xFF88CC;
+    const textCol = isVip ? '#FFD700' : '#FF88CC';
+    const subtitle = isVip ? 'VIP guests arrive more often tonight' : 'A birthday party is on the way!';
+
+    const bg = this.add.graphics().setDepth(55).setAlpha(0);
+    bg.fillStyle(0x08040E, 0.92);
+    bg.fillRoundedRect(GAME_WIDTH / 2 - 165, GAME_HEIGHT / 2 - 62, 330, 94, 14);
+    bg.lineStyle(2, borderCol, 0.7);
+    bg.strokeRoundedRect(GAME_WIDTH / 2 - 165, GAME_HEIGHT / 2 - 62, 330, 94, 14);
+
+    const title = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 28, label, {
+      fontSize: '32px', fontFamily: 'Arial Black', color: textCol,
+      stroke: '#000000', strokeThickness: 5,
+    }).setOrigin(0.5).setDepth(56).setAlpha(0).setScale(0);
+
+    const sub = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 12, subtitle, {
+      fontSize: '14px', fontFamily: 'Arial', color: '#DDDDDD',
+    }).setOrigin(0.5).setDepth(56).setAlpha(0);
+
+    // Show after abilities panel fades (~3.5s in)
+    const delay = 3600;
+    this.tweens.add({ targets: bg, alpha: 1, duration: 280, delay, ease: 'Quad.easeOut' });
+    this.tweens.add({ targets: title, alpha: 1, scale: 1, duration: 350, delay: delay + 100, ease: 'Back.easeOut' });
+    this.tweens.add({ targets: sub, alpha: 1, duration: 300, delay: delay + 300 });
+    this.time.delayedCall(delay + 2600, () => {
+      this.tweens.add({
+        targets: [bg, title, sub], alpha: 0, duration: 400,
+        onComplete: () => { bg.destroy(); title.destroy(); sub.destroy(); },
+      });
+    });
+  }
+
+  private enqueueCritic() {
+    if (this.criticSpawned || this.tutorialActive) return;
+    const MAX_QUEUE = this.rushHourActive ? 3 : 2;
+    if (this.waitingQueue.length >= MAX_QUEUE) {
+      // Queue full — retry in 10s
+      this.criticTimer = this.time.delayedCall(10000, () => this.enqueueCritic());
+      return;
+    }
+    this.criticSpawned = true;
+
+    const elapsed = (this.time.now - this.gameStartMs) / 1000;
+    const tier = this.getDifficultyTier(elapsed);
+    const patience = Phaser.Math.Between(tier.patienceMin, tier.patienceMax);
+    const id = this.nextCustomerId++;
+    const qIdx = this.waitingQueue.length;
+    const qPos = this.getQueuePosition(qIdx);
+    const customer = new Customer(this, GAME_WIDTH / 2, GAME_HEIGHT + 30, id % 7, patience);
+    this.customers.set(id, customer);
+    this.waitingQueue.push(customer);
+    customer.state = 'entering';
+    customer.makeCritic();
+
+    SoundManager.customerArrival();
+    this.time.delayedCall(500, () => {
+      this.showFloating('CRITIC IN THE HOUSE!', GAME_WIDTH / 2, GAME_HEIGHT / 2, '#AADDFF', 1.0);
+    });
+
+    this.tweens.add({
+      targets: customer, x: qPos.x, y: qPos.y,
+      duration: 600, ease: 'Quad.easeOut',
+      onComplete: () => {
+        customer.seatBounce();
+        customer.showNameBanner();
+        customer.startIdleBehavior();
+        customer.queueTimeout = this.time.delayedCall(18000, () => {
+          if (this.waitingQueue.includes(customer)) this.removeCustomerFromQueue(customer);
+        });
+        this.updateSeatingArrows();
+        this.updateQueueDisplay();
+      },
+    });
+  }
+
+  private showBirthdayBoostAnnouncement() {
+    const bg = this.add.graphics().setDepth(35).setAlpha(0);
+    bg.fillStyle(0xAA1155, 0.9);
+    bg.fillRoundedRect(GAME_WIDTH / 2 - 148, GAME_HEIGHT / 2 - 50, 296, 66, 14);
+    bg.lineStyle(2, 0xFF88CC, 0.7);
+    bg.strokeRoundedRect(GAME_WIDTH / 2 - 148, GAME_HEIGHT / 2 - 50, 296, 66, 14);
+
+    const title = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 22, 'BIRTHDAY BONUS!', {
+      fontSize: '26px', fontFamily: 'Arial Black', color: '#FFE0F0',
+      stroke: '#660033', strokeThickness: 4,
+    }).setOrigin(0.5).setDepth(36).setAlpha(0).setScale(0);
+
+    const sub = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 8, 'Next 3 payments earn ×2 score!', {
+      fontSize: '13px', fontFamily: 'Arial', color: '#FFCCEE',
+    }).setOrigin(0.5).setDepth(36).setAlpha(0);
+
+    this.tweens.add({ targets: bg, alpha: 1, duration: 250 });
+    this.tweens.add({ targets: title, alpha: 1, scale: 1, duration: 320, ease: 'Back.easeOut' });
+    this.tweens.add({ targets: sub, alpha: 1, duration: 280, delay: 160 });
+    this.time.delayedCall(2200, () => {
+      this.tweens.add({
+        targets: [bg, title, sub], alpha: 0, duration: 380,
+        onComplete: () => { bg.destroy(); title.destroy(); sub.destroy(); },
+      });
+    });
+  }
+
+  private triggerCriticReview(isRave: boolean) {
+    if (this.scoreMultiplierTimer) { this.scoreMultiplierTimer.remove(); this.scoreMultiplierTimer = null; }
+
+    if (isRave) {
+      this.scoreMultiplier = 1.5;
+      this.cameras.main.flash(320, 80, 255, 180, false);
+      this.showFloating('RAVE REVIEW!', GAME_WIDTH / 2, GAME_HEIGHT / 2 - 70, '#66EEBB', 1.2);
+      this.time.delayedCall(550, () => this.showFloating('+50% score for 30s', GAME_WIDTH / 2, GAME_HEIGHT / 2, '#44DDAA', 0.85));
+      this.scoreMultiplierTimer = this.time.delayedCall(30000, () => {
+        this.scoreMultiplier = 1.0;
+        this.showFloating('Review expired', GAME_WIDTH / 2, 90, '#88BBAA', 0.7);
+      });
+    } else {
+      this.scoreMultiplier = 0.75;
+      this.cameras.main.shake(300, 0.007);
+      this.cameras.main.flash(260, 255, 80, 80, false);
+      this.showFloating('POOR REVIEW!', GAME_WIDTH / 2, GAME_HEIGHT / 2 - 70, '#FF5555', 1.2);
+      this.time.delayedCall(550, () => this.showFloating('-25% score for 20s', GAME_WIDTH / 2, GAME_HEIGHT / 2, '#FF9988', 0.85));
+      this.scoreMultiplierTimer = this.time.delayedCall(20000, () => {
+        this.scoreMultiplier = 1.0;
+        this.showFloating('Review expired', GAME_WIDTH / 2, 90, '#888888', 0.7);
+      });
+    }
+  }
+
+  private spawnBirthdayConfetti(x: number, y: number) {
+    const colors = [0xFF4488, 0xFFDD00, 0x00CCFF, 0xFF8800, 0x88FF88];
+    for (let i = 0; i < 14; i++) {
+      const angle = (Math.PI * 2 / 14) * i - Math.PI / 2;
+      const dist = 40 + Math.random() * 30;
+      const conf = this.add.graphics().setDepth(22);
+      const color = colors[i % colors.length];
+      if (i % 3 === 0) { conf.fillStyle(color, 1); conf.fillRect(-3, -5, 6, 10); }
+      else if (i % 3 === 1) { conf.fillStyle(color, 1); conf.fillCircle(0, 0, 4); }
+      else { conf.fillStyle(color, 1); conf.fillTriangle(0, -5, 4, 4, -4, 4); }
+      conf.setPosition(x, y - 20);
+      conf.setAngle(Math.random() * 360);
+      this.tweens.add({
+        targets: conf,
+        x: x + Math.cos(angle) * dist,
+        y: (y - 20) + Math.sin(angle) * dist - 20,
+        alpha: 0, scale: 0,
+        duration: 700 + i * 40, ease: 'Quad.easeOut',
+        onComplete: () => conf.destroy(),
+      });
+    }
+  }
+
   private pauseGame() {
     SoundManager.stopMusic();
     this.scene.pause();
@@ -2729,6 +2963,10 @@ export class GameScene extends Phaser.Scene {
     this.gameTimer?.remove();
     this.steamTimer?.remove();
     this.steamTimer = null;
+    this.criticTimer?.remove();
+    this.criticTimer = null;
+    this.scoreMultiplierTimer?.remove();
+    this.scoreMultiplierTimer = null;
     SoundManager.stopMusic();
     SoundManager.roundEnd();
 

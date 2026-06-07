@@ -20,6 +20,8 @@ export class Customer extends Phaser.GameObjects.Container {
   public readonly variantIndex: number;
   public patienceAtDelivery = 1.0;
   public isVIP = false;
+  public isCritic = false;
+  public isBirthday = false;
   public queueTimeout: Phaser.Time.TimerEvent | null = null;
 
   private bodySprite!: Phaser.GameObjects.Image;
@@ -248,6 +250,61 @@ export class Customer extends Phaser.GameObjects.Container {
     this.scene.tweens.add({
       targets: crown, y: { from: -104, to: -116 },
       duration: 800, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
+    });
+  }
+
+  makeCritic() {
+    this.isCritic = true;
+    this.bodySprite.setTint(0x7799BB);
+    this.maxPatience = Math.floor(this.maxPatience * 0.9);
+    this.patience = this.maxPatience;
+
+    // Notepad + pencil — the critic's signature prop
+    const pad = this.scene.add.graphics();
+    pad.fillStyle(0xFFF5E0, 1);
+    pad.fillRoundedRect(-8, -5, 16, 18, 2);
+    pad.lineStyle(1, 0xCCBBAA, 0.9);
+    pad.strokeRoundedRect(-8, -5, 16, 18, 2);
+    pad.fillStyle(0xCCBBAA, 0.6);
+    pad.fillRect(-5, 1, 10, 1.5);
+    pad.fillRect(-5, 5, 10, 1.5);
+    pad.fillRect(-5, 9, 7, 1.5);
+    // Pencil alongside pad
+    pad.fillStyle(0xFFCC00, 1);
+    pad.fillRect(7, -8, 3, 12);
+    pad.fillStyle(0xFF8800, 1);
+    pad.fillTriangle(7, 4, 10, 4, 8.5, 8);
+    pad.setPosition(18, -10);
+    this.add(pad);
+    this.scene.tweens.add({
+      targets: pad, angle: { from: -6, to: 6 },
+      duration: 1400, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
+    });
+  }
+
+  makeBirthday() {
+    this.isBirthday = true;
+
+    // Party hat above patience bar (hat base at y=-62, tip at y=-84)
+    const hat = this.scene.add.graphics();
+    hat.fillStyle(0xFF4488, 1);
+    hat.fillTriangle(-10, 0, 10, 0, 0, -22);
+    hat.fillStyle(0xFFDD00, 0.8);
+    hat.fillTriangle(-7, 0, 7, 0, 0, -15);
+    hat.fillStyle(0x00CCFF, 0.9);
+    // Polka dots on hat
+    hat.fillCircle(-4, -6, 2);
+    hat.fillCircle(3, -12, 2);
+    // Pom pom tip
+    hat.fillStyle(0xFFFFFF, 0.95);
+    hat.fillCircle(0, -22, 3);
+    hat.setPosition(-1, -62);
+    this.add(hat);
+
+    // Subtle continuous bounce to draw attention
+    this.scene.tweens.add({
+      targets: hat, y: { from: -62, to: -68 },
+      duration: 500, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
     });
   }
 

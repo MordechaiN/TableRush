@@ -5,9 +5,9 @@ const UNLOCK_HINTS = [
   'Complete rounds to earn XP and reach Level 2!',
   'Level 2 — building momentum. Chain 3 serves to ignite your combo meter!',
   'Level 3 — TRAY UPGRADE: carry 3 items at once.',
-  'Level 4 — SPEED BOOST: you move 15% faster every shift.',
-  'Level 5 — TRAY UPGRADE: carry 4 items at once.',
-  'Level 6 — COMBO SHIELD: your first combo break drops to ×2, not ×1.',
+  'Level 4 — BIRTHDAY PARTIES: a party table triggers 3 double-score payments.',
+  'Level 5 — FOOD CRITIC: serve them perfectly for a RAVE REVIEW and +50% score.',
+  'Level 6 — EVENT NIGHTS: sessions can become VIP Night or Birthday Night.',
   'Level 7 — RUSH BONUS: rush hour earns +40% on every serve.',
   'Level 8 — MASTER TIMING: near-miss saves now award a +300 bonus.',
   'Level 9 — every second with a full tray and active combo is peak efficiency.',
@@ -16,9 +16,9 @@ const UNLOCK_HINTS = [
 
 const ABILITY_AT_LEVEL: Record<number, string> = {
   3: 'TRAY UPGRADE — carry 3 items',
-  4: 'SPEED BOOST — 15% faster walks',
-  5: 'TRAY UPGRADE — carry 4 items',
-  6: 'COMBO SHIELD — breaks fall to ×2, not ×1',
+  4: 'BIRTHDAY PARTIES — 3 double-score payment chain',
+  5: 'FOOD CRITIC — impress them for a RAVE REVIEW',
+  6: 'EVENT NIGHTS — VIP Night or Birthday Night shifts',
   7: 'RUSH BONUS — rush hour earns +40%',
   8: 'MASTER TIMING — near-miss saves +300 bonus',
 };

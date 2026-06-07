@@ -33,25 +33,39 @@ export class GameOverScene extends Phaser.Scene {
     // Resume ambient music during results review (AudioContext active from gameplay)
     this.time.delayedCall(1400, () => SoundManager.startMusic());
 
-    // ── Background (tile floor + walls, consistent visual language) ──────────
-    this.add.rectangle(cx, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, COLORS.FLOOR_WARM);
-    for (let row = 0; row < 14; row++) {
-      for (let col = 0; col < 7; col++) {
-        if ((row + col) % 2 === 0) {
-          this.add.rectangle(col * 70 + 35, row * 70 + 35, 69, 69, COLORS.FLOOR_ALT, 0.45);
-        }
-      }
+    // ── Background — dark walnut floor + wainscoting walls ───────────────────
+    const PLANK_H = 34;
+    const plankCols = [0x2E1E0F, 0x251508, 0x2B1B0D, 0x221307, 0x301F10];
+    const goFloor = this.add.graphics();
+    const rowCount = Math.ceil(GAME_HEIGHT / PLANK_H) + 1;
+    for (let row = 0; row < rowCount; row++) {
+      goFloor.fillStyle(plankCols[row % plankCols.length], 1);
+      goFloor.fillRect(0, row * PLANK_H, GAME_WIDTH, PLANK_H);
+    }
+    goFloor.fillStyle(0x000000, 0.25);
+    for (let row = 1; row < rowCount; row++) {
+      goFloor.fillRect(0, row * PLANK_H - 1, GAME_WIDTH, 1);
+    }
+    goFloor.fillStyle(0xFF9944, 0.04);
+    for (let row = 0; row < rowCount; row++) {
+      goFloor.fillRect(0, row * PLANK_H, GAME_WIDTH, 2);
     }
 
-    // Side walls
+    // Side walls — terracotta upper / cream wainscoting lower
     const wallW = 16;
     const walls = this.add.graphics();
-    walls.fillStyle(0xC8854A);
-    walls.fillRect(0, 0, wallW, GAME_HEIGHT);
-    walls.fillRect(GAME_WIDTH - wallW, 0, wallW, GAME_HEIGHT);
-    walls.fillStyle(0x9A5C28);
+    walls.fillStyle(0xBF7A42);
+    walls.fillRect(0, 0, wallW, Math.floor(GAME_HEIGHT * 0.58));
+    walls.fillRect(GAME_WIDTH - wallW, 0, wallW, Math.floor(GAME_HEIGHT * 0.58));
+    walls.fillStyle(0xEEE3D2);    // cream wainscoting
     walls.fillRect(0, Math.floor(GAME_HEIGHT * 0.58), wallW, Math.floor(GAME_HEIGHT * 0.4));
     walls.fillRect(GAME_WIDTH - wallW, Math.floor(GAME_HEIGHT * 0.58), wallW, Math.floor(GAME_HEIGHT * 0.4));
+    walls.fillStyle(0x5A2E12);    // chair rail
+    walls.fillRect(0, Math.floor(GAME_HEIGHT * 0.57), wallW, 4);
+    walls.fillRect(GAME_WIDTH - wallW, Math.floor(GAME_HEIGHT * 0.57), wallW, 4);
+    walls.fillStyle(0x251007);    // baseboard
+    walls.fillRect(0, GAME_HEIGHT - 14, wallW, 14);
+    walls.fillRect(GAME_WIDTH - wallW, GAME_HEIGHT - 14, wallW, 14);
 
     // Amber top accent
     this.add.rectangle(cx, 2, GAME_WIDTH, 5, COLORS.UI_ORANGE).setOrigin(0.5, 0);

@@ -3,8 +3,8 @@ export const GAME_HEIGHT = 854;
 
 export const COLORS = {
   // Floor / environment
-  FLOOR_WARM:    0xC4813A,  // rich warm golden oak
-  FLOOR_ALT:     0xAA6A28,  // darker oak for tile contrast
+  FLOOR_WARM:    0x2E1E0F,  // dark walnut hardwood (dining floor base)
+  FLOOR_ALT:     0x241508,  // darker walnut plank row
   WALL:          0xFFF8F0,
   WALL_ACCENT:   0xC17B3A,
 

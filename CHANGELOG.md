@@ -1,5 +1,26 @@
 # CHANGELOG
 
+## v1.4.0 — Art Direction Reboot (2026-06-07)
+
+### 5 Structural Visual Problems Fixed Through Design (Not Scale)
+
+**Design philosophy shift:** Visibility solved through contrast and material design, not by making elements larger. The amber-on-amber visual soup replaced by rich dark environment that makes every character, table, and food item pop.
+
+- **Fix 1: Dark walnut hardwood floor** (`GameConfig.ts`, `GameScene.ts`, `MainMenuScene.ts`, `GameOverScene.ts`): Replaced 70×70 amber checkerboard (`FLOOR_WARM: 0xC4813A`) with horizontal hardwood plank floor (`FLOOR_WARM: 0x2E1E0F`). 34px plank rows in 5 alternating dark walnut tones. Subtle grain highlights at plank tops. Shadow gap lines between boards. Staggered end-grain joint lines. Applied consistently across all three background scenes. Single most impactful visual change — every element above the floor now reads clearly: navy waiter pops, ivory tablecloths glow, customers are findable.
+
+- **Fix 2: Kitchen slate tile floor** (`GameScene.ts`): Replaced the ineffectual amber kitchen tint (7% dark orange over amber floor) with actual 38×30 cool slate tiles (`0x1E2523 / 0x191F1E`) covering the kitchen zone (y=88–188). Dark grout lines at 65% opacity. Creates immediate spatial grammar: walk into the dining room (dark walnut planks), look at the kitchen (cool gray slate). The zone distinction that was impossible to read is now instinctive.
+
+- **Fix 3: Cream wainscoting walls** (`GameScene.ts`, `MainMenuScene.ts`, `GameOverScene.ts`): Lower wall section changed from amber-brown (`0x9A5C28`) to warm cream (`0xEEE3D2`). Upper section stays terracotta (`0xBF7A42`). Added proper chair rail in dark mahogany (`0x5A2E12`). Near-black baseboard (`0x251007`). The visual separation between floor and wall that was previously absent now reads clearly — dark floor meets cream wainscoting at the chair rail. A restaurant reading at a glance.
+
+- **Fix 4: Per-table candlelight pools** (`GameScene.ts`): Removed three fixed pendant lamp light pools at y=320 radius=80 (these created an inaccurate horizontal band that missed tables 3, 4, 5). Added five per-table warm amber elliptical pools (`0xFFBB44` at 8% opacity, 120×70px) accurately positioned under each TABLE_POSITION. On the dark floor, these read as candlelit dining spots rather than zone indicators.
+
+- **Fix 5: Service counter warm granite** (`GameScene.ts`): Counter top changed from near-black (`0x241610`) to charcoal granite (`0x3A2820`). Warm surface sheen added (`0x5C3C28`). Mahogany face panel lightened from `0x6B3812` to `0x8B4820`. Added a 1.5px warm edge highlight line at the counter top. Divider panels darkened slightly for better contrast. The physical barrier between kitchen and dining room now reads as a real service counter against the dark floor.
+
+### Art Direction Document
+- **`ART_DIRECTION_REBOOT.md`** created: professional competitor analysis (Overcooked, PlateUp, Cooking Fever, Good Pizza Great Pizza), 10-section visual design prescription, ranked problem list, color language table, commercial presentation verdict.
+
+---
+
 ## v1.3.0 — Commercial Visual Polish (2026-06-07)
 
 ### Phase 4 — Top 5 Visual Problems Fixed

@@ -12,16 +12,22 @@ export class MainMenuScene extends Phaser.Scene {
     // Ambient music — plays if AudioContext is already active (returns from game session)
     SoundManager.startMusic();
 
-    // Warm background
-    this.add.rectangle(cx, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, COLORS.FLOOR_WARM);
-
-    // Tile pattern
-    for (let row = 0; row < 14; row++) {
-      for (let col = 0; col < 7; col++) {
-        if ((row + col) % 2 === 0) {
-          this.add.rectangle(col * 70 + 35, row * 70 + 35, 69, 69, COLORS.FLOOR_ALT, 0.6);
-        }
-      }
+    // Dark walnut hardwood plank floor
+    const PLANK_H = 34;
+    const plankCols = [0x2E1E0F, 0x251508, 0x2B1B0D, 0x221307, 0x301F10];
+    const menuFloor = this.add.graphics();
+    const rowCount = Math.ceil(GAME_HEIGHT / PLANK_H) + 1;
+    for (let row = 0; row < rowCount; row++) {
+      menuFloor.fillStyle(plankCols[row % plankCols.length], 1);
+      menuFloor.fillRect(0, row * PLANK_H, GAME_WIDTH, PLANK_H);
+    }
+    menuFloor.fillStyle(0x000000, 0.25);
+    for (let row = 1; row < rowCount; row++) {
+      menuFloor.fillRect(0, row * PLANK_H - 1, GAME_WIDTH, 1);
+    }
+    menuFloor.fillStyle(0xFF9944, 0.04);
+    for (let row = 0; row < rowCount; row++) {
+      menuFloor.fillRect(0, row * PLANK_H, GAME_WIDTH, 2);
     }
 
     // Top wall accent
@@ -31,19 +37,23 @@ export class MainMenuScene extends Phaser.Scene {
     const wallW = 16;
     const menuWallH = GAME_HEIGHT - 90;
     const lW = this.add.graphics();
-    lW.fillStyle(0xC8854A, 1);
+    lW.fillStyle(0xBF7A42, 1);
     lW.fillRect(0, 90, wallW, Math.floor(menuWallH * 0.58));
-    lW.fillStyle(0x9A5C28, 1);
+    lW.fillStyle(0xEEE3D2, 1);    // cream wainscoting
     lW.fillRect(0, 90 + Math.floor(menuWallH * 0.58), wallW, Math.floor(menuWallH * 0.4));
-    lW.fillStyle(0x4A2410, 1);
-    lW.fillRect(0, GAME_HEIGHT - 16, wallW, 16);
+    lW.fillStyle(0x5A2E12, 1);    // chair rail
+    lW.fillRect(0, 90 + Math.floor(menuWallH * 0.57), wallW, 4);
+    lW.fillStyle(0x251007, 1);
+    lW.fillRect(0, GAME_HEIGHT - 14, wallW, 14);
     const rW = this.add.graphics();
-    rW.fillStyle(0xC8854A, 1);
+    rW.fillStyle(0xBF7A42, 1);
     rW.fillRect(GAME_WIDTH - wallW, 90, wallW, Math.floor(menuWallH * 0.58));
-    rW.fillStyle(0x9A5C28, 1);
+    rW.fillStyle(0xEEE3D2, 1);    // cream wainscoting
     rW.fillRect(GAME_WIDTH - wallW, 90 + Math.floor(menuWallH * 0.58), wallW, Math.floor(menuWallH * 0.4));
-    rW.fillStyle(0x4A2410, 1);
-    rW.fillRect(GAME_WIDTH - wallW, GAME_HEIGHT - 16, wallW, 16);
+    rW.fillStyle(0x5A2E12, 1);    // chair rail
+    rW.fillRect(GAME_WIDTH - wallW, 90 + Math.floor(menuWallH * 0.57), wallW, 4);
+    rW.fillStyle(0x251007, 1);
+    rW.fillRect(GAME_WIDTH - wallW, GAME_HEIGHT - 14, wallW, 14);
 
     // ── Window light shafts ──────────────────────────────────────────────────
     const shafts = this.add.graphics();

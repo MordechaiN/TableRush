@@ -159,40 +159,54 @@ export class GameScene extends Phaser.Scene {
   // ─── Restaurant Layout ─────────────────────────────────────────────────────
 
   private buildRestaurant() {
-    // ── Floor ────────────────────────────────────────────────────────────────
-    this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, COLORS.FLOOR_WARM);
-    for (let row = 0; row < 14; row++) {
-      for (let col = 0; col < 7; col++) {
-        if ((row + col) % 2 === 0) {
-          this.add.rectangle(col * 70 + 35, row * 70 + 35, 69, 69, COLORS.FLOOR_ALT, 1);
-        }
-      }
+    // ── Dining floor — dark walnut hardwood planks (Fix 1) ───────────────────
+    const PLANK_H = 34;
+    const plankCols = [0x2E1E0F, 0x251508, 0x2B1B0D, 0x221307, 0x301F10];
+    const floorGfx = this.add.graphics().setDepth(0);
+    const rowCount = Math.ceil((GAME_HEIGHT - 188) / PLANK_H) + 1;
+    for (let row = 0; row < rowCount; row++) {
+      floorGfx.fillStyle(plankCols[row % plankCols.length], 1);
+      floorGfx.fillRect(0, 188 + row * PLANK_H, GAME_WIDTH, PLANK_H);
     }
-    // Grout lines
-    const grout = this.add.graphics().setDepth(0);
-    grout.lineStyle(1, 0x7A4A18, 0.55);
-    for (let col = 1; col < 7; col++) grout.lineBetween(col * 70, 88, col * 70, GAME_HEIGHT);
-    for (let row = 2; row < 13; row++) grout.lineBetween(0, row * 70 - 2, GAME_WIDTH, row * 70 - 2);
-    // Tile depth shadow (bottom-right edge of each tile)
-    const tileShadow = this.add.graphics().setDepth(0);
-    tileShadow.fillStyle(0x000000, 0.055);
-    for (let row = 2; row < 13; row++) {
-      for (let col = 0; col < 7; col++) {
-        tileShadow.fillRect(col * 70, row * 70 - 3, 70, 3);
-        tileShadow.fillRect(col * 70 + 67, row * 70 - 70, 3, 70);
+    // Plank gap shadow (bottom edge of each board)
+    floorGfx.fillStyle(0x000000, 0.28);
+    for (let row = 1; row < rowCount; row++) {
+      floorGfx.fillRect(0, 188 + row * PLANK_H - 1, GAME_WIDTH, 1);
+    }
+    // Grain highlight (top edge of each board — subtle warm sheen)
+    floorGfx.fillStyle(0xFF9944, 0.04);
+    for (let row = 0; row < rowCount; row++) {
+      floorGfx.fillRect(0, 188 + row * PLANK_H, GAME_WIDTH, 2);
+    }
+    // Board end-grain joints (staggered vertical lines)
+    const jointGfx = this.add.graphics().setDepth(0.1);
+    jointGfx.lineStyle(1, 0x160A02, 0.28);
+    for (let row = 0; row < rowCount; row++) {
+      const py = 188 + row * PLANK_H;
+      const xOff = (row % 3) * 26;
+      for (let bx = 72 + xOff; bx < GAME_WIDTH - 10; bx += 80) {
+        jointGfx.lineBetween(bx, py + 2, bx, py + PLANK_H - 3);
       }
     }
 
-    // ── Zone floor tints — kitchen (cooler) vs dining (warmer) ───────────────
-    const kitchenFloor = this.add.graphics().setDepth(0);
-    kitchenFloor.fillStyle(0x553300, 0.07);
-    kitchenFloor.fillRect(0, 88, GAME_WIDTH, 100);
-
-    const diningArea = this.add.graphics().setDepth(0);
-    diningArea.fillStyle(0xCC8833, 0.06);
-    diningArea.fillRoundedRect(18, 188, GAME_WIDTH - 36, 450, 8);
-    diningArea.lineStyle(1.5, 0xAA7030, 0.1);
-    diningArea.strokeRoundedRect(18, 188, GAME_WIDTH - 36, 450, 8);
+    // ── Kitchen floor — cool steel slate tiles (Fix 2) ───────────────────────
+    const SLATE_W = 38, SLATE_H = 30;
+    const kitchenSlate = this.add.graphics().setDepth(0.15);
+    const slateRows = Math.ceil(100 / SLATE_H) + 1;
+    const slateCols = Math.ceil(GAME_WIDTH / SLATE_W) + 1;
+    for (let sr = 0; sr < slateRows; sr++) {
+      for (let sc = 0; sc < slateCols; sc++) {
+        kitchenSlate.fillStyle((sr + sc) % 2 === 0 ? 0x1E2523 : 0x191F1E, 1);
+        kitchenSlate.fillRect(sc * SLATE_W, 88 + sr * SLATE_H, SLATE_W, SLATE_H);
+      }
+    }
+    kitchenSlate.lineStyle(1, 0x0D1110, 0.65);
+    for (let sc = 1; sc < slateCols; sc++) {
+      kitchenSlate.lineBetween(sc * SLATE_W, 88, sc * SLATE_W, 188);
+    }
+    for (let sr = 1; sr < slateRows; sr++) {
+      kitchenSlate.lineBetween(0, 88 + sr * SLATE_H, GAME_WIDTH, 88 + sr * SLATE_H);
+    }
 
     // ── Walls ─────────────────────────────────────────────────────────────────
     this.add.rectangle(GAME_WIDTH / 2, 0, GAME_WIDTH, 90, COLORS.WALL_ACCENT);
@@ -208,16 +222,16 @@ export class GameScene extends Phaser.Scene {
     // ── Side Walls ────────────────────────────────────────────────────────────
     const wallH = GAME_HEIGHT - 88;
     const wallW = 16;
-    // Left wall
+    // Left wall — terracotta upper / cream wainscoting lower (Fix 3)
     const lWall = this.add.graphics().setDepth(1);
-    lWall.fillStyle(0xC8854A, 1);
+    lWall.fillStyle(0xBF7A42, 1);
     lWall.fillRect(0, 88, wallW, Math.floor(wallH * 0.58));
-    lWall.fillStyle(0x9A5C28, 1);
+    lWall.fillStyle(0xEEE3D2, 1);    // warm cream wainscoting
     lWall.fillRect(0, 88 + Math.floor(wallH * 0.58), wallW, Math.floor(wallH * 0.38));
-    lWall.fillStyle(0x7A3E18, 1);
-    lWall.fillRect(0, 88 + Math.floor(wallH * 0.56), wallW, 5); // chair rail
-    lWall.fillStyle(0x4A2410, 1);
-    lWall.fillRect(0, GAME_HEIGHT - 16, wallW, 16); // baseboard
+    lWall.fillStyle(0x5A2E12, 1);    // dark mahogany chair rail
+    lWall.fillRect(0, 88 + Math.floor(wallH * 0.57), wallW, 4);
+    lWall.fillStyle(0x251007, 1);    // near-black baseboard
+    lWall.fillRect(0, GAME_HEIGHT - 14, wallW, 14);
     // Left wall sconces (depth 2 so they appear above the wall strip)
     [240, 490].forEach((sy, si) => {
       const sc = this.add.graphics().setDepth(2);
@@ -234,16 +248,16 @@ export class GameScene extends Phaser.Scene {
         duration: 600 + si * 220, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
       });
     });
-    // Right wall
+    // Right wall — terracotta upper / cream wainscoting lower (Fix 3)
     const rWall = this.add.graphics().setDepth(1);
-    rWall.fillStyle(0xC8854A, 1);
+    rWall.fillStyle(0xBF7A42, 1);
     rWall.fillRect(GAME_WIDTH - wallW, 88, wallW, Math.floor(wallH * 0.58));
-    rWall.fillStyle(0x9A5C28, 1);
+    rWall.fillStyle(0xEEE3D2, 1);    // warm cream wainscoting
     rWall.fillRect(GAME_WIDTH - wallW, 88 + Math.floor(wallH * 0.58), wallW, Math.floor(wallH * 0.38));
-    rWall.fillStyle(0x7A3E18, 1);
-    rWall.fillRect(GAME_WIDTH - wallW, 88 + Math.floor(wallH * 0.56), wallW, 5);
-    rWall.fillStyle(0x4A2410, 1);
-    rWall.fillRect(GAME_WIDTH - wallW, GAME_HEIGHT - 16, wallW, 16);
+    rWall.fillStyle(0x5A2E12, 1);    // dark mahogany chair rail
+    rWall.fillRect(GAME_WIDTH - wallW, 88 + Math.floor(wallH * 0.57), wallW, 4);
+    rWall.fillStyle(0x251007, 1);    // near-black baseboard
+    rWall.fillRect(GAME_WIDTH - wallW, GAME_HEIGHT - 14, wallW, 14);
     [240, 490].forEach((sy, si) => {
       const sc = this.add.graphics().setDepth(2);
       sc.fillStyle(0xC8A060, 1);
@@ -304,9 +318,12 @@ export class GameScene extends Phaser.Scene {
       lamp.fillStyle(0xFFDD66, 0.5); lamp.fillTriangle(lx - 10, 126, lx + 10, 126, lx + 4, 144);
       // Bulb glow
       lamp.fillStyle(0xFFFF99, 0.8); lamp.fillCircle(lx, 147, 3);
-      // Light pool on floor (warm glow)
-      const pool = this.add.graphics().setDepth(0);
-      pool.fillStyle(0xFFFF88, 0.085); pool.fillCircle(lx, 320, 80);
+    });
+    // Per-table candlelight pools — accurate to actual table positions (Fix 4)
+    TABLE_POSITIONS.forEach(pos => {
+      const pool = this.add.graphics().setDepth(0.05);
+      pool.fillStyle(0xFFBB44, 0.08);
+      pool.fillEllipse(pos.x, pos.y + 10, 120, 70);
     });
 
     // ── Recipe strip — thin visible strip in the kitchen zone (wall is behind HUD) ─
@@ -463,20 +480,23 @@ export class GameScene extends Phaser.Scene {
     this.kitchenGlow.fillRoundedRect(KITCHEN_X + 8, KITCHEN_Y - 34, GAME_WIDTH - KITCHEN_X - 16, 68, { tl: 0, tr: 4, bl: 0, br: 4 });
     this.kitchenGlow.setAlpha(0);
 
-    // Service counter — prominent physical barrier between kitchen and dining room
+    // Service counter — physical barrier, reads against dark floor (Fix 5)
     const counter = this.add.graphics().setDepth(3);
-    // Dark granite countertop (top surface)
-    counter.fillStyle(0x241610, 1);
+    // Charcoal granite countertop — lighter than before so it reads against dark floor
+    counter.fillStyle(0x3A2820, 1);
     counter.fillRoundedRect(8, KITCHEN_Y + 36, GAME_WIDTH - 16, 16, 3);
-    // Lighter granite edge highlight
-    counter.fillStyle(0x3D2518, 0.7);
-    counter.fillRoundedRect(8, KITCHEN_Y + 36, GAME_WIDTH - 16, 4, 2);
-    // Warm mahogany front face (vertical panel below countertop)
-    counter.fillStyle(0x6B3812, 1);
+    // Warm surface sheen highlight
+    counter.fillStyle(0x5C3C28, 0.70);
+    counter.fillRoundedRect(8, KITCHEN_Y + 36, GAME_WIDTH - 16, 5, 2);
+    // Warm mahogany front face — amber-brown, clearly visible
+    counter.fillStyle(0x8B4820, 1);
     counter.fillRoundedRect(8, KITCHEN_Y + 50, GAME_WIDTH - 16, 14, { tl: 0, tr: 0, bl: 5, br: 5 });
-    // Subtle panel dividers on the wood face
+    // Counter top edge — bright line that reads as a physical surface edge
+    counter.lineStyle(1.5, 0x7A5030, 0.55);
+    counter.lineBetween(8, KITCHEN_Y + 36, GAME_WIDTH - 8, KITCHEN_Y + 36);
+    // Panel dividers on wood face
     [GAME_WIDTH * 0.25, GAME_WIDTH * 0.5, GAME_WIDTH * 0.75].forEach(dx => {
-      counter.fillStyle(0x4A2808, 0.55);
+      counter.fillStyle(0x602E10, 0.55);
       counter.fillRect(Math.round(dx) - 1, KITCHEN_Y + 50, 2, 14);
     });
 

@@ -38,7 +38,9 @@ Fast-paced restaurant management game. Premium casual — think Overcooked/Good 
 
 ---
 
-## Current State: v1.3.0 — Commercial Visual Polish
+## Current State: v1.4.0 — Art Direction Reboot
+
+**Art Direction Reboot (2026-06-07): 5 structural visual problems fixed through design. Dark walnut hardwood plank floor replaces amber checkerboard (single most impactful change — everything pops against dark). Kitchen area gets cool slate tile floor (distinct zone grammar). Side walls get cream wainscoting lower section (terracotta upper / cream lower / mahogany chair rail / near-black baseboard). Per-table candlelight pools replace incorrectly-positioned pendant lamp pools. Service counter updated to warmer granite + brighter mahogany face. All 3 scenes updated consistently. ART_DIRECTION_REBOOT.md created with professional competitor analysis and visual design prescription.**
 
 **Visual Overhaul Phase 4+6 (2026-06-07): Top 5 visual problems fixed completely. Table texture redesigned — ivory linen tablecloth (0xF5F0E8) replaces red/white checkerboard. Table overlay updated to match. Dining rug removed (it looked like a hitbox indicator). Kitchen zone labels now bold styled ("COOKING"/"READY", 16px, Arial Black, gold/green). Score display "$ 0" gold instead of emoji. Combo baseline "×1" warm gold instead of dead gray. SVG plant decorations: potted_plant.svg and herb_plant.svg replace 🪴/🌿 emoji at all 4 corners. Main menu plate badge replaced from 🍽️ emoji to plate_badge.svg.**
 

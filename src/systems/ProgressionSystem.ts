@@ -7,7 +7,7 @@ const UNLOCK_HINTS = [
   'Level 3 — tray upgraded! You can now carry 3 items at once.',
   'Level 4 — the combo meter is your secret weapon. ×4.0 is within reach.',
   'Level 5 — tray upgraded! You can now carry 4 items at once.',
-  'Level 6 — lightning service. Deliver fast for ⚡ speed bonus multipliers.',
+  'Level 6 — lightning service. Deliver fast for speed bonus multipliers.',
   'Level 7 — rush hour mastery. Two waves per shift — chain big combos through them.',
   'Level 8 — near-miss saves earn you mention in the shift report. Push the edge.',
   'Level 9 — every second with a full tray and active combo is peak efficiency.',
@@ -20,6 +20,10 @@ interface ProgressData {
   highScore: number;
   bestStars: number;
   totalRounds: number;
+  lastScore: number;
+  bestCombo: number;
+  dailyDate: string;
+  dailyGoalDone: boolean;
 }
 
 const STORAGE_KEY = 'tablerush_progress';
@@ -27,9 +31,22 @@ const STORAGE_KEY = 'tablerush_progress';
 function load(): ProgressData {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw) as ProgressData;
+    if (raw) {
+      const p = JSON.parse(raw) as Partial<ProgressData>;
+      return {
+        xp: p.xp ?? 0,
+        level: p.level ?? 1,
+        highScore: p.highScore ?? 0,
+        bestStars: p.bestStars ?? 0,
+        totalRounds: p.totalRounds ?? 0,
+        lastScore: p.lastScore ?? 0,
+        bestCombo: p.bestCombo ?? 0,
+        dailyDate: p.dailyDate ?? '',
+        dailyGoalDone: p.dailyGoalDone ?? false,
+      };
+    }
   } catch { /* ignore */ }
-  return { xp: 0, level: 1, highScore: 0, bestStars: 0, totalRounds: 0 };
+  return { xp: 0, level: 1, highScore: 0, bestStars: 0, totalRounds: 0, lastScore: 0, bestCombo: 0, dailyDate: '', dailyGoalDone: false };
 }
 
 function save(data: ProgressData): void {
@@ -66,7 +83,6 @@ export class ProgressionSystem {
     data.xp += xpEarned;
     data.totalRounds += 1;
 
-    // Level up
     while (data.level < MAX_LEVEL && data.xp >= XP_THRESHOLDS[data.level]) {
       data.level += 1;
     }
@@ -94,6 +110,28 @@ export class ProgressionSystem {
       nextUnlockHint,
       thresholdForLevel: (lvl: number) => XP_THRESHOLDS[lvl] ?? XP_THRESHOLDS[MAX_LEVEL],
     };
+  }
+
+  static recordSession(score: number, combo: number): void {
+    const data = load();
+    data.lastScore = score;
+    if (combo > data.bestCombo) data.bestCombo = combo;
+    const today = new Date().toISOString().slice(0, 10);
+    if (data.dailyDate !== today) {
+      data.dailyDate = today;
+      data.dailyGoalDone = false;
+    }
+    const target = Math.max(500, Math.floor((data.highScore || score) * 0.6));
+    if (!data.dailyGoalDone && score >= target) data.dailyGoalDone = true;
+    save(data);
+  }
+
+  static getDailyGoal(): { target: number; lastScore: number; done: boolean } {
+    const data = load();
+    const today = new Date().toISOString().slice(0, 10);
+    const active = data.dailyDate === today;
+    const target = Math.max(500, Math.floor((data.highScore || 0) * 0.6));
+    return { target, lastScore: active ? data.lastScore : 0, done: active && data.dailyGoalDone };
   }
 
   static getData(): ProgressData {

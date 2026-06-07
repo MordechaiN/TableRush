@@ -28,6 +28,7 @@ export class GameOverScene extends Phaser.Scene {
       comboRecord: data.comboRecord,
     };
     const summary = ProgressionSystem.addRound(result);
+    ProgressionSystem.recordSession(data.score, data.comboRecord);
     const prog = ProgressionSystem.getData();
 
     // Resume ambient music during results review (AudioContext active from gameplay)

@@ -80,6 +80,11 @@ export class GameScene extends Phaser.Scene {
 
   private rushHourActive = false;
   private rushHourOverlay!: Phaser.GameObjects.Graphics;
+  private rushBorder: Phaser.GameObjects.Graphics | null = null;
+  private rushBorderTween: Phaser.Tweens.Tween | null = null;
+  private rushCountdownTxt: Phaser.GameObjects.Text | null = null;
+  private rushEndTime = 0;
+  private comboHeatOverlay!: Phaser.GameObjects.Graphics;
   private ticketRail!: Phaser.GameObjects.Container;
 
   private steamTimer: Phaser.Time.TimerEvent | null = null;
@@ -124,6 +129,10 @@ export class GameScene extends Phaser.Scene {
     this.readyPlateSprites.clear();
     this.waitingQueue = [];
     this.rushHourActive = false;
+    this.rushBorder = null;
+    this.rushBorderTween = null;
+    this.rushCountdownTxt = null;
+    this.rushEndTime = 0;
     this.kitchenOrders = [];
     this.nextOrderId = 0;
     this.nextCustomerId = 0;
@@ -706,6 +715,39 @@ export class GameScene extends Phaser.Scene {
     this.rushHourOverlay = this.add.graphics().setDepth(1).setAlpha(0);
     this.rushHourOverlay.fillStyle(0xFF2200, 1);
     this.rushHourOverlay.fillRect(0, 88, GAME_WIDTH, GAME_HEIGHT - 88);
+
+    // Combo heat overlay — warm golden dining-room glow that grows with combo streak
+    this.comboHeatOverlay = this.add.graphics().setDepth(0.6).setAlpha(0);
+    this.comboHeatOverlay.fillStyle(0xFFAA00, 1);
+    this.comboHeatOverlay.fillRect(0, 88, GAME_WIDTH, GAME_HEIGHT - 88);
+
+    // Level-based table decorations
+    const { level: playerLevel } = ProgressionSystem.getData();
+    if (playerLevel >= 3) {
+      TABLE_POSITIONS.forEach(pos => {
+        // Small flower vase on upper-left of each tablecloth
+        const vase = this.add.graphics().setDepth(4);
+        vase.fillStyle(0x2266BB, 1);
+        vase.fillRoundedRect(pos.x - 37, pos.y - 30, 8, 10, 2);
+        vase.fillStyle(0x3377CC, 1);
+        vase.fillRoundedRect(pos.x - 36, pos.y - 34, 6, 6, 2);
+        vase.fillStyle(0x22AA44, 1);
+        vase.fillRect(pos.x - 34, pos.y - 44, 2, 12);
+        vase.fillStyle(0xFF88CC, 0.9);
+        vase.fillCircle(pos.x - 34, pos.y - 46, 4);
+        vase.fillStyle(0xFFBBDD, 0.65);
+        vase.fillCircle(pos.x - 31, pos.y - 45, 3);
+        vase.fillCircle(pos.x - 37, pos.y - 45, 3);
+      });
+    }
+    if (playerLevel >= 5) {
+      TABLE_POSITIONS.forEach(pos => {
+        // Gold tablecloth rim tracing the visible top surface
+        const rim = this.add.graphics().setDepth(3.8);
+        rim.lineStyle(2, 0xFFD700, 0.55);
+        rim.strokeRoundedRect(pos.x - 47, pos.y - 34, 94, 28, 6);
+      });
+    }
 
     // Plants — SVG potted plants at entrance corners
     this.add.image(28, GAME_HEIGHT - 74, 'potted_plant').setOrigin(0.5, 1).setDepth(2).setScale(1.1);
@@ -1400,9 +1442,7 @@ export class GameScene extends Phaser.Scene {
       }
 
       if (customer.patienceAtDelivery < 0.08) {
-        this.nearMissSaves++;
-        SoundManager.nearMiss();
-        this.showFloating('CLOSE CALL!', table.x, table.y - 85, '#FF4444');
+        this.triggerNearMissSave(table.x, table.y);
       }
 
       if (speedMult > 1) {
@@ -1577,27 +1617,62 @@ export class GameScene extends Phaser.Scene {
     this.rushHourActive = true;
     SoundManager.rushHour();
 
-    // Big banner slam — red, bold, screen-covering for 1 frame then settles
-    const banner = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 80, 'RUSH HOUR', {
-      fontSize: '40px', fontFamily: 'Arial Black', color: '#FF3322',
-      stroke: '#000000', strokeThickness: 6,
-    }).setOrigin(0.5).setDepth(40).setScale(0);
+    this.cameras.main.shake(380, 0.010);
+    this.cameras.main.flash(220, 255, 60, 60, false);
+
+    // Cinematic full-screen RUSH HOUR banner
+    const rushBg = this.add.graphics().setDepth(41).setAlpha(0);
+    rushBg.fillStyle(0x220000, 0.82);
+    rushBg.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
     this.tweens.add({
-      targets: banner, scale: 1.2, duration: 300, ease: 'Back.easeOut',
+      targets: rushBg, alpha: 1, duration: 80,
+      onComplete: () => this.tweens.add({ targets: rushBg, alpha: 0, duration: 500, delay: 600, onComplete: () => rushBg.destroy() }),
+    });
+
+    const banner = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 60, 'RUSH HOUR', {
+      fontSize: '54px', fontFamily: 'Arial Black', color: '#FF3322',
+      stroke: '#000000', strokeThickness: 8,
+    }).setOrigin(0.5).setDepth(42).setScale(0);
+    const subBanner = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 14, 'SURVIVE 25 SECONDS', {
+      fontSize: '18px', fontFamily: 'Arial Black', color: '#FF9966',
+      stroke: '#000000', strokeThickness: 4,
+    }).setOrigin(0.5).setDepth(42).setAlpha(0);
+    this.tweens.add({
+      targets: banner, scale: 1.15, duration: 320, ease: 'Back.easeOut',
       onComplete: () => {
-        this.tweens.add({ targets: banner, scaleX: 1.0, scaleY: 1.0, duration: 120 });
-        this.time.delayedCall(1600, () => {
-          this.tweens.add({ targets: banner, alpha: 0, y: banner.y - 40, duration: 400, onComplete: () => banner.destroy() });
+        this.tweens.add({ targets: banner, scaleX: 1.0, scaleY: 1.0, duration: 130 });
+        this.tweens.add({ targets: subBanner, alpha: 1, duration: 250, delay: 120 });
+        this.time.delayedCall(1800, () => {
+          this.tweens.add({ targets: [banner, subBanner], alpha: 0, y: banner.y - 30, duration: 350, onComplete: () => { banner.destroy(); subBanner.destroy(); } });
         });
       },
     });
 
-    this.cameras.main.shake(320, 0.008);
-    this.cameras.main.flash(180, 255, 60, 60, false);
+    // Pulsing red screen border — unmistakable danger signal
+    this.rushBorder = this.add.graphics().setDepth(50).setAlpha(0);
+    const bw = 10;
+    this.rushBorder.fillStyle(0xFF2200, 1);
+    this.rushBorder.fillRect(0, 0, GAME_WIDTH, bw);
+    this.rushBorder.fillRect(0, GAME_HEIGHT - bw, GAME_WIDTH, bw);
+    this.rushBorder.fillRect(0, bw, bw, GAME_HEIGHT - 2 * bw);
+    this.rushBorder.fillRect(GAME_WIDTH - bw, bw, bw, GAME_HEIGHT - 2 * bw);
+    this.rushBorderTween = this.tweens.add({
+      targets: this.rushBorder,
+      alpha: { from: 0.25, to: 0.85 },
+      duration: 500, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
+    });
+
+    // Rush countdown label in HUD
+    this.rushEndTime = this.time.now + 25000;
+    this.rushCountdownTxt = this.add.text(GAME_WIDTH / 2, 72, 'RUSH: 25s', {
+      fontSize: '12px', fontFamily: 'Arial Black', color: '#FF5544',
+      stroke: '#000000', strokeThickness: 3,
+    }).setOrigin(0.5).setDepth(20).setAlpha(0);
+    this.tweens.add({ targets: this.rushCountdownTxt, alpha: 1, duration: 300, delay: 500 });
 
     this.tweens.add({
       targets: this.rushHourOverlay,
-      alpha: 0.055,
+      alpha: 0.06,
       duration: 600, ease: 'Quad.easeOut',
     });
 
@@ -1608,11 +1683,96 @@ export class GameScene extends Phaser.Scene {
     if (!this.rushHourActive) return;
     this.rushHourActive = false;
 
+    // Remove border
+    if (this.rushBorderTween) { this.rushBorderTween.stop(); this.rushBorderTween = null; }
+    if (this.rushBorder) {
+      this.tweens.add({ targets: this.rushBorder, alpha: 0, duration: 400, onComplete: () => { this.rushBorder?.destroy(); this.rushBorder = null; } });
+    }
+    if (this.rushCountdownTxt) {
+      this.tweens.add({ targets: this.rushCountdownTxt, alpha: 0, duration: 300, onComplete: () => { this.rushCountdownTxt?.destroy(); this.rushCountdownTxt = null; } });
+    }
+    this.rushEndTime = 0;
+
     this.tweens.add({
       targets: this.rushHourOverlay, alpha: 0,
-      duration: 1000, ease: 'Quad.easeOut',
+      duration: 1200, ease: 'Quad.easeOut',
     });
-    this.showFloating('Rush is over', GAME_WIDTH / 2, GAME_HEIGHT / 2 - 30, '#88CCFF');
+
+    // "RUSH SURVIVED!" — big celebration
+    this.cameras.main.flash(280, 80, 200, 255, false);
+    this.triggerCelebration('RUSH SURVIVED!', '#66DDFF');
+  }
+
+  private triggerNearMissSave(tableX: number, tableY: number) {
+    this.nearMissSaves++;
+    SoundManager.nearMiss();
+
+    // Red vignette flash — the table was SECONDS away from losing
+    const vig = this.add.graphics().setDepth(44).setAlpha(0);
+    vig.fillStyle(0xFF2200, 0.28);
+    vig.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+    this.tweens.add({ targets: vig, alpha: 1, duration: 60, yoyo: true, repeat: 1, onComplete: () => vig.destroy() });
+
+    // "THE SAVE!" hero text — big, impactful, center-screen
+    const saveTxt = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 90, 'THE SAVE!', {
+      fontSize: '56px', fontFamily: 'Arial Black', color: '#FF6600',
+      stroke: '#000000', strokeThickness: 9,
+    }).setOrigin(0.5).setDepth(46).setScale(0);
+    this.tweens.add({
+      targets: saveTxt, scale: 1.2, duration: 300, ease: 'Back.easeOut',
+      onComplete: () => {
+        this.tweens.add({ targets: saveTxt, scaleX: 1.0, scaleY: 1.0, duration: 130 });
+        this.time.delayedCall(1100, () => {
+          this.tweens.add({ targets: saveTxt, alpha: 0, y: saveTxt.y - 50, duration: 380, ease: 'Quad.easeIn', onComplete: () => saveTxt.destroy() });
+        });
+      },
+    });
+
+    // Save bonus
+    const saveBonus = 200;
+    this.addScore(saveBonus);
+    this.time.delayedCall(300, () => {
+      this.showFloating(`+${saveBonus} SAVED!`, tableX, tableY - 80, '#FF9900', 1.3);
+    });
+
+    // Orange particle burst at the table
+    for (let i = 0; i < 14; i++) {
+      const angle = (Math.PI * 2 / 14) * i;
+      const p = this.add.graphics().setDepth(47);
+      if (i % 2 === 0) {
+        p.fillStyle(0xFF6600, 0.95);
+        p.fillTriangle(0, -5, 4, 3, -4, 3);
+      } else {
+        p.fillStyle(0xFFAA00, 0.85);
+        p.fillCircle(0, 0, 4);
+      }
+      p.setPosition(tableX, tableY - 20);
+      this.tweens.add({
+        targets: p,
+        x: tableX + Math.cos(angle) * (55 + Math.random() * 35),
+        y: (tableY - 20) + Math.sin(angle) * (55 + Math.random() * 25) - 15,
+        alpha: 0, scale: 0,
+        duration: 650 + i * 25, ease: 'Quad.easeOut',
+        onComplete: () => p.destroy(),
+      });
+    }
+
+    this.cameras.main.shake(220, 0.009);
+    this.cameras.main.flash(220, 255, 120, 0, false);
+    this.player.setEmotion('excited', 2500);
+  }
+
+  private updateComboHeat() {
+    if (!this.comboHeatOverlay) return;
+    const targetAlpha = this.comboMultiplier >= 5 ? 0.11
+      : this.comboMultiplier >= 4 ? 0.07
+      : this.comboMultiplier >= 3 ? 0.04
+      : this.comboMultiplier >= 2 ? 0.02
+      : 0;
+    this.tweens.add({
+      targets: this.comboHeatOverlay, alpha: targetAlpha,
+      duration: 700, ease: 'Quad.easeOut',
+    });
   }
 
   private spawnDishwasherSteam() {
@@ -1728,6 +1888,7 @@ export class GameScene extends Phaser.Scene {
     const lostMult = this.comboMultiplier;
     this.comboCount = 0;
     this.comboMultiplier = 1.0;
+    this.updateComboHeat();
     if (wasCombo) {
       SoundManager.comboLost();
       this.showFloating(`×${lostMult.toFixed(1)} LOST!`, GAME_WIDTH / 2, 80, '#FF4444');
@@ -1792,6 +1953,7 @@ export class GameScene extends Phaser.Scene {
       this.drawComboPill(0xFFD700, 0.55);
     }
     this.updateComboProgress();
+    this.updateComboHeat();
   }
 
   private updateComboProgress() {
@@ -2021,6 +2183,13 @@ export class GameScene extends Phaser.Scene {
 
   update() {
     this.updateActionPriority();
+
+    // Rush hour countdown tick
+    if (this.rushHourActive && this.rushCountdownTxt && this.rushEndTime > 0) {
+      const remaining = Math.max(0, Math.ceil((this.rushEndTime - this.time.now) / 1000));
+      this.rushCountdownTxt.setText(`RUSH: ${remaining}s`);
+      if (remaining <= 5) this.rushCountdownTxt.setColor('#FF2222');
+    }
 
     for (const [id, customer] of this.customers) {
       const nonAngryStates = ['leaving', 'eating', 'paying'];

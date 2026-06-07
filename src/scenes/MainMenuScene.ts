@@ -223,8 +223,80 @@ export class MainMenuScene extends Phaser.Scene {
       }).setOrigin(0.5).setAlpha(0.75);
     }
 
+    // ── Retention strip — daily goal + last session + best combo ─────────────
+    const hasHistory = prog.lastScore > 0 || prog.bestCombo > 0;
+    let retBtnOffset = 0;
+    if (hasHistory) {
+      retBtnOffset = 68;
+      const retY = statsY + 66;
+      const daily = ProgressionSystem.getDailyGoal();
+
+      // Background strip
+      const retBg = this.add.graphics().setAlpha(0);
+      retBg.fillStyle(0x120A04, 0.72);
+      retBg.fillRoundedRect(cx - 196, retY - 18, 392, 62, 10);
+      retBg.lineStyle(1, 0xC8A860, 0.3);
+      retBg.strokeRoundedRect(cx - 196, retY - 18, 392, 62, 10);
+      this.tweens.add({ targets: retBg, alpha: 1, duration: 350, delay: 600 });
+
+      // Last session pill (left)
+      if (prog.lastScore > 0) {
+        const lastTxt = this.add.text(cx - 98, retY - 4, 'LAST SESSION', {
+          fontSize: '9px', fontFamily: 'Arial Black', color: '#886644', letterSpacing: 1,
+        }).setOrigin(0.5).setAlpha(0);
+        const lastScore = this.add.text(cx - 98, retY + 12, `$${fmtScore(prog.lastScore)}`, {
+          fontSize: '18px', fontFamily: 'Arial Black', color: '#DDCCAA',
+        }).setOrigin(0.5).setAlpha(0);
+        this.tweens.add({ targets: [lastTxt, lastScore], alpha: 1, duration: 300, delay: 660 });
+      }
+
+      // Divider
+      const divGfx = this.add.graphics().setAlpha(0);
+      divGfx.fillStyle(0xC8A860, 0.3);
+      divGfx.fillRect(cx - 2, retY - 12, 1.5, 46);
+      this.tweens.add({ targets: divGfx, alpha: 1, duration: 300, delay: 680 });
+
+      // Best combo pill (right)
+      if (prog.bestCombo > 0) {
+        const comboLabel = this.add.text(cx + 98, retY - 4, 'BEST STREAK', {
+          fontSize: '9px', fontFamily: 'Arial Black', color: '#886644', letterSpacing: 1,
+        }).setOrigin(0.5).setAlpha(0);
+        const comboColor = prog.bestCombo >= 15 ? '#FFD700'
+          : prog.bestCombo >= 10 ? '#FF8C42'
+          : prog.bestCombo >= 6 ? '#FF8C42' : '#DDCCAA';
+        const comboTxt = this.add.text(cx + 98, retY + 12, `${prog.bestCombo} serves`, {
+          fontSize: '18px', fontFamily: 'Arial Black', color: comboColor,
+        }).setOrigin(0.5).setAlpha(0);
+        this.tweens.add({ targets: [comboLabel, comboTxt], alpha: 1, duration: 300, delay: 680 });
+      }
+
+      // Daily goal bar
+      if (daily.target > 0) {
+        const barAreaY = retY + 30;
+        const barW = 340;
+        const goalProg = daily.lastScore > 0 ? Math.min(1, daily.lastScore / daily.target) : 0;
+        const goalDone = daily.done;
+
+        const barGfx = this.add.graphics().setAlpha(0);
+        barGfx.fillStyle(0x000000, 0.35);
+        barGfx.fillRoundedRect(cx - barW / 2, barAreaY - 4, barW, 7, 3);
+        if (goalProg > 0) {
+          barGfx.fillStyle(goalDone ? 0x44BB44 : 0x5588DD, 1);
+          barGfx.fillRoundedRect(cx - barW / 2, barAreaY - 4, barW * goalProg, 7, 3);
+        }
+        const goalStr = goalDone
+          ? 'DAILY GOAL DONE!'
+          : `DAILY GOAL: ${fmtScore(daily.lastScore)} / ${fmtScore(daily.target)}`;
+        const goalTxt = this.add.text(cx, barAreaY - 15, goalStr, {
+          fontSize: '10px', fontFamily: 'Arial Black',
+          color: goalDone ? '#44FF88' : '#8899CC', letterSpacing: 1,
+        }).setOrigin(0.5).setAlpha(0);
+        this.tweens.add({ targets: [barGfx, goalTxt], alpha: 1, duration: 300, delay: 700 });
+      }
+    }
+
     // ── Buttons (staggered entrance) ──────────────────────────────────────────
-    const btnY = 510;
+    const btnY = 510 + retBtnOffset;
     const playBtn = this.makeBtnAnimated(cx, btnY, '▶  PLAY', 'btn_orange', () => this.scene.start('GameScene'), 650, 1.12);
     this.makeBtnAnimated(cx, btnY + 72, 'SETTINGS', 'btn_green', () => this.scene.start('SettingsScene'), 730);
     this.makeBtnAnimated(cx, btnY + 144, 'CREDITS', 'btn_green', () => this.scene.start('CreditsScene'), 800);

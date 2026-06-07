@@ -1,5 +1,45 @@
 # CHANGELOG
 
+## v2.0.0 — Final Alpha Sprint: Living Restaurant + Content Progression (2026-06-07)
+
+### Special Situations (Phase 1)
+
+Five distinct situations that change player strategy:
+
+- **Business Lunch** (`sessionType = 'business_lunch'`, Level 3+): Mid-session wave of 3–4 business customers (1.4s intervals). Business customers have 30% shorter patience, briefcase graphic, blue-grey tint. Fast serve earns ×1.5 tip. Story event: `business_rush`.
+- **Family Table** (`isFamilyTable`, Level 3+): ~45% of customers on family_day are family tables. After eating main course, table returns to `requesting` for dessert order ("DESSERT TIME!"). Full meal earns ×2.2 at checkout. Story event: `family_served`.
+- **Critic Night** (`sessionType = 'critic_night'`, Level 5+): Critic arrives 25–45s in (vs. 45–105s normally). `criticAngrySeen` flag: any customer leaving angry while critic is seated overrides good serve to poor review. Forces multi-table management. Story events: `critic_rave/poor/angry`.
+- **Birthday Night** (Level 4+): Birthday customer arrives with confetti burst. Payment triggers 3-payment ×2 chain boost. Story event: `birthday_served`.
+- **VIP Night** (Level 6+): VIP rate 10%→30%. ×2.5 payment.
+
+### Restaurant Evolution (Phase 2)
+
+Visible changes by player level:
+- Level 4+: Coffee bar station (upper right, animated steam)
+- Level 6+: Dessert display case beside pass zone
+- Level 7+: VIP velvet rope across restaurant entry
+- Level 10+: TABLE MASTER EDITION banner
+
+### Session Variety (Phase 3)
+
+- `rollSessionType()` now generates all 5 special types progressively by level
+- All 5 session types have cinematic announcements with color-coded overlays
+- `showSessionAnnouncement()` expanded from 2 to 6 session types
+
+### Player Stories (Phase 4)
+
+- `storyEvents: string[]` tracked throughout gameplay (10 event types)
+- Game Over screen displays up to 4 story lines from the shift
+- Story events: `critic_rave`, `critic_poor`, `critic_angry`, `birthday_served`, `family_served`, `business_rush`, `near_miss`, `rush_survived`, `combo_legend`, `combo_master`
+
+### New Documentation
+
+- `ALPHA_COMPLETION_REPORT.md` — detailed feature breakdown
+- `COMMERCIAL_AUDIT.md` — honest 20-point audit, competitive analysis
+- `CONTENT_PROGRESSION_PLAN.md` — Beta and beyond content roadmap
+
+---
+
 ## v1.5.0 — Final Product: Full Emoji Sweep + Visual Consistency (2026-06-07)
 
 ### Complete Emoji Elimination (10 files)

@@ -1,12 +1,46 @@
 # PROJECT STATUS
 
-**Last Updated:** 2026-06-04
-**Current Version:** v1.1.0 (Final Product Sprint)
+**Last Updated:** 2026-06-07
+**Current Version:** v2.0.0 (Final Alpha Sprint — Living Restaurant)
 
 ---
 
 ## Current Focus
-Final Product Sprint (2026-06-04) — full commercial polish pass:
+Final Alpha Sprint (2026-06-07) — Content Progression: Living Restaurant
+
+### Phase 1: Special Situations ✅
+- ✅ Business Lunch: mid-session wave of 3-4 business customers (impatient, ×1.5 tip)
+- ✅ Family Table: dessert round before checkout (×2.2 payout), announces DESSERT TIME
+- ✅ Critic Night: critic arrives early (25-45s); critic angry if any table walks out
+- ✅ Birthday Night: birthday customer triggers ×2 chain boost on next 3 payments
+- ✅ VIP Night: VIP customer rate 10%→30%
+
+### Phase 2: Restaurant Evolution ✅
+- ✅ Level 4+: Coffee bar station (upper right)
+- ✅ Level 6+: Dessert display case (pass zone right)
+- ✅ Level 7+: VIP velvet rope across entry
+- ✅ Level 10+: TABLE MASTER EDITION banner
+
+### Phase 3: Session Variety ✅
+- ✅ 5 session types with cinematic announcements: business_lunch, family_day, critic_night, birthday_night, vip_night
+- ✅ Session types unlock progressively by level (business/family: L3+, birthday: L4+, critic: L5+, vip: L6+)
+- ✅ rollSessionType() generates different distributions per level tier
+
+### Phase 4: Player Stories ✅
+- ✅ storyEvents[] tracked throughout session (10 event types)
+- ✅ GameOverScene shows up to 4 story lines describing what was unique about this shift
+
+### Documentation ✅
+- ✅ MEMORY.md updated
+- ✅ PROJECT_STATUS.md updated
+- ✅ CHANGELOG.md updated
+- ✅ ALPHA_COMPLETION_REPORT.md created
+- ✅ COMMERCIAL_AUDIT.md created
+- ✅ CONTENT_PROGRESSION_PLAN.md created
+
+---
+
+## Previously Complete: Final Product Sprint (2026-06-04)
 - ✅ Float emojis depth 19 (above player/arrows): ordered food, 😋 eating, 💳 paying, 🍽️ dirty
 - ✅ Pulsing seat ring: yellow circle marks customer position at table
 - ✅ Queue count display: "N GUESTS WAITING" updated on every queue change

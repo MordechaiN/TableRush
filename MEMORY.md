@@ -38,7 +38,9 @@ Fast-paced restaurant management game. Premium casual — think Overcooked/Good 
 
 ---
 
-## Current State: v1.5.0 — Final Product: Full Emoji Sweep + Visual Consistency
+## Current State: v2.0.0 — Final Alpha Sprint: Living Restaurant + Content Progression
+
+**Final Alpha Sprint (2026-06-07): 5 content session types fully implemented (business_lunch, family_day, critic_night, birthday_night, vip_night). Business lunch wave: 3-4 impatient customers burst at mid-session. Family table: dessert round before checkout (×2.2 payout). Critic now tracks angrySeen — any walkout during critic's visit kills the rave review. Restaurant visual evolution by level (coffee station L4, dessert display L6, VIP rope L7, TABLE MASTER banner L10). Game Over screen shows up to 4 story lines from the shift. Story events tracked: critic_rave/poor/angry, birthday_served, family_served, business_rush, near_miss, rush_survived, combo_legend/master.**
 
 **Final Product Sweep (2026-06-07): Complete emoji elimination and visual consistency pass across all 10 source files. See v1.5.0 in CHANGELOG for full details.**
 

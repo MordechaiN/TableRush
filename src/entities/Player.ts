@@ -11,7 +11,7 @@ export class Player extends Phaser.GameObjects.Container {
   private face!: Phaser.GameObjects.Graphics;
   private trayContainer: Phaser.GameObjects.Container | null = null;
   private emotionBadge: Phaser.GameObjects.Text | null = null;
-  private dirtyBadge: Phaser.GameObjects.Text | null = null;
+  private dirtyBadge: Phaser.GameObjects.Graphics | null = null;
   private walkTween: Phaser.Tweens.Tween | null = null;
   private walkAnimTimer: Phaser.Time.TimerEvent | null = null;
   private walkFrame = 0;
@@ -130,7 +130,17 @@ export class Player extends Phaser.GameObjects.Container {
 
   showDirtyDish() {
     this.dirtyBadge?.destroy();
-    this.dirtyBadge = this.scene.add.text(22, 8, '🍽️', { fontSize: '13px' }).setOrigin(0.5);
+    const g = this.scene.add.graphics();
+    // Dirty plate indicator — small grey plate with orange food smear
+    g.fillStyle(0xD8D0C4, 1);
+    g.fillCircle(22, 8, 8);
+    g.fillStyle(0xC0B8B0, 1);
+    g.fillCircle(22, 8, 6);
+    g.fillStyle(0xC08030, 0.85);
+    g.fillCircle(21, 7, 3.5);
+    g.lineStyle(1, 0xB0A898, 0.8);
+    g.strokeCircle(22, 8, 8);
+    this.dirtyBadge = g;
     this.add(this.dirtyBadge);
   }
 
@@ -174,7 +184,7 @@ export class Player extends Phaser.GameObjects.Container {
       default: this.sprite.clearTint();
     }
     const BADGES: Partial<Record<PlayerEmotion, string>> = {
-      happy: '😊', excited: '🤩', stressed: '😰', proud: '😤',
+      happy: '♡', excited: '★', stressed: '!!', proud: '✓',
     };
     const badge = BADGES[emotion];
     if (badge) {

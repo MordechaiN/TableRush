@@ -118,7 +118,7 @@ export class Customer extends Phaser.GameObjects.Container {
   }
 
   showRequestBubble() {
-    this.buildBubble('❓', 0x3498DB);
+    this.buildBubble('?', 0x3498DB);
     this.bubblePulse();
   }
 
@@ -127,7 +127,7 @@ export class Customer extends Phaser.GameObjects.Container {
   }
 
   showPayBubble(price: number) {
-    this.buildBubble(`💳 $${price}`, 0xFFD700);
+    this.buildBubble(`$${price}`, 0xFFD700);
   }
 
   showOrderFlash() {
@@ -142,7 +142,7 @@ export class Customer extends Phaser.GameObjects.Container {
   }
 
   showAngryBubble() {
-    this.buildBubble('😠', 0xF44336);
+    this.buildBubble('!!', 0xF44336);
     this.scene.tweens.add({
       targets: this.bubble, x: { from: -4, to: 4 },
       duration: 75, yoyo: true, repeat: 4,
@@ -232,10 +232,21 @@ export class Customer extends Phaser.GameObjects.Container {
     this.maxPatience = Math.floor(this.maxPatience * 0.7);
     this.patience = this.maxPatience;
 
-    const crown = this.scene.add.text(0, -105, '👑', { fontSize: '18px' }).setOrigin(0.5);
+    // VIP crown — drawn as a gold Graphics crown shape
+    const crown = this.scene.add.graphics();
+    crown.fillStyle(0xFFCC00, 1);
+    crown.fillTriangle(-10, 0, -4, -8, 0, -2);
+    crown.fillTriangle(0, -10, 4, -2, 0, -2);
+    crown.fillTriangle(4, -2, 8, -8, 12, 0);
+    crown.fillRect(-10, 0, 22, 6);
+    crown.fillStyle(0xFFEE44, 0.7);
+    crown.fillCircle(-4, -7, 2.5);
+    crown.fillCircle(1, -9, 2.5);
+    crown.fillCircle(6, -7, 2.5);
+    crown.setPosition(-6, -108);
     this.add(crown);
     this.scene.tweens.add({
-      targets: crown, y: { from: -100, to: -112 },
+      targets: crown, y: { from: -104, to: -116 },
       duration: 800, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
     });
   }

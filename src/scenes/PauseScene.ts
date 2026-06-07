@@ -17,7 +17,7 @@ export class PauseScene extends Phaser.Scene {
     panel.lineStyle(2, COLORS.UI_ORANGE);
     panel.strokeRoundedRect(cx - 160, cy - 150, 320, 300, 16);
 
-    this.add.text(cx, cy - 100, '⏸ PAUSED', {
+    this.add.text(cx, cy - 100, 'PAUSED', {
       fontSize: '32px', fontFamily: 'Arial Black', color: COLORS.TEXT_DARK, fontStyle: 'bold',
     }).setOrigin(0.5);
 
@@ -33,7 +33,7 @@ export class PauseScene extends Phaser.Scene {
       this.scene.start('GameScene');
     });
 
-    this.makeBtn(cx, cy + 130, 'MAIN MENU', 0x888888, () => {
+    this.makeBtn(cx, cy + 130, 'MAIN MENU', 0x5A3A1E, () => {
       this.scene.stop('GameScene');
       this.scene.stop();
       this.scene.start('MainMenuScene');

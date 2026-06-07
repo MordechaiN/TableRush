@@ -38,7 +38,9 @@ Fast-paced restaurant management game. Premium casual — think Overcooked/Good 
 
 ---
 
-## Current State: v1.4.0 — Art Direction Reboot
+## Current State: v1.5.0 — Final Product: Full Emoji Sweep + Visual Consistency
+
+**Final Product Sweep (2026-06-07): Complete emoji elimination and visual consistency pass across all 10 source files. See v1.5.0 in CHANGELOG for full details.**
 
 **Art Direction Reboot (2026-06-07): 5 structural visual problems fixed through design. Dark walnut hardwood plank floor replaces amber checkerboard (single most impactful change — everything pops against dark). Kitchen area gets cool slate tile floor (distinct zone grammar). Side walls get cream wainscoting lower section (terracotta upper / cream lower / mahogany chair rail / near-black baseboard). Per-table candlelight pools replace incorrectly-positioned pendant lamp pools. Service counter updated to warmer granite + brighter mahogany face. All 3 scenes updated consistently. ART_DIRECTION_REBOOT.md created with professional competitor analysis and visual design prescription.**
 

@@ -67,18 +67,18 @@ export const DIFFICULTY_TIERS = [
 // Combo milestones — five escalating stages
 export const COMBO_MILESTONES = [
   { min: 0,  multiplier: 1.0, label: '' },
-  { min: 3,  multiplier: 2.0, label: 'HOT STREAK 🔥' },
-  { min: 6,  multiplier: 3.0, label: 'ON FIRE 🔥🔥' },
-  { min: 10, multiplier: 4.0, label: '⭐ TABLE LEGEND' },
-  { min: 15, multiplier: 5.0, label: '💫 TABLE MASTER' },
+  { min: 3,  multiplier: 2.0, label: 'HOT STREAK' },
+  { min: 6,  multiplier: 3.0, label: 'ON FIRE' },
+  { min: 10, multiplier: 4.0, label: 'TABLE LEGEND' },
+  { min: 15, multiplier: 5.0, label: 'TABLE MASTER' },
 ];
 
 // Speed multiplier based on patience % remaining at delivery
 export const SPEED_MULTIPLIERS = [
-  { minPct: 0.75, multiplier: 2.0, label: '⚡⚡ LIGHTNING' },
-  { minPct: 0.50, multiplier: 1.5, label: '⚡ FAST' },
+  { minPct: 0.75, multiplier: 2.0, label: 'LIGHTNING' },
+  { minPct: 0.50, multiplier: 1.5, label: 'FAST' },
   { minPct: 0.25, multiplier: 1.0, label: '' },
-  { minPct: 0.00, multiplier: 0.75, label: '🐢 SLOW' },
+  { minPct: 0.00, multiplier: 0.75, label: 'SLOW' },
 ];
 
 export const GAME_DURATION = 180; // seconds

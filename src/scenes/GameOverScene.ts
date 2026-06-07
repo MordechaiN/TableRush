@@ -79,8 +79,8 @@ export class GameOverScene extends Phaser.Scene {
     // ── Header — cinematic entrance ───────────────────────────────────────────
     const isRecord = summary.isNewHighScore;
     const isNewBestStars = summary.isNewBestStars && !isRecord && data.stars > 1;
-    const headerText = isRecord ? '🏆 NEW RECORD!'
-      : isNewBestStars ? '⭐ PERSONAL BEST!'
+    const headerText = isRecord ? 'NEW RECORD!'
+      : isNewBestStars ? 'PERSONAL BEST!'
       : 'ROUND COMPLETE!';
     const headerColor = isRecord ? COLORS.TEXT_GOLD
       : isNewBestStars ? '#FFE066'
@@ -156,7 +156,7 @@ export class GameOverScene extends Phaser.Scene {
     if (allHappy) {
       addStat(`✓  All ${total} guests left happy`, COLORS.TEXT_GREEN);
     } else {
-      addStat(`👥  ${total} guests — ${data.customersHappy} happy · ${data.customersAngry} walked out`, '#888888');
+      addStat(`${total} guests — ${data.customersHappy} happy · ${data.customersAngry} walked out`, '#888888');
     }
 
     // Best combo — always shown
@@ -165,12 +165,12 @@ export class GameOverScene extends Phaser.Scene {
     // Fastest delivery
     if (isFinite(data.fastestDeliveryMs) && data.fastestDeliveryMs > 0) {
       const sec = (data.fastestDeliveryMs / 1000).toFixed(1);
-      addStat(`⚡  Fastest serve: ${sec}s kitchen-to-table`, '#888888');
+      addStat(`Fastest: ${sec}s kitchen-to-table`, '#888888');
     }
 
     // Close calls
     if (data.nearMissSaves > 0) {
-      addStat(`💪  ${data.nearMissSaves} close call${data.nearMissSaves > 1 ? 's' : ''} — saved`, '#CC7733');
+      addStat(`${data.nearMissSaves} close call${data.nearMissSaves > 1 ? 's' : ''} — saved`, '#CC7733');
     }
 
     // XP bar
@@ -222,7 +222,7 @@ export class GameOverScene extends Phaser.Scene {
       const lvlBg = this.add.graphics().setAlpha(0);
       lvlBg.fillStyle(0xFF9900, 1);
       lvlBg.fillRoundedRect(cx - 140, y - 16, 280, 36, 12);
-      const lvlTxt = this.add.text(cx, y + 2, `🎉  LEVEL UP  →  ${summary.levelAfter}`, {
+      const lvlTxt = this.add.text(cx, y + 2, `LEVEL UP  →  ${summary.levelAfter}`, {
         fontSize: '20px', fontFamily: 'Arial Black', color: '#FFFFFF',
       }).setOrigin(0.5).setAlpha(0).setScale(0.4);
       this.tweens.add({
@@ -264,7 +264,7 @@ export class GameOverScene extends Phaser.Scene {
         const trayBg = this.add.graphics().setAlpha(0);
         trayBg.fillStyle(0x1A4A1A, 0.9);
         trayBg.fillRoundedRect(cx - 120, y - 12, 240, 30, 8);
-        const trayUpgTxt = this.add.text(cx, y + 3, `🍽️  Tray upgraded — carry ${newTray} items!`, {
+        const trayUpgTxt = this.add.text(cx, y + 3, `Tray upgraded — carry ${newTray} items!`, {
           fontSize: '13px', fontFamily: 'Arial Black', color: '#66FF88',
         }).setOrigin(0.5).setAlpha(0);
         this.tweens.add({ targets: [trayBg, trayUpgTxt], alpha: 1, duration: 350, delay: 1900 });
@@ -338,7 +338,7 @@ export class GameOverScene extends Phaser.Scene {
     }
     if (count === 0) return '○  No streak built';
     if (count <= 2) return `↑  Best streak: ${count} serve${count > 1 ? 's' : ''}`;
-    const icon = mult >= 5.0 ? '💫' : mult >= 4.0 ? '⭐' : mult >= 3.0 ? '🔥🔥' : '🔥';
+    const icon = mult >= 5.0 ? '★' : mult >= 4.0 ? '★' : mult >= 3.0 ? '+' : '↑';
     return `${icon}  Best streak: ${count} serves → ×${mult.toFixed(1)}`;
   }
 
@@ -382,13 +382,24 @@ export class GameOverScene extends Phaser.Scene {
 
   private starBurstCelebration(cx: number, cy: number) {
     this.cameras.main.flash(220, 255, 230, 100, false);
-    const burst = ['⭐', '✨', '💫', '🌟', '⭐', '✨', '💫', '🌟', '⭐', '✨', '💫', '🌟'];
-    burst.forEach((icon, i) => {
-      const angle = (Math.PI * 2 / burst.length) * i;
+    const burstCount = 12;
+    for (let i = 0; i < burstCount; i++) {
+      const angle = (Math.PI * 2 / burstCount) * i;
       const dist = 70 + Math.random() * 40;
-      const s = this.add.text(cx, cy, icon, {
-        fontSize: `${14 + Math.floor(Math.random() * 10)}px`,
-      }).setOrigin(0.5).setDepth(50);
+      const size = 4 + Math.floor(Math.random() * 5);
+      const s = this.add.graphics().setDepth(50);
+      if (i % 3 === 0) {
+        s.fillStyle(0xFFD700, 0.9);
+        s.fillTriangle(0, -size, size * 0.6, size * 0.6, -size * 0.6, size * 0.6);
+      } else if (i % 3 === 1) {
+        s.fillStyle(0xFFEE44, 0.85);
+        s.fillCircle(0, 0, size * 0.7);
+      } else {
+        s.fillStyle(0xFFFF99, 0.8);
+        s.fillRect(-size * 0.2, -size, size * 0.4, size * 2);
+        s.fillRect(-size, -size * 0.2, size * 2, size * 0.4);
+      }
+      s.setPosition(cx, cy);
       this.tweens.add({
         targets: s,
         x: cx + Math.cos(angle) * dist,
@@ -398,9 +409,9 @@ export class GameOverScene extends Phaser.Scene {
         ease: 'Quad.easeOut',
         onComplete: () => s.destroy(),
       });
-    });
-    // Gold "PERFECT!" banner
-    const banner = this.add.text(cx, cy - 54, '✨ PERFECT SHIFT! ✨', {
+    }
+    // Gold "PERFECT SHIFT!" banner
+    const banner = this.add.text(cx, cy - 54, 'PERFECT SHIFT!', {
       fontSize: '22px', fontFamily: 'Arial Black', color: '#FFD700',
       stroke: '#000000', strokeThickness: 4,
     }).setOrigin(0.5).setDepth(50).setScale(0);

@@ -116,7 +116,6 @@ export class Table extends Phaser.GameObjects.Container {
     this.setPriority('dirty');
     this.clearSeatRing();
     this.clearPlaceDisc();
-    this.setFloatEmoji('🍽️', false);
   }
 
   setPayingGlow() { this.setGlowState('paying'); }

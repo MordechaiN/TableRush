@@ -63,7 +63,7 @@ export class MainMenuScene extends Phaser.Scene {
     shafts.fillTriangle(GAME_WIDTH - 24, 90, GAME_WIDTH - 180, 90, GAME_WIDTH - 110, 500);
 
     // ── Background table silhouettes — atmospheric restaurant backdrop ───────
-    const bgTables = this.add.graphics().setAlpha(0.22);
+    const bgTables = this.add.graphics().setAlpha(0.38);
     [[100, 590], [380, 590], [240, 730]].forEach(([tx, ty]) => {
       // Table body
       bgTables.fillStyle(0x8B4513, 1);
@@ -198,7 +198,7 @@ export class MainMenuScene extends Phaser.Scene {
     this.tweens.add({ targets: statBg, alpha: 1, duration: 350, delay: 550 });
 
     const statsGrp = [
-      this.add.text(cx - 86, statsY + 4, `🏆 ${fmtScore(prog.highScore)}`, {
+      this.add.text(cx - 86, statsY + 4, `BEST: ${fmtScore(prog.highScore)}`, {
         fontSize: '18px', fontFamily: 'Arial Black', color: COLORS.TEXT_GOLD,
       }).setOrigin(0.5).setAlpha(0),
       this.add.text(cx, statsY + 4, '|', { fontSize: '16px', color: '#CCBBAA' }).setOrigin(0.5).setAlpha(0),
@@ -210,7 +210,7 @@ export class MainMenuScene extends Phaser.Scene {
 
     if (prog.bestStars > 0) {
       let starsStr = '';
-      for (let i = 0; i < prog.bestStars; i++) starsStr += '⭐';
+      for (let i = 0; i < prog.bestStars; i++) starsStr += '★';
       const subLine = prog.totalRounds >= 3
         ? `Best: ${starsStr}  ·  ${prog.totalRounds} rounds`
         : `Best: ${starsStr}`;
@@ -238,14 +238,29 @@ export class MainMenuScene extends Phaser.Scene {
       this.tweens.add({ targets: fe, y: ey - 8, duration: 1200 + i * 150, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     });
 
-    // Ambient rising particles (steam/sparkle) — gives menu breathing life
-    const particleEmojis = ['✨', '⭐', '💫', '🌟'];
+    // Ambient rising particles — small geometric sparkles give menu breathing life
     const spawnMenuParticle = () => {
       const px = Phaser.Math.Between(30, GAME_WIDTH - 30);
       const py = GAME_HEIGHT - 40;
-      const p = this.add.text(px, py, particleEmojis[Phaser.Math.Between(0, particleEmojis.length - 1)], {
-        fontSize: `${Phaser.Math.Between(10, 18)}px`,
-      }).setOrigin(0.5).setAlpha(0).setDepth(2);
+      const size = Phaser.Math.Between(3, 7);
+      const p = this.add.graphics().setDepth(2);
+      const type = Phaser.Math.Between(0, 2);
+      if (type === 0) {
+        // Diamond
+        p.fillStyle(0xFFD700, 0.7);
+        p.fillTriangle(0, -size, size, 0, 0, size);
+        p.fillTriangle(0, -size, -size, 0, 0, size);
+      } else if (type === 1) {
+        // Circle
+        p.fillStyle(0xFFCC44, 0.6);
+        p.fillCircle(0, 0, size * 0.6);
+      } else {
+        // Cross
+        p.fillStyle(0xFFEE88, 0.65);
+        p.fillRect(-size * 0.2, -size, size * 0.4, size * 2);
+        p.fillRect(-size, -size * 0.2, size * 2, size * 0.4);
+      }
+      p.setPosition(px, py).setAlpha(0);
       this.tweens.add({
         targets: p, y: py - Phaser.Math.Between(160, 300), alpha: { from: 0.7, to: 0 },
         duration: Phaser.Math.Between(2000, 3500), ease: 'Quad.easeOut',

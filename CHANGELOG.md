@@ -1,5 +1,24 @@
 # CHANGELOG
 
+## v1.5.0 — Final Product: Full Emoji Sweep + Visual Consistency (2026-06-07)
+
+### Complete Emoji Elimination (10 files)
+
+All emoji removed or replaced with rendered graphics. Every rendering environment now shows the correct visual.
+
+- **`GameConfig.ts`**: COMBO_MILESTONES labels (`HOT STREAK 🔥→HOT STREAK`, `ON FIRE 🔥🔥→ON FIRE`, `⭐ TABLE LEGEND→TABLE LEGEND`, `💫 TABLE MASTER→TABLE MASTER`). SPEED_MULTIPLIERS labels (`⚡⚡ LIGHTNING→LIGHTNING`, `⚡ FAST→FAST`, `🐢 SLOW→SLOW`).
+- **`SettingsScene.ts`**: Old amber checkerboard floor replaced with dark walnut planks + cream wainscoting walls (matches rest of game). Header `⚙️ SETTINGS→SETTINGS`. Reset button `🗑️→plain text`.
+- **`CreditsScene.ts`**: Old amber floor/walls replaced with dark walnut + cream wainscoting. Header `🎖️ CREDITS→CREDITS`. Credit icons `🎮🤖🛠📦→✦✦✦✦`. Footer `🍽️ Made with care→Made with care`.
+- **`PauseScene.ts`**: `⏸ PAUSED→PAUSED`. MAIN MENU button color `0x888888→0x5A3A1E` (dark mahogany — no longer looks disabled).
+- **`GameScene.ts`**: Redundant tableGlow circle (inside TABLE_POSITIONS.forEach) removed — per-table candlelight pools already handle this. Combo HUD `🔥 ×2.0→×2`, `🔥🔥 ×3.0→×3`, `⭐ ×4.0→×4`, `💫 ×5.0→×5`. Queue footprints `👣→drawn Graphics ovals`. Pause button `⏸→||`. Tutorial step icons `['🪑','📋','🍳','🍽️','😋','🧹','🚿']→['1','2','3','4','5','6','7']`. All showFloating() calls de-emojied. table.setFloatEmoji `'😋'→'♡'`, `'💳'→'$'`. spawnStarBurst uses Graphics instead of `⭐` text. triggerCelebration confetti uses Graphics. Rush hour banner `⚡ RUSH HOUR ⚡→RUSH HOUR`.
+- **`MainMenuScene.ts`**: Background table silhouettes alpha `0.22→0.38` (visible on dark floor). `🏆 BEST SCORE→BEST:`. `⭐→★` in best-stars display. Ambient particles: emoji array replaced with drawn Graphics shapes (diamonds, circles, crosses).
+- **`GameOverScene.ts`**: Headers `🏆 NEW RECORD!→NEW RECORD!`, `⭐ PERSONAL BEST!→PERSONAL BEST!`. Stats: `👥` removed, `⚡` removed, `💪` removed. Level-up `🎉 LEVEL UP→LEVEL UP`. Tray upgrade `🍽️` removed. Combo icons `💫/⭐/🔥🔥/🔥→★/★/+/↑`. Star burst uses Graphics instead of emoji. `✨ PERFECT SHIFT! ✨→PERFECT SHIFT!`.
+- **`Customer.ts`**: Bubbles `❓→?`, `💳 $price→$price`, `😠→!!`. VIP crown `👑→drawn Graphics crown shape`.
+- **`Player.ts`**: Dirty badge `🍽️→drawn Graphics plate (grey disc with orange smear)`. Emotion badges `😊🤩😰😤→♡★!!✓`.
+- **`Table.ts`**: `setDirty()` no longer calls `setFloatEmoji('🍽️')` — dirt overlay already communicates state.
+
+---
+
 ## v1.4.0 — Art Direction Reboot (2026-06-07)
 
 ### 5 Structural Visual Problems Fixed Through Design (Not Scale)

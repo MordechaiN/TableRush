@@ -588,10 +588,7 @@ export class GameScene extends Phaser.Scene {
       pLamp.fillTriangle(pos.x - 11, pShadeY + 4, pos.x + 11, pShadeY + 4, pos.x + 6, pShadeY + 18); // shade body
       pLamp.fillStyle(0xFFCC44, 0.45);
       pLamp.fillTriangle(pos.x - 7, pShadeY + 4, pos.x + 7, pShadeY + 4, pos.x + 3, pShadeY + 16);   // warm inner glow
-      // Soft warm light pool on the floor beneath
-      const tableGlow = this.add.graphics().setDepth(0);
-      tableGlow.fillStyle(0xFF9933, 0.065);
-      tableGlow.fillCircle(pos.x, pos.y, 60);
+      // (candlelight pools handled by per-table ellipses after this loop)
     });
 
     // ── Dishwasher station (left wall, below kitchen) ─────────────────────────
@@ -695,11 +692,14 @@ export class GameScene extends Phaser.Scene {
     queueZone.fillRoundedRect(100, GAME_HEIGHT - 115, 240, 50, 8);
     queueZone.lineStyle(2, 0xBBAA44, 0.7);
     queueZone.strokeRoundedRect(100, GAME_HEIGHT - 115, 240, 50, 8);
-    // Footprint icons
-    ['👣', '👣'].forEach((icon, i) => {
-      this.add.text(175 + i * 90, GAME_HEIGHT - 98, icon, {
-        fontSize: '16px',
-      }).setOrigin(0.5).setDepth(0).setAlpha(0.55);
+    // Footprint markers — drawn as simple shoe-shaped ovals
+    [175, 265].forEach((fx, i) => {
+      const fp = this.add.graphics().setDepth(0).setAlpha(0.45);
+      fp.fillStyle(0xCCBB88, 1);
+      // Heel
+      fp.fillEllipse(fx + (i === 1 ? 4 : -4), GAME_HEIGHT - 100, 10, 14);
+      // Toe
+      fp.fillEllipse(fx + (i === 1 ? -2 : 2), GAME_HEIGHT - 91, 8, 10);
     });
 
     // Rush hour overlay (hidden by default — subtle full-screen red warmth during rush)
@@ -740,7 +740,7 @@ export class GameScene extends Phaser.Scene {
     }).setOrigin(0.5, 0.5).setDepth(4);
 
     if (!this.sys.game.device.input.touch) {
-      const pauseBtn = this.add.text(GAME_WIDTH - 16, 28, '⏸', {
+      const pauseBtn = this.add.text(GAME_WIDTH - 16, 28, '||', {
         fontSize: '17px', color: 'rgba(255,255,255,0.75)',
       }).setOrigin(1, 0.5).setInteractive({ useHandCursor: true }).setDepth(5);
       pauseBtn.on('pointerdown', () => { SoundManager.uiClick(); this.pauseGame(); });
@@ -867,7 +867,7 @@ export class GameScene extends Phaser.Scene {
     const tier = this.getDifficultyTier(elapsed);
     this.score = Math.max(0, this.score - Math.floor(tier.penalty * 0.5));
     this.scoreTxt.setText(`$  ${fmtScore(this.score)}`);
-    this.showFloating('Left! 😡', customer.x, customer.y - 50, COLORS.TEXT_RED);
+    this.showFloating('Left!', customer.x, customer.y - 50, COLORS.TEXT_RED);
     this.cameras.main.shake(100, 0.002);
     this.resetCombo();
 
@@ -976,7 +976,7 @@ export class GameScene extends Phaser.Scene {
         this.timeTxt.setText(`${m}:${s.toString().padStart(2, '0')}`);
         // Final-minute callout at the tier-3 transition (guests are least patient now)
         if (remaining <= 60 && remaining > 59) {
-          this.showFloating('🌶️ Final minute!', GAME_WIDTH / 2, 90, COLORS.TEXT_ORANGE);
+          this.showFloating('Final minute!', GAME_WIDTH / 2, 90, COLORS.TEXT_ORANGE);
           // Amber timer pill — visual warning before red at 30s
           this.hudTimerPill.clear();
           this.hudTimerPill.fillStyle(0xCC6600, 0.92);
@@ -990,7 +990,7 @@ export class GameScene extends Phaser.Scene {
             this.hudTimerPill.fillStyle(0x8B1010, 0.95);
             this.hudTimerPill.fillRoundedRect(GAME_WIDTH - 156, 7, 148, 42, 10);
             this.timeTxt.setColor('#FF6666');
-            this.showFloating('⏰ 30s LEFT!', GAME_WIDTH / 2, GAME_HEIGHT / 2 - 40, COLORS.TEXT_RED);
+            this.showFloating('30s LEFT!', GAME_WIDTH / 2, GAME_HEIGHT / 2 - 40, COLORS.TEXT_RED);
             this.cameras.main.shake(150, 0.003);
             SoundManager.timerWarning();
           }
@@ -1377,7 +1377,7 @@ export class GameScene extends Phaser.Scene {
       table.clearFloatEmoji();
       // Eating indicator — "leave me alone" signal
       this.time.delayedCall(600, () => {
-        if (customer.state === 'eating') table.setFloatEmoji('😋', true);
+        if (customer.state === 'eating') table.setFloatEmoji('♡', true);
       });
 
       this.tray.drop(orderId);
@@ -1402,7 +1402,7 @@ export class GameScene extends Phaser.Scene {
       if (customer.patienceAtDelivery < 0.08) {
         this.nearMissSaves++;
         SoundManager.nearMiss();
-        this.showFloating('💪 CLOSE CALL!', table.x, table.y - 85, '#FF4444');
+        this.showFloating('CLOSE CALL!', table.x, table.y - 85, '#FF4444');
       }
 
       if (speedMult > 1) {
@@ -1426,7 +1426,7 @@ export class GameScene extends Phaser.Scene {
         table.setStateVisual('bill');
         table.setPayingGlow();
         table.setPriority('paying');
-        table.setFloatEmoji('💳', true);
+        table.setFloatEmoji('$', true);
 
         if (this.tutorialActive && this.tutorialStep === 3) {
           this.advanceTutorial();
@@ -1454,7 +1454,7 @@ export class GameScene extends Phaser.Scene {
       this.cameras.main.shake(80, 0.003);
 
       const paySize = this.comboMultiplier >= 5 ? 2.0 : this.comboMultiplier >= 4 ? 1.7 : this.comboMultiplier >= 3 ? 1.4 : 1.2;
-      this.showFloating(`💰 $${payScore}`, table.x, table.y - 50, COLORS.TEXT_GOLD, paySize);
+      this.showFloating(`$${payScore}`, table.x, table.y - 50, COLORS.TEXT_GOLD, paySize);
       this.spawnCoins(table.x, table.y);
 
       // XP preview (actual XP saved at end-of-round)
@@ -1465,7 +1465,7 @@ export class GameScene extends Phaser.Scene {
 
       if (customer.isVIP) {
         this.time.delayedCall(200, () => {
-          this.showFloating('⭐ VIP! ×2.5', table.x, table.y - 100, COLORS.TEXT_GOLD, 1.3);
+          this.showFloating('VIP! ×2.5', table.x, table.y - 100, COLORS.TEXT_GOLD, 1.3);
           this.cameras.main.flash(180, 255, 220, 0, false);
         });
       }
@@ -1476,7 +1476,7 @@ export class GameScene extends Phaser.Scene {
 
       if (customer.patienceAtDelivery >= 0.75) {
         this.time.delayedCall(300, () => {
-          this.showFloating('⭐ PERFECT!', table.x, table.y - 95, COLORS.TEXT_GOLD, 1.1);
+          this.showFloating('PERFECT!', table.x, table.y - 95, COLORS.TEXT_GOLD, 1.1);
         });
       }
 
@@ -1521,7 +1521,7 @@ export class GameScene extends Phaser.Scene {
       this.carryingDirty = true;
       this.player.showDirtyDish();
       this.setDishwasherGlowPrimary(true);
-      this.showFloating('🧹 CLEAR!', savedTableX, savedTableY - 40, COLORS.TEXT_ORANGE, 1.3);
+      this.showFloating('CLEAR!', savedTableX, savedTableY - 40, COLORS.TEXT_ORANGE, 1.3);
       this.spawnCleanBurst(savedTableX, savedTableY);
       this.playerBusy = false;
 
@@ -1546,7 +1546,7 @@ export class GameScene extends Phaser.Scene {
       this.player.hideDirtyDish();
       this.setDishwasherGlowPrimary(false);
       this.updateSeatingArrows();
-      this.showFloating('✨ CLEAN!', 80, 165, COLORS.TEXT_GREEN, 1.3);
+      this.showFloating('CLEAN!', 80, 165, COLORS.TEXT_GREEN, 1.3);
       this.cameras.main.flash(80, 120, 255, 120, false);
       this.spawnDishwasherSteam();
       SoundManager.dishwasher();
@@ -1578,7 +1578,7 @@ export class GameScene extends Phaser.Scene {
     SoundManager.rushHour();
 
     // Big banner slam — red, bold, screen-covering for 1 frame then settles
-    const banner = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 80, '⚡ RUSH HOUR ⚡', {
+    const banner = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 80, 'RUSH HOUR', {
       fontSize: '40px', fontFamily: 'Arial Black', color: '#FF3322',
       stroke: '#000000', strokeThickness: 6,
     }).setOrigin(0.5).setDepth(40).setScale(0);
@@ -1612,7 +1612,7 @@ export class GameScene extends Phaser.Scene {
       targets: this.rushHourOverlay, alpha: 0,
       duration: 1000, ease: 'Quad.easeOut',
     });
-    this.showFloating('😌 Rush is over', GAME_WIDTH / 2, GAME_HEIGHT / 2 - 30, '#88CCFF');
+    this.showFloating('Rush is over', GAME_WIDTH / 2, GAME_HEIGHT / 2 - 30, '#88CCFF');
   }
 
   private spawnDishwasherSteam() {
@@ -1652,7 +1652,7 @@ export class GameScene extends Phaser.Scene {
     if (!this.newRecordAnnounced && this.prevHighScore > 0 && this.score > this.prevHighScore) {
       this.newRecordAnnounced = true;
       this.cameras.main.flash(180, 255, 215, 0, false);
-      this.showFloating('🏆 NEW RECORD!', GAME_WIDTH / 2, GAME_HEIGHT / 2, COLORS.TEXT_GOLD, 1.2);
+      this.showFloating('NEW RECORD!', GAME_WIDTH / 2, GAME_HEIGHT / 2, COLORS.TEXT_GOLD, 1.2);
     }
   }
 
@@ -1714,10 +1714,10 @@ export class GameScene extends Phaser.Scene {
     this.player.celebrateCombo(this.comboCount);
     if (this.comboCount === 15) {
       this.cameras.main.shake(350, 0.013);
-      this.triggerCelebration('💫 TABLE MASTER! 💫', '#FFD700');
+      this.triggerCelebration('TABLE MASTER!', '#FFD700');
     } else if (this.comboCount === 10) {
       this.cameras.main.shake(250, 0.009);
-      this.triggerCelebration('⭐ TABLE LEGEND! ⭐', COLORS.TEXT_GOLD);
+      this.triggerCelebration('TABLE LEGEND!', COLORS.TEXT_GOLD);
     } else if (this.comboCount === 6) {
       this.spawnStarBurst(this.player.x, this.player.y - 20);
     }
@@ -1730,7 +1730,7 @@ export class GameScene extends Phaser.Scene {
     this.comboMultiplier = 1.0;
     if (wasCombo) {
       SoundManager.comboLost();
-      this.showFloating(`💔 ×${lostMult.toFixed(1)} LOST!`, GAME_WIDTH / 2, 80, '#FF4444');
+      this.showFloating(`×${lostMult.toFixed(1)} LOST!`, GAME_WIDTH / 2, 80, '#FF4444');
       this.comboTxt.setStyle({ color: '#FF4444' });
       // Flash the progress bar red, then clear it
       this.comboProgressGfx.clear();
@@ -1775,19 +1775,19 @@ export class GameScene extends Phaser.Scene {
       this.comboTxt.setStyle({ color: '#D4A85A', fontSize: '15px', fontFamily: 'Arial Black' });
       this.drawComboPill(0xD4A849, 0.28);
     } else if (m <= 2.0) {
-      this.comboTxt.setText('🔥 ×2.0');
+      this.comboTxt.setText('×2');
       this.comboTxt.setStyle({ color: '#FF8C42', fontSize: '17px', fontFamily: 'Arial Black' });
       this.drawComboPill(0xFF8C42, 0.35);
     } else if (m <= 3.0) {
-      this.comboTxt.setText('🔥🔥 ×3.0');
+      this.comboTxt.setText('×3');
       this.comboTxt.setStyle({ color: '#FF5722', fontSize: '19px', fontFamily: 'Arial Black' });
       this.drawComboPill(0xFF5722, 0.42);
     } else if (m <= 4.0) {
-      this.comboTxt.setText('⭐ ×4.0');
+      this.comboTxt.setText('×4');
       this.comboTxt.setStyle({ color: '#E91E63', fontSize: '20px', fontFamily: 'Arial Black' });
       this.drawComboPill(0xE91E63, 0.48);
     } else {
-      this.comboTxt.setText('💫 ×5.0');
+      this.comboTxt.setText('×5');
       this.comboTxt.setStyle({ color: '#FFD700', fontSize: '22px', fontFamily: 'Arial Black' });
       this.drawComboPill(0xFFD700, 0.55);
     }
@@ -2052,7 +2052,7 @@ export class GameScene extends Phaser.Scene {
 
     this.score = Math.max(0, this.score - penalty);
     this.scoreTxt.setText(`$  ${fmtScore(this.score)}`);
-    this.showFloating(`-${penalty} 😠`, customer.x, customer.y - 40, COLORS.TEXT_RED);
+    this.showFloating(`-${penalty}`, customer.x, customer.y - 40, COLORS.TEXT_RED);
     this.cameras.main.shake(200, 0.004);
     this.player.reactToAngry();
 
@@ -2128,10 +2128,10 @@ export class GameScene extends Phaser.Scene {
     bg.lineStyle(1, 0xE0C898, 0.7);
     bg.strokeRoundedRect(cardX, cardY - 28, cardW, cardH, radius);
 
-    // Step icon (emoji) on left margin
-    const stepEmojis = ['🪑', '📋', '🍳', '🍽️', '😋', '🧹', '🚿'];
-    const icon = this.add.text(cardX + 19, cardY - 2, stepEmojis[step] ?? '⭐', {
-      fontSize: '20px',
+    // Step number on left margin
+    const stepLabels = ['1', '2', '3', '4', '5', '6', '7'];
+    const icon = this.add.text(cardX + 19, cardY - 2, stepLabels[step] ?? '★', {
+      fontSize: '18px', fontFamily: 'Arial Black', color: '#D4821A',
     }).setOrigin(0.5);
 
     // Instruction text — dark ink on cream
@@ -2221,7 +2221,7 @@ export class GameScene extends Phaser.Scene {
     this.clearTutorialSpotlight();
     ProgressionSystem.markTutorialDone();
 
-    const successTxt = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 60, "✅  You're all set!", {
+    const successTxt = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 60, "You're all set!", {
       fontSize: '28px', fontFamily: 'Arial Black', color: '#66FF99',
       stroke: '#003300', strokeThickness: 5,
     }).setOrigin(0.5).setDepth(55).setScale(0);
@@ -2370,7 +2370,13 @@ export class GameScene extends Phaser.Scene {
   private spawnStarBurst(x: number, y: number) {
     for (let i = 0; i < 8; i++) {
       const angle = (Math.PI * 2 / 8) * i;
-      const star = this.add.text(x, y, '⭐', { fontSize: '14px' }).setOrigin(0.5).setDepth(30);
+      const star = this.add.graphics().setDepth(30);
+      star.fillStyle(0xFFD700, 0.9);
+      star.fillTriangle(0, -7, 3, -2, -3, -2);
+      star.fillTriangle(-7, 3, 0, 0, 7, 3);
+      star.fillStyle(0xFFEE44, 0.7);
+      star.fillCircle(0, 0, 3);
+      star.setPosition(x, y);
       this.tweens.add({
         targets: star,
         x: x + Math.cos(angle) * 55,
@@ -2382,7 +2388,7 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  private triggerCelebration(message = '🌟 TABLE LEGEND! 🌟', color = COLORS.TEXT_GOLD) {
+  private triggerCelebration(message = 'TABLE LEGEND!', color = COLORS.TEXT_GOLD) {
     this.cameras.main.flash(300, 255, 230, 100, false);
 
     // Big announcement text with stroke
@@ -2407,14 +2413,18 @@ export class GameScene extends Phaser.Scene {
       },
     });
 
-    // Confetti burst
+    // Confetti burst — small geometric shapes
     for (let i = 0; i < 22; i++) {
       const sx = Phaser.Math.Between(30, GAME_WIDTH - 30);
       const sy = Phaser.Math.Between(GAME_HEIGHT / 4, GAME_HEIGHT * 3 / 4);
-      const icons = ['⭐', '✨', '🌟', '💫'];
-      const star = this.add.text(sx, sy, icons[i % icons.length], {
-        fontSize: `${Phaser.Math.Between(16, 26)}px`,
-      }).setOrigin(0.5).setDepth(35).setAlpha(0.9);
+      const size = Phaser.Math.Between(5, 10);
+      const star = this.add.graphics().setDepth(35).setAlpha(0.9);
+      const type = i % 4;
+      if (type === 0) { star.fillStyle(0xFFD700, 1); star.fillTriangle(0, -size, size * 0.6, size * 0.6, -size * 0.6, size * 0.6); }
+      else if (type === 1) { star.fillStyle(0xFFEE88, 1); star.fillCircle(0, 0, size * 0.6); }
+      else if (type === 2) { star.fillStyle(0xFFCC22, 1); star.fillRect(-size * 0.2, -size, size * 0.4, size * 2); star.fillRect(-size, -size * 0.2, size * 2, size * 0.4); }
+      else { star.fillStyle(0xFFFF99, 1); star.fillRect(-size * 0.5, -size * 0.5, size, size); }
+      star.setPosition(sx, sy);
       this.tweens.add({
         targets: star, y: sy - Phaser.Math.Between(100, 180), alpha: 0,
         angle: Phaser.Math.Between(-180, 180),

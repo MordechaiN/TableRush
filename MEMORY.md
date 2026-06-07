@@ -38,7 +38,9 @@ Fast-paced restaurant management game. Premium casual — think Overcooked/Good 
 
 ---
 
-## Current State: v1.2.0 — Visual Art Overhaul
+## Current State: v1.3.0 — Commercial Visual Polish
+
+**Visual Overhaul Phase 4+6 (2026-06-07): Top 5 visual problems fixed completely. Table texture redesigned — ivory linen tablecloth (0xF5F0E8) replaces red/white checkerboard. Table overlay updated to match. Dining rug removed (it looked like a hitbox indicator). Kitchen zone labels now bold styled ("COOKING"/"READY", 16px, Arial Black, gold/green). Score display "$ 0" gold instead of emoji. Combo baseline "×1" warm gold instead of dead gray. SVG plant decorations: potted_plant.svg and herb_plant.svg replace 🪴/🌿 emoji at all 4 corners. Main menu plate badge replaced from 🍽️ emoji to plate_badge.svg.**
 
 **Visual Art Overhaul (2026-06-05): Complete SVG art pipeline. All emoji food removed. 17 SVG assets: 5 food items (salad/burger/pasta/sushi/pizza), 7 customer characters (Elegant/Business/Casual/Trendy/Romantic/Elder/Teen), 2 waiter sprites (standing/walking). BootScene.preload() loads all SVGs. Food images replace emoji in: order bubbles, tray, kitchen tickets, cooking pots, ready plates, READY pop, delivery burst, table float, menu strip, main menu. CarrySlot.itemId added. Player.showTray() now accepts item IDs.**
 
@@ -142,6 +144,22 @@ All design decisions must support the player's sense of EARNED COMPETENCE.
 3. Last-second save theater (<8% patience → flashing bar + "CLOSE CALL!" peak moment)
 4. Yesterday's score on main menu ("LAST SESSION: 2,840 — beat it?")
 5. Shift report end screen (narrative summary of session highlights)
+
+### SVG Decoration Assets
+- `public/assets/decorations/potted_plant.svg` — terracotta pot with green plant (48×64)
+- `public/assets/decorations/herb_plant.svg` — small herb plant in brown pot (32×36)
+- `public/assets/icons/plate_badge.svg` — plate with fork+knife, gold/cream (48×48)
+- BootScene preloads all three; GameScene places potted_plant at entrance corners and herb_plant at kitchen sides; MainMenuScene uses plate_badge on logo card
+
+### Visual Overhaul — Key Config Values
+- `TABLE_CLOTH: 0xF5F0E8` (warm linen ivory — GameConfig.ts)
+- Table texture: 110×76 ivory linen, no checkerboard, two place-setting ring pairs
+- Table overlay (depth 16): matching ivory, drawn in GameScene per table
+- Dining rug: REMOVED (was muddy oval 0x8B1A2A at alpha 0.22)
+- Kitchen "COOKING" label: 16px Arial Black, color #FFAA33
+- Kitchen "READY" label: 16px Arial Black, color #44DD77
+- Score text: `'$  0'` gold #FFD700 (was `'🍽️  0'`)
+- Combo baseline text: `'×1'` color #D4AA55 (warm gold, not dead gray)
 
 ### Visual Reboot Direction
 Chosen direction: **Stylized Cartoon** (Direction C)

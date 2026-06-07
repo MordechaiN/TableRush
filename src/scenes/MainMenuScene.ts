@@ -58,8 +58,8 @@ export class MainMenuScene extends Phaser.Scene {
       // Table body
       bgTables.fillStyle(0x8B4513, 1);
       bgTables.fillRoundedRect(tx - 52, ty - 30, 104, 60, 8);
-      // Tablecloth (matches in-game burgundy)
-      bgTables.fillStyle(0x9B1C2A, 1);
+      // Tablecloth (matches in-game linen ivory)
+      bgTables.fillStyle(0xF5F0E8, 1);
       bgTables.fillRoundedRect(tx - 48, ty - 28, 96, 48, 6);
       // Chair silhouettes
       bgTables.fillStyle(0x5C3317, 1);
@@ -80,8 +80,8 @@ export class MainMenuScene extends Phaser.Scene {
     this.tweens.add({ targets: logoBg, alpha: 1, duration: 500, ease: 'Quad.easeOut' });
 
     // Restaurant badge icon
-    const badge = this.add.text(cx, logoY + 12, '🍽️', { fontSize: '36px' })
-      .setOrigin(0.5).setAlpha(0);
+    const badge = this.add.image(cx, logoY + 12, 'plate_badge')
+      .setOrigin(0.5).setScale(0.75).setAlpha(0);
     this.tweens.add({ targets: badge, alpha: 1, y: logoY + 6, duration: 400, delay: 150, ease: 'Back.easeOut' });
 
     // "TABLE" word

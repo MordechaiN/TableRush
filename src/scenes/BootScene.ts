@@ -15,48 +15,47 @@ export class BootScene extends Phaser.Scene {
     this.load.svg('food_2', 'assets/food/pasta.svg', { width: 48, height: 48 });
     this.load.svg('food_3', 'assets/food/sushi.svg', { width: 48, height: 48 });
     this.load.svg('food_4', 'assets/food/pizza.svg', { width: 48, height: 48 });
+    this.load.svg('potted_plant', 'assets/decorations/potted_plant.svg', { width: 48, height: 64 });
+    this.load.svg('herb_plant', 'assets/decorations/herb_plant.svg', { width: 32, height: 36 });
+    this.load.svg('plate_badge', 'assets/icons/plate_badge.svg', { width: 48, height: 48 });
   }
 
   private createTextures() {
     const g = this.make.graphics({ x: 0, y: 0 });
 
-    // ─── TABLE (mahogany + checkered linen) ───────────────────────────────────
+    // ─── TABLE (mahogany + clean linen cloth) ─────────────────────────────────
     g.clear();
-    // Mahogany body
+    // Mahogany outer body
     g.fillStyle(COLORS.TABLE_BODY);
     g.fillRoundedRect(0, 0, 110, 76, 12);
-    // Table top
+    // Table top surface
     g.fillStyle(COLORS.TABLE_TOP);
     g.fillRoundedRect(2, 2, 106, 72, 10);
-    // Tablecloth base
+    // Clean linen tablecloth (no pattern — solid ivory)
     g.fillStyle(COLORS.TABLE_CLOTH);
     g.fillRoundedRect(8, 6, 94, 64, 8);
-    // Subtle damask-style pattern (alternating darker squares)
-    const cSize = 8;
-    for (let row = 0; row < 8; row++) {
-      for (let col = 0; col < 12; col++) {
-        if ((row + col) % 2 === 0) {
-          g.fillStyle(0x7A1520, 0.38);
-          g.fillRect(9 + col * cSize, 7 + row * cSize, cSize, cSize);
-        }
-      }
-    }
-    // Cloth border detail
-    g.lineStyle(1.5, 0xCC3344, 0.5);
-    g.strokeRoundedRect(11, 9, 88, 58, 6);
-    // Place setting circles (white on burgundy)
-    g.fillStyle(0xFFFFFF, 0.18);
-    g.fillCircle(32, 38, 17);
-    g.fillCircle(78, 38, 17);
-    g.lineStyle(1, 0xFFDDDD, 0.35);
-    g.strokeCircle(32, 38, 17);
-    g.strokeCircle(78, 38, 17);
-    // Center crease
-    g.lineStyle(0.5, 0xCC2233, 0.4);
-    g.lineBetween(55, 10, 55, 66);
-    // Cloth highlight
-    g.fillStyle(0xFFFFFF, 0.12);
-    g.fillRoundedRect(12, 10, 38, 5, 3);
+    // Cloth top highlight (subtle linen sheen)
+    g.fillStyle(0xFFFFFF, 0.40);
+    g.fillRoundedRect(10, 8, 44, 5, 3);
+    // Cloth bottom shadow
+    g.fillStyle(0x000000, 0.06);
+    g.fillRoundedRect(8, 62, 94, 8, { tl: 0, tr: 0, bl: 8, br: 8 });
+    // Cloth border stitching (thin elegant line)
+    g.lineStyle(1, 0xD8CCBA, 0.8);
+    g.strokeRoundedRect(10, 8, 90, 60, 7);
+    // Place setting: left plate (ring only — no fill)
+    g.lineStyle(1.5, 0xC8BCA8, 0.9);
+    g.strokeCircle(32, 38, 14);
+    g.lineStyle(1, 0xD8D0C0, 0.6);
+    g.strokeCircle(32, 38, 10);
+    // Place setting: right plate
+    g.lineStyle(1.5, 0xC8BCA8, 0.9);
+    g.strokeCircle(78, 38, 14);
+    g.lineStyle(1, 0xD8D0C0, 0.6);
+    g.strokeCircle(78, 38, 10);
+    // Center candle holder dot
+    g.fillStyle(0xBEAE90, 0.5);
+    g.fillCircle(55, 38, 3);
     g.generateTexture('table', 110, 76);
 
     // ─── CHAIR (top-down: backrest at top, seat below, front legs at base) ────

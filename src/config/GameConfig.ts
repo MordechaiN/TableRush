@@ -11,7 +11,7 @@ export const COLORS = {
   // Table
   TABLE_BODY:    0x8B4513,
   TABLE_TOP:     0xA0522D,
-  TABLE_CLOTH:   0x9B1C2A,  // deep restaurant burgundy
+  TABLE_CLOTH:   0xF5F0E8,  // warm linen ivory
   CHAIR:         0x5C3317,
 
   // Characters

@@ -1,5 +1,26 @@
 # CHANGELOG
 
+## v1.3.0 — Commercial Visual Polish (2026-06-07)
+
+### Phase 4 — Top 5 Visual Problems Fixed
+
+- **Table cloth** (`GameConfig.ts`, `BootScene.ts`, `GameScene.ts`): Replaced red/white checkerboard (0x9B1C2A) with clean ivory linen (0xF5F0E8). Table texture redesigned — solid tablecloth, place-setting rings, linen edge stitching detail. Table overlay (depth-16 seated illusion) updated to exact match.
+- **Dining rug removed** (`GameScene.ts`): Deleted the muddy burgundy oval that looked like a hitbox/zone indicator. Floor now reads cleanly as a tiled restaurant floor.
+- **Kitchen zone labels** (`GameScene.ts`): "COOKING" and "READY" labels upgraded to 16px Arial Black, #FFAA33 gold and #44DD77 green respectively. Previously 13px with fire/checkmark emoji.
+- **Score display** (`GameScene.ts`): Changed from `'🍽️  0'` to `'$  0'` in gold #FFD700. All `setText` calls updated to match. Score now reads as money, not a food item.
+- **Combo baseline** (`GameScene.ts`): Changed from `'×1.0'` dead gray to `'×1'` warm gold #D4AA55 with matching pill background. Combo meter feels alive even at minimum, not disabled.
+
+### Phase 6 — Placeholder Asset Replacement
+
+- **`public/assets/decorations/potted_plant.svg`** (NEW): Terracotta pot with lush green plant, 48×64 viewBox. Replaces 🪴 emoji at both entrance corners in GameScene.
+- **`public/assets/decorations/herb_plant.svg`** (NEW): Small herb plant in brown pot, 32×36 viewBox. Replaces 🌿 emoji at both kitchen sides in GameScene.
+- **`public/assets/icons/plate_badge.svg`** (NEW): Plate with fork left and knife right, gold/cream, 48×48 viewBox. Replaces 🍽️ emoji in MainMenuScene logo card.
+- **`BootScene.ts`**: Added preload calls for all 3 new SVGs.
+- **`GameScene.ts`**: Replaced `this.add.text(28, ..., '🪴')` / `'🌿'` with `this.add.image(..., 'potted_plant')` / `'herb_plant'` at all 4 corners.
+- **`MainMenuScene.ts`**: Background table silhouettes updated to `0xF5F0E8` (was `0x9B1C2A`). Logo badge upgraded from emoji text to `this.add.image(..., 'plate_badge')`.
+
+---
+
 ## Visual Art Overhaul — Phase A+B+C+D (2026-06-05)
 
 ### SVG Asset Pipeline — Complete

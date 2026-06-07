@@ -194,16 +194,6 @@ export class GameScene extends Phaser.Scene {
     diningArea.lineStyle(1.5, 0xAA7030, 0.1);
     diningArea.strokeRoundedRect(18, 188, GAME_WIDTH - 36, 450, 8);
 
-    // Decorative dining rug — warm burgundy oval with gold border, adds restaurant feel
-    const rug = this.add.graphics().setDepth(0.2);
-    rug.fillStyle(0x8B1A2A, 0.22);
-    rug.fillEllipse(GAME_WIDTH / 2, 430, 320, 380);
-    // Rug border (inner gold band)
-    rug.lineStyle(3, 0xC8902A, 0.28);
-    rug.strokeEllipse(GAME_WIDTH / 2, 430, 320, 380);
-    rug.lineStyle(1.5, 0xC8902A, 0.16);
-    rug.strokeEllipse(GAME_WIDTH / 2, 430, 300, 356);
-
     // ── Walls ─────────────────────────────────────────────────────────────────
     this.add.rectangle(GAME_WIDTH / 2, 0, GAME_WIDTH, 90, COLORS.WALL_ACCENT);
     // Wainscoting detail
@@ -425,8 +415,8 @@ export class GameScene extends Phaser.Scene {
     });
 
     // COOKING label
-    this.add.text(KITCHEN_X / 2, KITCHEN_Y - 22, '🔥 COOKING', {
-      fontSize: '13px', fontFamily: 'Arial Black', color: '#FFBB55', letterSpacing: 1,
+    this.add.text(KITCHEN_X / 2, KITCHEN_Y - 20, 'COOKING', {
+      fontSize: '16px', fontFamily: 'Arial Black', color: '#FFAA33', letterSpacing: 2,
     }).setOrigin(0.5).setDepth(4);
 
     // ── PASS / READY ZONE (right half) ──────────────────────────────────────
@@ -458,8 +448,8 @@ export class GameScene extends Phaser.Scene {
     heatPool.fillRoundedRect(KITCHEN_X + 8, KITCHEN_Y - 24, GAME_WIDTH - KITCHEN_X - 16, 58, { tl: 0, tr: 4, bl: 0, br: 4 });
 
     // READY label
-    this.add.text(KITCHEN_X + (GAME_WIDTH - KITCHEN_X) / 2, KITCHEN_Y - 22, '✅ READY', {
-      fontSize: '13px', fontFamily: 'Arial Black', color: '#44DD77', letterSpacing: 1,
+    this.add.text(KITCHEN_X + (GAME_WIDTH - KITCHEN_X) / 2, KITCHEN_Y - 20, 'READY', {
+      fontSize: '16px', fontFamily: 'Arial Black', color: '#44DD77', letterSpacing: 2,
     }).setOrigin(0.5).setDepth(4);
 
     // Zone divider — amber gold chrome strip
@@ -522,29 +512,21 @@ export class GameScene extends Phaser.Scene {
       // Table top inner bevel
       overlay.fillStyle(COLORS.TABLE_TOP, 1);
       overlay.fillRoundedRect(tx + 2, ty + 33, 106, 41, { tl: 0, tr: 0, bl: 10, br: 10 });
-      // Tablecloth (texture rows 33–70 → world pos.y-5 to pos.y+32)
+      // Tablecloth (clean linen ivory — bottom half of table)
       overlay.fillStyle(COLORS.TABLE_CLOTH, 1);
       overlay.fillRoundedRect(tx + 8, ty + 33, 94, 35, { tl: 0, tr: 0, bl: 8, br: 8 });
-      // Checkered linen pattern (rows 3–7 of the 8-row grid)
-      const cSize = 8;
-      for (let row = 3; row < 8; row++) {
-        for (let col = 0; col < 12; col++) {
-          if ((row + col) % 2 === 0) {
-            overlay.fillStyle(0xEEE8DF, 0.5);
-            overlay.fillRect(tx + 9 + col * cSize, ty + 7 + row * cSize, cSize, cSize);
-          }
-        }
-      }
-      // Place setting circles — lower half (centers at ty+38 = pos.y, same as table texture)
-      overlay.fillStyle(0xF0EDE8, 0.3);
-      overlay.fillCircle(tx + 32, ty + 38, 17);
-      overlay.fillCircle(tx + 78, ty + 38, 17);
-      overlay.lineStyle(1, 0xDDD8D0, 0.45);
-      overlay.strokeCircle(tx + 32, ty + 38, 17);
-      overlay.strokeCircle(tx + 78, ty + 38, 17);
-      // Center crease
-      overlay.lineStyle(0.5, 0xE0DAD4, 0.3);
-      overlay.lineBetween(tx + 55, ty + 38, tx + 55, ty + 66);
+      // Cloth bottom shadow
+      overlay.fillStyle(0x000000, 0.06);
+      overlay.fillRoundedRect(tx + 8, ty + 60, 94, 8, { tl: 0, tr: 0, bl: 8, br: 8 });
+      // Place setting rings — lower half only (ring, no fill)
+      overlay.lineStyle(1.5, 0xC8BCA8, 0.85);
+      overlay.strokeCircle(tx + 32, ty + 38, 14);
+      overlay.lineStyle(1, 0xD8D0C0, 0.55);
+      overlay.strokeCircle(tx + 32, ty + 38, 10);
+      overlay.lineStyle(1.5, 0xC8BCA8, 0.85);
+      overlay.strokeCircle(tx + 78, ty + 38, 14);
+      overlay.lineStyle(1, 0xD8D0C0, 0.55);
+      overlay.strokeCircle(tx + 78, ty + 38, 10);
 
       // Front chair — flipped so backrest faces away from table (toward player)
       this.add.image(pos.x, pos.y + 62, 'chair').setOrigin(0.5).setDepth(5).setFlipY(true);
@@ -705,12 +687,12 @@ export class GameScene extends Phaser.Scene {
     this.rushHourOverlay.fillStyle(0xFF2200, 1);
     this.rushHourOverlay.fillRect(0, 88, GAME_WIDTH, GAME_HEIGHT - 88);
 
-    // Plants — moved to depth 2 so they appear in front of side walls
-    this.add.text(28, GAME_HEIGHT - 80, '🪴', { fontSize: '36px' }).setOrigin(0.5).setDepth(2);
-    this.add.text(GAME_WIDTH - 28, GAME_HEIGHT - 80, '🪴', { fontSize: '36px' }).setOrigin(0.5).setDepth(2);
-    // Kitchen-side plants — moved to x=28/452 so they sit just inside the walls
-    this.add.text(28, 172, '🌿', { fontSize: '20px' }).setOrigin(0.5).setDepth(2);
-    this.add.text(GAME_WIDTH - 28, 172, '🌿', { fontSize: '20px' }).setOrigin(0.5).setDepth(2);
+    // Plants — SVG potted plants at entrance corners
+    this.add.image(28, GAME_HEIGHT - 74, 'potted_plant').setOrigin(0.5, 1).setDepth(2).setScale(1.1);
+    this.add.image(GAME_WIDTH - 28, GAME_HEIGHT - 74, 'potted_plant').setOrigin(0.5, 1).setDepth(2).setScale(1.1);
+    // Kitchen-side herb plants
+    this.add.image(28, 178, 'herb_plant').setOrigin(0.5, 1).setDepth(2).setScale(0.9);
+    this.add.image(GAME_WIDTH - 28, 178, 'herb_plant').setOrigin(0.5, 1).setDepth(2).setScale(0.9);
   }
 
   // ─── UI ───────────────────────────────────────────────────────────────────
@@ -724,8 +706,8 @@ export class GameScene extends Phaser.Scene {
     scorePill.fillStyle(0x2D1810, 0.92);
     scorePill.fillRoundedRect(8, 7, 148, 42, 10);
 
-    this.scoreTxt = this.add.text(82, 28, '🍽️  0', {
-      fontSize: '19px', fontFamily: 'Arial Black', color: '#FFFFFF',
+    this.scoreTxt = this.add.text(82, 28, '$  0', {
+      fontSize: '19px', fontFamily: 'Arial Black', color: '#FFD700',
     }).setOrigin(0.5, 0.5).setDepth(4);
 
     // Timer badge — right dark pill
@@ -746,10 +728,10 @@ export class GameScene extends Phaser.Scene {
 
     // Combo pill — centered, color changes with tier
     this.hudComboPill = this.add.graphics().setDepth(3.5);
-    this.drawComboPill(0x888888, 0.20);
+    this.drawComboPill(0x7A5520, 0.35);
 
-    this.comboTxt = this.add.text(GAME_WIDTH / 2, 28, '×1.0', {
-      fontSize: '14px', fontFamily: 'Arial Black', color: '#AAAAAA',
+    this.comboTxt = this.add.text(GAME_WIDTH / 2, 28, '×1', {
+      fontSize: '14px', fontFamily: 'Arial Black', color: '#D4AA55',
     }).setOrigin(0.5, 0.5).setDepth(4);
 
     // Combo progress strip — bottom 4px of HUD panel
@@ -864,7 +846,7 @@ export class GameScene extends Phaser.Scene {
     const elapsed = (this.time.now - this.gameStartMs) / 1000;
     const tier = this.getDifficultyTier(elapsed);
     this.score = Math.max(0, this.score - Math.floor(tier.penalty * 0.5));
-    this.scoreTxt.setText(`🍽️  ${fmtScore(this.score)}`);
+    this.scoreTxt.setText(`$  ${fmtScore(this.score)}`);
     this.showFloating('Left! 😡', customer.x, customer.y - 50, COLORS.TEXT_RED);
     this.cameras.main.shake(100, 0.002);
     this.resetCombo();
@@ -1637,7 +1619,7 @@ export class GameScene extends Phaser.Scene {
 
   private addScore(amount: number) {
     this.score = Math.max(0, this.score + amount);
-    this.scoreTxt.setText(`🍽️  ${fmtScore(this.score)}`);
+    this.scoreTxt.setText(`$  ${fmtScore(this.score)}`);
     this.scoreTxt.setColor(COLORS.TEXT_GOLD);
     const bounce = this.comboMultiplier >= 5 ? 1.7 : this.comboMultiplier >= 4 ? 1.55 : this.comboMultiplier >= 3 ? 1.45 : 1.3;
     const dur = this.comboMultiplier >= 3 ? 160 : 130;
@@ -1765,9 +1747,9 @@ export class GameScene extends Phaser.Scene {
     const m = this.comboMultiplier;
     const n = this.comboCount;
     if (n === 0) {
-      this.comboTxt.setText('×1.0');
-      this.comboTxt.setStyle({ color: '#AAAAAA', fontSize: '14px', fontFamily: 'Arial Black' });
-      this.drawComboPill(0x888888, 0.20);
+      this.comboTxt.setText('×1');
+      this.comboTxt.setStyle({ color: '#D4AA55', fontSize: '14px', fontFamily: 'Arial Black' });
+      this.drawComboPill(0x7A5520, 0.35);
     } else if (n <= 2) {
       this.comboTxt.setText(`↑${n}`);
       this.comboTxt.setStyle({ color: '#D4A85A', fontSize: '15px', fontFamily: 'Arial Black' });
@@ -2049,7 +2031,7 @@ export class GameScene extends Phaser.Scene {
     const penalty = tier.penalty;
 
     this.score = Math.max(0, this.score - penalty);
-    this.scoreTxt.setText(`🍽️  ${fmtScore(this.score)}`);
+    this.scoreTxt.setText(`$  ${fmtScore(this.score)}`);
     this.showFloating(`-${penalty} 😠`, customer.x, customer.y - 40, COLORS.TEXT_RED);
     this.cameras.main.shake(200, 0.004);
     this.player.reactToAngry();

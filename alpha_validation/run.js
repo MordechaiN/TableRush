@@ -115,6 +115,8 @@ async function shot09_combo() {
   // Build a genuine streak — aim for x4 (combo 10 = TABLE LEGEND), accept >=6 (x3 ON FIRE).
   let s = await H.waitFor(page, st => st.combo >= 10, { timeout: 95000, interval: 200 });
   if (!s) s = await H.waitFor(page, st => st.combo >= 6, { timeout: 5000, interval: 200 }) || await H.stats(page);
+  // Wait for Phaser to register and complete any celebration flash before screenshotting.
+  await H.sleep(450);
   await H.shot(page, '09_high_combo.png');
   record('09', 'High Combo state', s, 'Bot served a genuine uninterrupted streak; combo + multiplier are earned (note non-zero score).');
   await H.botStop(page); await browser.close();
@@ -270,6 +272,76 @@ async function shot19_criticRave() {
   await H.botStop(page); await browser.close();
 }
 
+async function shot20_businessTip() {
+  console.log('[20] Business tip payout');
+  const { browser, page } = await newSessionClean(6, 'business_lunch');
+  let forced = false;
+  for (let i = 0; i < 18 && !forced; i++) { await call(page, () => window.__bot.pump()); await H.sleep(200); forced = await call(page, () => window.__bot.forceBusinessNext()); }
+  console.log('   business forced:', forced);
+  await H.botStart(page);
+  const froze = await freezeOnFloat(page, 'BUSINESS TIP! ×1.5', 90000);
+  const s = await H.stats(page);
+  await H.shot(page, '20_business_tip.png');
+  record('20', 'Business tip payout (×1.5)', s, `Business Lunch; forced business customer; froze on live 'BUSINESS TIP! ×1.5' payout float (captured=${froze}).`);
+  await H.botStop(page); await browser.close();
+}
+
+async function shot21_familyFeast() {
+  console.log('[21] Family feast payout');
+  const { browser, page } = await newSessionClean(5, 'family_day');
+  let forced = false;
+  for (let i = 0; i < 12 && !forced; i++) { await call(page, () => window.__bot.pump()); await H.sleep(220); forced = await call(page, () => window.__bot.forceFamilyNext()); }
+  console.log('   family forced:', forced);
+  await H.botStart(page);
+  // Bot serves first course, then dessert, then collects full payment → FAMILY FEAST! ×2.2
+  const froze = await freezeOnFloat(page, 'FAMILY FEAST! ×2.2', 150000);
+  const s = await H.stats(page);
+  await H.shot(page, '21_family_feast.png');
+  record('21', 'Family feast payout (×2.2)', s, `Family Day; forced family customer; bot served both courses; froze on live 'FAMILY FEAST! ×2.2' payout float (captured=${froze}).`);
+  await H.botStop(page); await browser.close();
+}
+
+async function shot22_birthdayChain() {
+  console.log('[22] Birthday chain payout');
+  const { browser, page } = await newSessionClean(6, 'birthday_night');
+  let forced = false;
+  for (let i = 0; i < 14 && !forced; i++) { await call(page, () => window.__bot.pump()); await H.sleep(200); forced = await call(page, () => window.__bot.forceBirthdayNext()); }
+  console.log('   birthday forced:', forced);
+  await H.botStart(page);
+  // Bot serves birthday guest → on payment birthdayBoostRemaining=3 → next payment shows 'BIRTHDAY CHEER! ×2'
+  const froze = await freezeOnFloat(page, 'BIRTHDAY CHEER! ×2', 150000);
+  const s = await H.stats(page);
+  await H.shot(page, '22_birthday_chain.png');
+  record('22', 'Birthday chain payout (×2)', s, `Birthday Night; bot served birthday guest then next guest; froze on live 'BIRTHDAY CHEER! ×2' chain payment float (captured=${froze}).`);
+  await H.botStop(page); await browser.close();
+}
+
+async function shot23_audio() {
+  console.log('[23] Audio system validation');
+  const { browser, page } = await H.launch();
+  const jsErrors = [];
+  page.on('pageerror', e => jsErrors.push(e.message));
+  // boot() leaves tablerush_sfx and tablerush_music unset → SoundManager runs enabled by default
+  await H.boot(page, 4);
+  await H.startGame(page, null, { suppressPanel: true });
+  await H.botStart(page);
+  await H.waitFor(page, s => s.score > 100 && s.occupied >= 2, { timeout: 60000 });
+  await H.botStop(page);
+  await H.sleep(400);
+  const audioInfo = await page.evaluate(() => ({
+    sfxEnabled: localStorage.getItem('tablerush_sfx') !== 'off',
+    musicEnabled: localStorage.getItem('tablerush_music') !== 'off',
+    audioContextAPI: typeof AudioContext !== 'undefined',
+  }));
+  const s = await H.stats(page);
+  await H.shot(page, '23_audio_validation.png');
+  const passed = jsErrors.length === 0 && audioInfo.sfxEnabled && audioInfo.audioContextAPI;
+  record('23', `Audio wiring (${passed ? 'PASS' : 'FAIL'})`, s,
+    `SoundManager ran with sfx=${audioInfo.sfxEnabled} music=${audioInfo.musicEnabled} ` +
+    `AudioContext API=${audioInfo.audioContextAPI} jsErrors=${jsErrors.length}${jsErrors.length ? ' errors=[' + jsErrors.join('; ') + ']' : ''}`);
+  await browser.close();
+}
+
 (async () => {
   const only = process.argv[2]; // optional: run a single shot id
   const steps = {
@@ -292,6 +364,10 @@ async function shot19_criticRave() {
     '17': shot17_birthday,
     '18': shot18_shield,
     '19': shot19_criticRave,
+    '20': shot20_businessTip,
+    '21': shot21_familyFeast,
+    '22': shot22_birthdayChain,
+    '23': shot23_audio,
   };
   const keys = only ? [only] : Object.keys(steps);
   for (const k of keys) {

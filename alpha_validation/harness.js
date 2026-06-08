@@ -89,6 +89,15 @@ function injectedBot() {
       }
       return false;
     },
+    forceBusinessNext() {
+      const s = scene(); if (!s) return false;
+      const arr = [...s.customers.values()];
+      const c = arr[arr.length - 1];
+      if (c && !c.isVIP && !c.isBirthday && !c.isCritic && !c.isFamilyTable && !c.isBusinessCustomer && c.state === 'entering') {
+        c.makeBusinessCustomer(); return true;
+      }
+      return false;
+    },
     // Freeze the scene at the frame a named float text is at full size — for a crisp capture.
     freezeOnFloat(label) {
       window.__froze = false;

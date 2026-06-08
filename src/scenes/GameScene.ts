@@ -1646,7 +1646,7 @@ export class GameScene extends Phaser.Scene {
           table.clearFloatEmoji();
           table.setPriority('requesting');
           this.time.delayedCall(300, () => {
-            this.showFloating('DESSERT TIME!', table.x, table.y - 70, '#FFAACC', 0.95);
+            this.showFloating('DESSERT TIME!', table.x, table.y - 70, '#FF44BB', 1.35);
           });
           return;
         }
@@ -2647,7 +2647,7 @@ export class GameScene extends Phaser.Scene {
     if (level >= 8) abilities.push('Master Saves: +300');
 
     const panelH = 32 + abilities.length * 24;
-    const panel = this.add.container(GAME_WIDTH / 2, GAME_HEIGHT / 2 - panelH / 2).setDepth(55).setAlpha(0);
+    const panel = this.add.container(GAME_WIDTH / 2, 75).setDepth(55).setAlpha(0);
 
     const bg = this.add.graphics();
     bg.fillStyle(0x08060F, 0.88);
@@ -2761,6 +2761,8 @@ export class GameScene extends Phaser.Scene {
       fontSize: `${px}px`, fontFamily: 'Arial Black', color,
       stroke: '#000000', strokeThickness: Math.round(4 * sizeMult),
     }).setOrigin(0.5).setDepth(25).setScale(0);
+    const halfW = t.width * 0.65 + 8;
+    t.x = Math.max(halfW, Math.min(GAME_WIDTH - halfW, x));
     this.tweens.add({
       targets: t, scale: 1.25,
       duration: 120, ease: 'Back.easeOut',

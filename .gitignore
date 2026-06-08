@@ -3,3 +3,9 @@ dist/
 .DS_Store
 *.local
 .claude/
+
+# Obsolete one-off validation scratch from an earlier session (superseded by
+# alpha_validation/). Left on disk, kept out of the repo. Safe to delete.
+/fix_mobile.js
+/validate_temp.js
+/validate_v2.js

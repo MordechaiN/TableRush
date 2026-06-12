@@ -85,16 +85,30 @@ function playMusicBar(ac: AudioContext, barIdx: number, startT: number) {
   const beat = 60 / bpm;
   const bar = beat * 4;
 
-  // 4-chord loop: Cmaj7 | Am7 | Fmaj7 | G7
-  const bassRoots  = [130.81, 110.00, 174.61, 196.00];
-  const bassOctave = [261.63, 220.00, 349.23, 392.00];
+  // 8-chord loop: Cmaj7 | Am7 | Fmaj7 | G7 | Em7 | Am7 | Dm7 | G7sus4
+  // Bars 5-8 add a secondary flavour that resolves naturally back to bar 1.
+  // The 8-bar cycle is ~17.8s at 108BPM — no audible loop seam on typical runs.
+  const bassRoots  = [130.81, 110.00, 174.61, 196.00, 164.81, 110.00, 146.83, 196.00];
+  const bassOctave = [261.63, 220.00, 349.23, 392.00, 329.63, 220.00, 293.66, 392.00];
   const chordTones: number[][] = [
+    // Bar 1: Cmaj7 — warm home chord
     [329.63, 392.00, 493.88, 392.00, 329.63, 392.00, 493.88, 523.25],
+    // Bar 2: Am7 — gentle pull
     [220.00, 261.63, 329.63, 392.00, 329.63, 261.63, 220.00, 246.94],
+    // Bar 3: Fmaj7 — rich departure
     [261.63, 349.23, 440.00, 349.23, 261.63, 392.00, 349.23, 261.63],
+    // Bar 4: G7 — tension
     [392.00, 493.88, 587.33, 493.88, 392.00, 349.23, 392.00, 440.00],
+    // Bar 5: Em7 — introspective variation
+    [329.63, 246.94, 293.66, 392.00, 329.63, 246.94, 329.63, 392.00],
+    // Bar 6: Am7 — same as bar 2 but starting higher for contrast
+    [440.00, 329.63, 261.63, 329.63, 392.00, 329.63, 246.94, 220.00],
+    // Bar 7: Dm7 — deeper colour
+    [293.66, 349.23, 440.00, 349.23, 293.66, 261.63, 293.66, 349.23],
+    // Bar 8: G7sus4 — broad resolution back to bar 1
+    [392.00, 523.25, 587.33, 493.88, 440.00, 392.00, 349.23, 392.00],
   ];
-  const b = barIdx % 4;
+  const b = barIdx % 8;
 
   const m = ac.createGain();
   m.gain.value = 0.13;

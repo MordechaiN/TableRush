@@ -10,8 +10,9 @@ export class Table extends Phaser.GameObjects.Container {
   public customerId = -1;
 
   private tableBody!: Phaser.GameObjects.Image;
-  // Arrow is a SCENE-LEVEL object (not a container child) so it renders above customers
+  // Arrow + label are SCENE-LEVEL objects (not container children) so they render above customers
   private actionArrow!: Phaser.GameObjects.Graphics;
+  private arrowLabel: Phaser.GameObjects.Text | null = null;
   private dirtOverlay!: Phaser.GameObjects.Graphics;
   private stateVisual!: Phaser.GameObjects.Graphics;
   private stateGlow!: Phaser.GameObjects.Graphics;
@@ -34,6 +35,16 @@ export class Table extends Phaser.GameObjects.Container {
   // World position of arrow anchor (above and outside customer sprite area)
   private arrowWorldX: number;
   private arrowWorldY: number;
+
+  // Action label configs per priority: text + color
+  private static readonly LABEL_CONFIG: Record<Exclude<TablePriority, 'none'>, { text: string; color: string }> = {
+    urgent:        { text: 'URGENT!',     color: '#FF4444' },
+    paying:        { text: 'COLLECT $',   color: '#FFD700' },
+    kitchen_ready: { text: 'DELIVER',     color: '#FF8C42' },
+    requesting:    { text: 'TAKE ORDER',  color: '#66BBFF' },
+    seating:       { text: 'SEAT GUEST',  color: '#CC88FF' },
+    dirty:         { text: 'CLEAN TABLE', color: '#FFCC88' },
+  };
 
   constructor(scene: Phaser.Scene, x: number, y: number, id: number) {
     super(scene, x, y);
@@ -62,11 +73,6 @@ export class Table extends Phaser.GameObjects.Container {
     this.add(this.dirtOverlay);
 
     // State visual — small object drawn on table surface to communicate current state
-    // Positioned at upper-left (container x: -40 to -22, y: -30 to -8) — clear of:
-    //   • customer sprite (center x:-24 to +24)
-    //   • front-face overlay (starts at container y = -5)
-    //   • candle (container x=34, y=-18)
-    //   • table number badge (container x=33, y=-44)
     this.stateVisual = scene.add.graphics();
     this.add(this.stateVisual);
 
@@ -145,22 +151,19 @@ export class Table extends Phaser.GameObjects.Container {
   }
 
   // Draw a small contextual object on the table surface to communicate state.
-  // All drawings at container x: -40 to -20, y: -30 to -8 — above overlay, left of customer.
   setStateVisual(type: 'none' | 'menu' | 'ticket' | 'plate' | 'bill') {
     const g = this.stateVisual;
     g.clear();
     if (type === 'none') return;
 
     if (type === 'menu') {
-      // Open menu booklet — dark green cover, cream pages
+      // Open menu booklet
       g.fillStyle(0x1B5E20, 1);
       g.fillRoundedRect(-40, -29, 16, 20, 2);
       g.fillStyle(0xFFF8F0, 1);
       g.fillRoundedRect(-39, -28, 12, 17, 1);
-      // Spine
       g.fillStyle(0x0A3D0A, 1);
       g.fillRect(-40, -29, 2, 20);
-      // Text lines
       g.fillStyle(0x555555, 0.55);
       g.fillRect(-36, -25, 8, 1.5);
       g.fillRect(-36, -22, 8, 1.5);
@@ -168,54 +171,47 @@ export class Table extends Phaser.GameObjects.Container {
       g.fillRect(-36, -16, 7, 1.5);
       g.fillRect(-36, -13, 5, 1.5);
     } else if (type === 'ticket') {
-      // Order ticket slip — white paper with printed lines and a warm stamp
+      // Order ticket slip
       g.fillStyle(0xFFFFFF, 0.97);
       g.fillRoundedRect(-40, -31, 18, 25, 2);
-      // Tear perforation
       g.lineStyle(0.8, 0xCCCCCC, 0.7);
       g.lineBetween(-40, -23, -22, -23);
-      // Heading line
       g.fillStyle(0x222222, 0.5);
       g.fillRect(-38, -29, 14, 2);
-      // Text lines
       g.fillStyle(0x444444, 0.35);
       g.fillRect(-38, -20, 12, 1.5);
       g.fillRect(-38, -17, 10, 1.5);
       g.fillRect(-38, -14, 12, 1.5);
       g.fillRect(-38, -11, 8, 1.5);
-      // Stamp circle
       g.lineStyle(1.5, 0xFF6B35, 0.75);
       g.strokeCircle(-30, -9, 5);
       g.fillStyle(0xFF6B35, 0.18);
       g.fillCircle(-30, -9, 5);
     } else if (type === 'plate') {
-      // Plate with food — rim, inner plate, food blob, garnish
-      g.fillStyle(0xEDE8DC, 1);      // rim
+      // Plate with food
+      g.fillStyle(0xEDE8DC, 1);
       g.fillCircle(-30, -20, 16);
-      g.fillStyle(0xFAF8F4, 1);      // inner
+      g.fillStyle(0xFAF8F4, 1);
       g.fillCircle(-30, -20, 12);
-      g.fillStyle(0xE07820, 0.95);   // main food
+      g.fillStyle(0xE07820, 0.95);
       g.fillCircle(-30, -20, 8);
-      g.fillStyle(0x5A9920, 0.88);   // garnish
+      g.fillStyle(0x5A9920, 0.88);
       g.fillCircle(-36, -23, 3);
       g.fillCircle(-24, -25, 2.5);
       g.lineStyle(1.5, 0xD0C8BA, 0.9);
       g.strokeCircle(-30, -20, 16);
     } else if (type === 'bill') {
-      // Check presenter — dark leather folder with gold clasp
-      g.fillStyle(0x3E1C02, 1);      // dark leather
+      // Check presenter
+      g.fillStyle(0x3E1C02, 1);
       g.fillRoundedRect(-42, -29, 24, 17, 3);
-      g.fillStyle(0x2A1002, 0.7);    // fold shadow
+      g.fillStyle(0x2A1002, 0.7);
       g.fillRect(-31, -29, 2, 17);
-      // Gold corner ornaments
       g.fillStyle(0xFFCC22, 0.9);
       g.fillRoundedRect(-41, -28, 3, 3, 0.5);
       g.fillRoundedRect(-20, -28, 3, 3, 0.5);
-      // $ amount lines
       g.fillStyle(0xFFE0A0, 0.7);
       g.fillRect(-39, -22, 10, 1.5);
       g.fillRect(-39, -19, 8, 1.5);
-      // Gold clasp
       g.fillStyle(0xFFCC22, 1);
       g.fillRoundedRect(-33, -22, 5, 7, 1.5);
       g.fillStyle(0xAA8800, 0.6);
@@ -227,11 +223,7 @@ export class Table extends Phaser.GameObjects.Container {
     const g = this.dirtOverlay;
     g.clear();
 
-    // ALL graphics use y < -7 (container local space).
-    // The front face overlay covers y ≥ -5 in local space, so these stay fully visible.
-    // Table tablecloth occupies local y = -32 to +32 — all graphics are on the cloth surface.
-
-    // Left plate (large, prominent dirty dish)
+    // Left plate
     g.fillStyle(0xF0EBE0, 1);
     g.fillCircle(-20, -20, 14);
     g.fillStyle(0xDED4C4, 1);
@@ -242,7 +234,7 @@ export class Table extends Phaser.GameObjects.Container {
     g.lineStyle(1.5, 0xB8B0A0, 0.8);
     g.strokeCircle(-20, -20, 13);
 
-    // Right plate (smaller, also dirty)
+    // Right plate
     g.fillStyle(0xF0EBE0, 1);
     g.fillCircle(18, -18, 12);
     g.fillStyle(0xDED4C4, 1);
@@ -252,33 +244,28 @@ export class Table extends Phaser.GameObjects.Container {
     g.lineStyle(1, 0xB8B0A0, 0.7);
     g.strokeCircle(18, -18, 11);
 
-    // Glass (knocked slightly sideways)
+    // Glass
     g.fillStyle(0xD8EEF4, 0.8);
     g.fillRoundedRect(-5, -32, 10, 14, 2);
     g.lineStyle(1.5, 0xA8CCD8, 0.9);
     g.strokeRoundedRect(-5, -32, 10, 14, 2);
-    // Drink level inside
     g.fillStyle(0xFF8833, 0.5);
     g.fillRoundedRect(-4, -26, 8, 7, 1);
 
-    // Fork (vertical, right side)
+    // Cutlery
     g.lineStyle(1.5, 0xA09080, 0.7);
     g.lineBetween(34, -30, 34, -12);
     g.lineBetween(37, -30, 37, -12);
-    // Knife
     g.lineStyle(1, 0xA09080, 0.6);
     g.lineBetween(35.5, -30, 35.5, -22);
 
-    // Used napkin (crumpled rectangle)
+    // Napkin
     g.fillStyle(0xF5F0E8, 0.9);
     g.fillRoundedRect(-38, -28, 14, 11, 3);
     g.lineStyle(1, 0xDDD5C5, 0.6);
     g.strokeRoundedRect(-38, -28, 14, 11, 3);
-    g.lineStyle(0.8, 0xCCC4B4, 0.4);
-    g.lineBetween(-35, -25, -28, -25);
-    g.lineBetween(-36, -21, -29, -21);
 
-    // Crumbs (scattered across upper table surface)
+    // Crumbs
     g.fillStyle(0xC8A878, 0.95);
     g.fillCircle(-6, -10, 2.5);
     g.fillCircle(6, -12, 2);
@@ -294,6 +281,9 @@ export class Table extends Phaser.GameObjects.Container {
     this.currentPriority = priority;
 
     if (this.arrowTween) { this.arrowTween.stop(); this.arrowTween = null; }
+
+    // Destroy old label
+    if (this.arrowLabel) { this.arrowLabel.destroy(); this.arrowLabel = null; }
 
     if (priority === 'none') {
       this.actionArrow.setVisible(false);
@@ -315,6 +305,21 @@ export class Table extends Phaser.GameObjects.Container {
     this.actionArrow.setScale(this.arrowBaseScale);
     this.actionArrow.setVisible(true);
 
+    // Create action label below arrow
+    const labelCfg = Table.LABEL_CONFIG[priority];
+    this.arrowLabel = this.scene.add.text(
+      this.arrowWorldX,
+      this.arrowWorldY + 24,
+      labelCfg.text,
+      {
+        fontSize: '12px',
+        fontFamily: 'Arial Black',
+        color: labelCfg.color,
+        stroke: '#000000',
+        strokeThickness: 3,
+      }
+    ).setOrigin(0.5, 0).setDepth(15);
+
     const s = this.arrowBaseScale;
 
     if (priority === 'urgent') {
@@ -332,6 +337,12 @@ export class Table extends Phaser.GameObjects.Container {
         duration: 180,
         yoyo: true, repeat: -1, ease: 'Quad.easeInOut',
       });
+      // Make label pulse for urgent too
+      this.scene.tweens.add({
+        targets: this.arrowLabel,
+        alpha: { from: 1, to: 0.4 },
+        duration: 250, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
+      });
     } else {
       this.arrowTween = this.scene.tweens.add({
         targets: this.actionArrow,
@@ -344,14 +355,15 @@ export class Table extends Phaser.GameObjects.Container {
 
   setUrgencyLevel(isPrimary: boolean) {
     // Secondary tables are completely hidden — only the #1 priority indicator is visible.
-    // Keeping the state (currentPriority, tweens) intact so it snaps back when promoted.
     if (isPrimary) {
       if (this.currentPriority !== 'none') {
         this.actionArrow.setVisible(true);
         this.actionArrow.setAlpha(0.95);
+        if (this.arrowLabel) this.arrowLabel.setAlpha(1);
       }
     } else {
       this.actionArrow.setAlpha(0);
+      if (this.arrowLabel) this.arrowLabel.setAlpha(0);
     }
   }
 
@@ -361,6 +373,8 @@ export class Table extends Phaser.GameObjects.Container {
     if (this.urgentAlphaTween) { this.urgentAlphaTween.stop(); this.urgentAlphaTween = null; }
     this.actionArrow.setAlpha(0.95);
     this.actionArrow.setVisible(false);
+    // Destroy action label
+    if (this.arrowLabel) { this.arrowLabel.destroy(); this.arrowLabel = null; }
   }
 
   private drawArrow(color: number, isUrgent = false) {
@@ -381,8 +395,7 @@ export class Table extends Phaser.GameObjects.Container {
     this.actionArrow.strokeTriangle(-w, -10, w, -10, 0, h);
   }
 
-  // Floating emoji above the table surface — communicates dirty state, paying, eating etc.
-  // Depth 19 puts it above the player (17) and action arrows (15) for always-on legibility.
+  // Floating emoji above the table surface
   setFloatEmoji(emoji: string, bouncing = false) {
     this.clearFloatEmoji();
     const ey = this.y - 78;
@@ -398,7 +411,7 @@ export class Table extends Phaser.GameObjects.Container {
     }
   }
 
-  // Floating food image above table — shows the ordered item
+  // Floating food image above table
   setFloatFoodImage(itemId: number, bouncing = false) {
     this.clearFloatEmoji();
     const ey = this.y - 78;
@@ -418,7 +431,7 @@ export class Table extends Phaser.GameObjects.Container {
     if (this.floatEmoji) { this.floatEmoji.destroy(); this.floatEmoji = null; }
   }
 
-  // Pulsing seat ring — makes customer position scannable at a glance
+  // Pulsing seat ring
   private showSeatRing() {
     this.clearSeatRing();
     this.seatRing = this.scene.add.graphics().setDepth(8);
@@ -436,7 +449,7 @@ export class Table extends Phaser.GameObjects.Container {
     if (this.seatRing) { this.seatRing.destroy(); this.seatRing = null; }
   }
 
-  // Cream place disc — sits at depth 11 behind customer (depth 12), creates contrast on warm floor
+  // Cream place disc behind customer
   private showPlaceDisc() {
     this.clearPlaceDisc();
     this.placeDisc = this.scene.add.graphics().setDepth(11);

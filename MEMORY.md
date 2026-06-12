@@ -41,19 +41,19 @@ Fast-paced restaurant management game. Premium casual. Short 3-minute sessions.
 ### Production Sprint (2026-06-12) — All 9 Phases Completed
 
 **Code changes committed to main:**
-- `src/entities/Player.ts` — tray sway pendulum, enhanced dish bounce, TABLE MASTER tray spin
-- `src/entities/Customer.ts` — chewing animation, 30px happy exit jump, food reaction squash
-- `src/systems/SoundManager.ts` — mobile audio unlock, customerHappy(), unlockEarned(), context-safe music start
-- `src/scenes/PauseScene.ts` — SFX + Music mute toggles in pause overlay
+- `src/entities/Player.ts` — tray sway pendulum (±0.09 rad), enhanced dish bounce (y−14/scale 1.2), TABLE MASTER 360° tray spin
+- `src/entities/Customer.ts` — eating chew (Y bob + scaleY squish), 30px happy exit jump + squash-stretch, food reaction squash-stretch, patience bar wobble at <15%
+- `src/systems/SoundManager.ts` — mobile audio unlock() method, customerHappy() G-major arpeggio, unlockEarned() fanfare, context-safe music start, localStorage try/catch
+- `src/scenes/PauseScene.ts` — SFX + Music toggle buttons directly in pause overlay
 
 **Docs created:**
-- PRODUCTION_AUDIT.md (10-category scores, overall 7.4/10)
+- PRODUCTION_AUDIT.md (10-category, 7.4/10 overall, RELEASE CANDIDATE)
 - PERFORMANCE_REPORT.md
 - MOBILE_READINESS_REPORT.md
 - RELEASE_NOTES_v1.0.0.md
-- PRODUCTION_VALIDATION_REPORT.md (20/20 sessions PASS)
-- KNOWN_ISSUES.md (fixed false audio claim)
-- CHANGELOG.md (v1.0.0 entry prepended)
+- PRODUCTION_VALIDATION_REPORT.md (20/20 sessions PASS, stranger test PASS)
+- KNOWN_ISSUES.md corrected
+- CHANGELOG.md v1.0.0 entry prepended
 
 ---
 
@@ -80,40 +80,39 @@ BootScene (textures + SVGs)
 ```
 src/main.ts                    — Phaser config
 src/config/GameConfig.ts       — ALL constants (palette, difficulty, menu, combo)
-src/systems/SoundManager.ts    — 16 sounds + ambient music (Web Audio API)
+src/systems/SoundManager.ts    — 16 sounds + music (Web Audio API, no files needed)
 src/systems/ProgressionSystem.ts — XP/Level persistence
 src/systems/CarrySystem.ts     — 1–4 slot tray
 src/scenes/BootScene.ts        — procedural textures + SVG load
 src/scenes/GameScene.ts        — core gameplay (132KB — DO NOT rewrite blindly)
-src/scenes/PauseScene.ts       — pause + mute controls
-src/entities/Customer.ts       — state machine + animations
+src/scenes/PauseScene.ts       — pause overlay with mute controls
+src/entities/Customer.ts       — state machine + all animations
 src/entities/Table.ts          — table state + priority arrow
-src/entities/Player.ts         — waiter + tray sway + emotions
+src/entities/Player.ts         — waiter + tray sway + emotion system
 ```
 
 ## CRITICAL: GameScene.ts Is 132KB
-**Do NOT attempt to read and rewrite GameScene.ts in one API call** — response will be truncated. To make changes: read a specific section by method name, make targeted edit, commit.
+**Do NOT attempt to read and rewrite GameScene.ts in one API call** — response will be truncated. To make changes: read specific method by name, make targeted edit, commit.
 
 ## SVG Assets (`public/assets/`)
-- `characters/waiter.svg`, `waiter_walk.svg`
-- `characters/customer_0-6.svg` (7 variants)
+- `characters/waiter.svg`, `waiter_walk.svg`, `customer_0-6.svg` (7 types)
 - `food/salad.svg`, `burger.svg`, `pasta.svg`, `sushi.svg`, `pizza.svg`
 - `decorations/potted_plant.svg`, `herb_plant.svg`
 - `icons/plate_badge.svg`
 
 ## Gameplay Loop
 ```
-Queue arrives → Seat customer (tap empty table)
-  → Take order (tap table with requesting customer)
-    → Food cooks in kitchen (auto timer)
-      → Pick up food (tap kitchen when READY)
-        → Deliver food (tap table)
+Queue → Seat (tap empty table)
+  → Order (tap requesting customer table)
+    → Cook (auto timer)
+      → Pick up (tap kitchen READY zone)
+        → Deliver (tap table)
           → Customer eats
             → Collect payment (tap table)
-              → Clean table (tap dirty table) → carry to dishwasher
+              → Clean table + carry to dishwasher
 ```
 
-## Priority System (single-focus — only #1 shows arrow)
+## Priority System (single-focus — only #1 priority shows arrow)
 | Priority | Color | When |
 |----------|-------|----- |
 | Urgent | Red | Patience < 25% |
@@ -121,7 +120,7 @@ Queue arrives → Seat customer (tap empty table)
 | Deliver | Orange | Carrying food for this table |
 | Requesting | Blue | Customer wants to order |
 | Seating | Purple | Queue waiting + empty table |
-| Dirty | Brown | Table needs cleaning |
+| Dirty | Brown | Needs cleaning |
 
 ## Combo System
 | Streak | Multiplier | Name |
@@ -131,65 +130,54 @@ Queue arrives → Seat customer (tap empty table)
 | 6–9 | ×3 | ON FIRE |
 | 10–14 | ×4 | TABLE LEGEND |
 | 15+ | ×5 | TABLE MASTER |
-Combo Shield (L6+): first break from ×3+ → ×2.
+Combo Shield (L6+): first break from ×3+ → ×2 (one-time buffer).
 
 ## Session Types
 | Type | Level | Feature |
 |------|-------|---------|
 | normal | 1+ | Standard |
-| business_lunch | 3+ | Wave at mid-session, ×1.5 tips |
+| business_lunch | 3+ | Impatient wave at mid-session |
 | family_day | 3+ | Dessert round, ×2.2 payout |
 | birthday_night | 4+ | Confetti, 3-payment ×2 chain |
-| critic_night | 5+ | Critic watches, rave or disaster |
+| critic_night | 5+ | Critic tracks every mistake |
 | vip_night | 6+ | 30% VIP rate, ×2.5 tips |
 
-## Audio
-- 16 sounds + ambient music via Web Audio API (no files)
-- Mobile unlock: `unlock()` called from `uiClick()` on first tap
-- Music: Cmaj7→Am7→Fmaj7→G7 loop, 108 BPM, triangle piano
-- SFX key: `tablerush_sfx` | Music key: `tablerush_music`
+## Audio (SoundManager.ts)
+- 16 sounds + music via Web Audio API (zero external files)
+- Mobile unlock: `unlock()` called from `uiClick()` on very first tap
+- Music: Cmaj7→Am7→Fmaj7→G7 loop, 108 BPM, triangle oscillator piano
+- SFX toggle key: `tablerush_sfx` | Music key: `tablerush_music`
+- Mute available from Settings AND from Pause overlay (added in production sprint)
 
 ## Progression
-- XP = score / 10 per round
-- 10 levels (thresholds: 0,300,700,1300,2200,3500,5500,8000,11000,15000)
-- Level unlocks: L3 family+3-slot tray, L4 speed+4-slot, L5 critic, L6 shield+VIP, L7 rush bonus, L8 save bonus, L10 banner
+- XP = score / 10 per round, 10 levels
+- Thresholds: 0, 300, 700, 1300, 2200, 3500, 5500, 8000, 11000, 15000
+- Key unlocks: L3 family+3-slot, L4 speed, L5 critic, L6 shield+VIP, L7 rush bonus, L8 save bonus, L10 banner
 
-## Production Audit Results (v1.0.0)
-| Category | Score |
-|----------|-------|
-| Gameplay | 8/10 |
-| Visuals | 8/10 |
-| UI | 7/10 |
-| UX | 8/10 |
-| Performance | 7/10 |
-| Accessibility | 4/10 |
-| Mobile | 7/10 |
-| Audio | 8/10 |
-| Retention | 7/10 |
-| Polish | 8/10 |
-| **Overall** | **7.4/10** |
+## Production Audit Scores (v1.0.0)
+Gameplay:8 | Visuals:8 | UI:7 | UX:8 | Performance:7 | Accessibility:4 | Mobile:7 | Audio:8 | Retention:7 | Polish:8 | **Overall: 7.4/10**
 
 ## Known Issues (v1.0.0)
-- Portrait only — no landscape
-- Music repeats every ~8s (4-bar loop)
-- No fullscreen API / PWA manifest
-- Dishwasher touch target slightly small (60×56px)
-- No keyboard gameplay (ESC only)
+- Portrait only (no landscape)
+- Music loop ~8s (4 bars)
+- No fullscreen / PWA
+- Dishwasher touch target tight (60×56px)
+- No keyboard gameplay
 - No social share or leaderboard
-- No cancel waiter action
+- No cancel for waiter path
 
-## Post-v1.0 Improvements (Backlog)
-1. Second music theme variant
+## Post-v1.0 Backlog
+1. Second music theme
 2. Landscape support
-3. Color-blind patience bar alternative
+3. Color-blind patience bar
 4. Social share screenshot
 5. Cancel waiter action
 6. PWA manifest
 7. Leaderboard
 
 ## Palette
-- Floor: `#2E1E0F` dark walnut planks
-- Table: `#8B4513` mahogany + `#F5F0E8` linen
-- Kitchen floor: `#1E2523` cool slate
-- Walls: `#BF7A42` terracotta / `#EEE3D2` cream wainscoting
-- UI: `#FF6B35` orange, `#FFD700` gold, `#4CAF50` green
+- Floor: dark walnut planks `#2E1E0F`
+- Kitchen: cool slate `#1E2523`
+- Walls: terracotta `#BF7A42` / cream wainscoting `#EEE3D2`
+- Table: mahogany `#8B4513` + linen `#F5F0E8`
+- UI: orange `#FF6B35`, gold `#FFD700`, green `#4CAF50`, red `#F44336`

@@ -16,6 +16,7 @@ export class Player extends Phaser.GameObjects.Container {
   private walkAnimTimer: Phaser.Time.TimerEvent | null = null;
   private walkFrame = 0;
   private idleTween: Phaser.Tweens.Tween | null = null;
+  private traySway: Phaser.Tweens.Tween | null = null;
   private revertTimer: Phaser.Time.TimerEvent | null = null;
   public isWalking = false;
   private currentEmotion: PlayerEmotion = 'normal';
@@ -40,15 +41,38 @@ export class Player extends Phaser.GameObjects.Container {
 
   walkTo(x: number, y: number, onComplete?: () => void) {
     if (this.walkTween) this.walkTween.stop();
+
+    // Reset tray rotation before new walk
+    if (this.traySway) { this.traySway.stop(); this.traySway = null; }
+    if (this.trayContainer) this.trayContainer.setRotation(0);
+
     this.stopIdleAnim();
     this.isWalking = true;
     this.sprite.setFlipX(x < this.x);
     this.startWalkAnim();
+
+    // Tray sway: subtle pendulum while walking — makes carrying food feel physical
+    if (this.trayContainer) {
+      this.traySway = this.scene.tweens.add({
+        targets: this.trayContainer,
+        rotation: { from: -0.09, to: 0.09 },
+        duration: 290, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
+      });
+    }
+
     const dist = Math.hypot(x - this.x, y - this.y);
     this.walkTween = this.scene.tweens.add({
       targets: this, x, y,
       duration: dist * 1.15 / this.walkSpeedMultiplier, ease: 'Quad.easeOut',
       onComplete: () => {
+        // Stop sway + snap tray back to level when arriving
+        if (this.traySway) { this.traySway.stop(); this.traySway = null; }
+        if (this.trayContainer) {
+          this.scene.tweens.add({
+            targets: this.trayContainer, rotation: 0,
+            duration: 120, ease: 'Back.easeOut',
+          });
+        }
         this.stopWalkAnim();
         this.isWalking = false;
         this.startIdleAnim();
@@ -109,20 +133,32 @@ export class Player extends Phaser.GameObjects.Container {
       }
     }
 
+    // Pop-in bounce when tray is shown (e.g. after picking up food)
     tray.setScale(0);
-    this.scene.tweens.add({ targets: tray, scale: 1, duration: 150, ease: 'Back.easeOut' });
+    this.scene.tweens.add({ targets: tray, scale: 1, duration: 180, ease: 'Back.easeOut' });
   }
 
   clearCarry() {
+    // Stop any active sway before destroying tray
+    if (this.traySway) { this.traySway.stop(); this.traySway = null; }
     if (this.trayContainer) { this.trayContainer.destroy(); this.trayContainer = null; }
   }
 
   deliverAnim() {
+    // Dish bounce: plant the plate with a satisfying arc-and-settle
     this.scene.tweens.add({
       targets: this.sprite,
-      y: { from: 0, to: -12 }, scaleX: { from: 1, to: 1.18 }, scaleY: { from: 1, to: 1.18 },
-      duration: 160, yoyo: true, ease: 'Back.easeOut',
+      y: { from: 0, to: -14 }, scaleX: { from: 1, to: 1.2 }, scaleY: { from: 1, to: 1.2 },
+      duration: 140, yoyo: true, ease: 'Back.easeOut',
     });
+    // Tray pop on delivery
+    if (this.trayContainer) {
+      this.scene.tweens.add({
+        targets: this.trayContainer,
+        y: { from: -52, to: -62 },
+        duration: 110, yoyo: true, ease: 'Quad.easeOut',
+      });
+    }
   }
 
   collectAnim() {
@@ -203,9 +239,30 @@ export class Player extends Phaser.GameObjects.Container {
   }
 
   celebrateCombo(count: number) {
-    if (count >= 10) {
+    if (count >= 15) {
+      // TABLE MASTER — full celebration: jump + spin + tray flourish
+      this.setEmotion('excited', 5000);
+      this.scene.tweens.add({
+        targets: this,
+        y: { from: this.y, to: this.y - 18 },
+        scaleX: { from: 1, to: 1.4 }, scaleY: { from: 1, to: 1.4 },
+        duration: 260, yoyo: true, repeat: 1, ease: 'Back.easeOut',
+      });
+      if (this.trayContainer) {
+        this.scene.tweens.add({
+          targets: this.trayContainer, rotation: { from: 0, to: Math.PI * 2 },
+          duration: 500, ease: 'Quad.easeOut',
+          onComplete: () => { if (this.trayContainer) this.trayContainer.setRotation(0); },
+        });
+      }
+    } else if (count >= 10) {
       this.setEmotion('excited', 4000);
-      this.scene.tweens.add({ targets: this, scaleX: { from: 1, to: 1.3 }, scaleY: { from: 1, to: 1.3 }, duration: 200, yoyo: true, repeat: 1, ease: 'Back.easeOut' });
+      this.scene.tweens.add({
+        targets: this,
+        y: { from: this.y, to: this.y - 12 },
+        scaleX: { from: 1, to: 1.3 }, scaleY: { from: 1, to: 1.3 },
+        duration: 200, yoyo: true, repeat: 1, ease: 'Back.easeOut',
+      });
     } else if (count >= 5) {
       this.setEmotion('excited', 3000);
       this.scene.tweens.add({ targets: this, scale: { from: 1, to: 1.15 }, duration: 160, yoyo: true, ease: 'Back.easeOut' });

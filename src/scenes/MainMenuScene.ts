@@ -33,7 +33,7 @@ export class MainMenuScene extends Phaser.Scene {
     // Top wall accent
     this.add.rectangle(cx, 45, GAME_WIDTH, 90, COLORS.WALL_ACCENT);
 
-    // ── Side walls — same language as game scene ─────────────────────────────
+    // ── Side walls — same language as game scene ────────────────────────────────────────────
     const wallW = 16;
     const menuWallH = GAME_HEIGHT - 90;
     const lW = this.add.graphics();
@@ -55,23 +55,20 @@ export class MainMenuScene extends Phaser.Scene {
     rW.fillStyle(0x251007, 1);
     rW.fillRect(GAME_WIDTH - wallW, GAME_HEIGHT - 14, wallW, 14);
 
-    // ── Window light shafts ──────────────────────────────────────────────────
+    // ── Window light shafts ──────────────────────────────────────────────────────
     const shafts = this.add.graphics();
     shafts.fillStyle(0xFFEE88, 0.07);
     shafts.fillTriangle(24, 90, 180, 90, 110, 500);
     shafts.fillStyle(0xFFEE88, 0.05);
     shafts.fillTriangle(GAME_WIDTH - 24, 90, GAME_WIDTH - 180, 90, GAME_WIDTH - 110, 500);
 
-    // ── Background table silhouettes — atmospheric restaurant backdrop ───────
+    // ── Background table silhouettes ─────────────────────────────────────────
     const bgTables = this.add.graphics().setAlpha(0.38);
     [[100, 590], [380, 590], [240, 730]].forEach(([tx, ty]) => {
-      // Table body
       bgTables.fillStyle(0x8B4513, 1);
       bgTables.fillRoundedRect(tx - 52, ty - 30, 104, 60, 8);
-      // Tablecloth (matches in-game linen ivory)
       bgTables.fillStyle(0xF5F0E8, 1);
       bgTables.fillRoundedRect(tx - 48, ty - 28, 96, 48, 6);
-      // Chair silhouettes
       bgTables.fillStyle(0x5C3317, 1);
       bgTables.fillRoundedRect(tx - 28, ty + 22, 20, 22, 3);
       bgTables.fillRoundedRect(tx + 8, ty + 22, 20, 22, 3);
@@ -79,7 +76,7 @@ export class MainMenuScene extends Phaser.Scene {
       bgTables.fillRoundedRect(tx + 8, ty - 48, 20, 20, 3);
     });
 
-    // ── Logo card backdrop ────────────────────────────────────────────────────
+    // ── Logo card backdrop ───────────────────────────────────────────────
     const logoY = 155;
     const logoBg = this.add.graphics();
     logoBg.fillStyle(0x1A0E08, 0.72);
@@ -114,51 +111,37 @@ export class MainMenuScene extends Phaser.Scene {
     }).setOrigin(0.5).setAlpha(0);
     this.tweens.add({ targets: tagline, alpha: 0.8, duration: 380, delay: 480, ease: 'Quad.easeOut' });
 
-    // ── Waiter mascot — drawn in logo card, tray-carrying hero ───────────────
-    const wc = logoY + 105;   // waiter center y
-    const wx = cx - 165;      // far-left of card, beside logo
+    // ── Waiter mascot ──────────────────────────────────────────────────────────────
+    const wc = logoY + 105;
+    const wx = cx - 165;
     const waiterGfx = this.add.graphics().setAlpha(0).setDepth(2);
-
-    // Body (navy jacket)
     waiterGfx.fillStyle(0x1A237E, 1);
     waiterGfx.fillRoundedRect(wx - 14, wc - 8, 28, 36, 4);
-    // Shirt (white strip)
     waiterGfx.fillStyle(0xFFFFFF, 1);
     waiterGfx.fillRect(wx - 5, wc - 6, 10, 18);
-    // Bow-tie
     waiterGfx.fillStyle(0xE53935, 1);
     waiterGfx.fillTriangle(wx - 5, wc - 6, wx - 1, wc - 2, wx - 5, wc + 2);
     waiterGfx.fillTriangle(wx + 5, wc - 6, wx + 1, wc - 2, wx + 5, wc + 2);
-    // Head
     waiterGfx.fillStyle(0xFDA07A, 1);
     waiterGfx.fillCircle(wx, wc - 22, 14);
-    // Hair
     waiterGfx.fillStyle(0x2C1810, 1);
     waiterGfx.fillEllipse(wx, wc - 33, 28, 12);
-    // Eyes
     waiterGfx.fillCircle(wx - 5, wc - 23, 2.5);
     waiterGfx.fillCircle(wx + 5, wc - 23, 2.5);
-    // Smile
     waiterGfx.lineStyle(2, 0x2C1810, 1);
     waiterGfx.beginPath();
     waiterGfx.arc(wx, wc - 18, 5, 0, Math.PI, false);
     waiterGfx.strokePath();
-    // Arm holding tray
     waiterGfx.fillStyle(0x1A237E, 1);
     waiterGfx.fillRoundedRect(wx + 10, wc - 4, 16, 8, 3);
-    // Tray
     waiterGfx.fillStyle(0x7A4A1E, 1);
     waiterGfx.fillRoundedRect(wx + 16, wc - 10, 34, 6, 2);
     waiterGfx.fillStyle(0xC4874A, 0.5);
     waiterGfx.fillRoundedRect(wx + 17, wc - 9, 32, 3, 1);
-    // Food on tray
     const foodLeft = this.add.image(wx + 33, wc - 16, 'food_1').setScale(0.28).setOrigin(0.5).setAlpha(0).setDepth(2);
-
     this.tweens.add({ targets: [waiterGfx, foodLeft], alpha: 1, duration: 380, delay: 600, ease: 'Quad.easeOut' });
-    // Idle bob
     this.tweens.add({ targets: waiterGfx, y: { from: 0, to: -6 }, duration: 1100, yoyo: true, repeat: -1, ease: 'Sine.easeInOut', delay: 700 });
 
-    // Mirror waiter on right side (facing left, holding dessert)
     const wx2 = cx + 165;
     const waiterGfx2 = this.add.graphics().setAlpha(0).setDepth(2);
     waiterGfx2.fillStyle(0x1A237E, 1);
@@ -178,7 +161,6 @@ export class MainMenuScene extends Phaser.Scene {
     waiterGfx2.beginPath();
     waiterGfx2.arc(wx2, wc - 18, 5, 0, Math.PI, false);
     waiterGfx2.strokePath();
-    // Arm (other side)
     waiterGfx2.fillStyle(0x1A237E, 1);
     waiterGfx2.fillRoundedRect(wx2 - 26, wc - 4, 16, 8, 3);
     waiterGfx2.fillStyle(0x7A4A1E, 1);
@@ -186,11 +168,10 @@ export class MainMenuScene extends Phaser.Scene {
     waiterGfx2.fillStyle(0xC4874A, 0.5);
     waiterGfx2.fillRoundedRect(wx2 - 49, wc - 9, 32, 3, 1);
     const foodRight = this.add.image(wx2 - 34, wc - 16, 'food_4').setScale(0.28).setOrigin(0.5).setAlpha(0).setDepth(2);
-
     this.tweens.add({ targets: [waiterGfx2, foodRight], alpha: 1, duration: 380, delay: 750, ease: 'Quad.easeOut' });
     this.tweens.add({ targets: waiterGfx2, y: { from: 0, to: -6 }, duration: 1300, yoyo: true, repeat: -1, ease: 'Sine.easeInOut', delay: 900 });
 
-    // ── Stats row ─────────────────────────────────────────────────────────────
+    // ── Stats row ─────────────────────────────────────────────────────────────────
     const statsY = 424;
     const statBg = this.add.graphics().setAlpha(0);
     statBg.fillStyle(0x000000, 0.28);
@@ -223,7 +204,7 @@ export class MainMenuScene extends Phaser.Scene {
       }).setOrigin(0.5).setAlpha(0.75);
     }
 
-    // ── Retention strip — daily goal + last session + best combo ─────────────
+    // ── Retention strip — daily goal + last session + best combo ─────────────────────
     const hasHistory = prog.lastScore > 0 || prog.bestCombo > 0;
     let retBtnOffset = 0;
     if (hasHistory) {
@@ -284,25 +265,63 @@ export class MainMenuScene extends Phaser.Scene {
           barGfx.fillStyle(goalDone ? 0x44BB44 : 0x5588DD, 1);
           barGfx.fillRoundedRect(cx - barW / 2, barAreaY - 4, barW * goalProg, 7, 3);
         }
+
+        // Label with context-aware messaging
+        const isClose = !goalDone && goalProg >= 0.75;
         const goalStr = goalDone
-          ? 'DAILY GOAL DONE!'
+          ? '✓  DAILY GOAL COMPLETE!'
+          : isClose
+          ? `SO CLOSE! ${fmtScore(daily.lastScore)} / ${fmtScore(daily.target)}`
           : `DAILY GOAL: ${fmtScore(daily.lastScore)} / ${fmtScore(daily.target)}`;
+        const goalColor = goalDone ? '#44FF88' : isClose ? '#FFCC44' : '#8899CC';
         const goalTxt = this.add.text(cx, barAreaY - 15, goalStr, {
           fontSize: '10px', fontFamily: 'Arial Black',
-          color: goalDone ? '#44FF88' : '#8899CC', letterSpacing: 1,
+          color: goalColor, letterSpacing: 1,
         }).setOrigin(0.5).setAlpha(0);
         this.tweens.add({ targets: [barGfx, goalTxt], alpha: 1, duration: 300, delay: 700 });
+
+        // Pulse the bar label when close to goal — creates urgency without nagging
+        if (isClose) {
+          this.tweens.add({
+            targets: goalTxt, alpha: { from: 1, to: 0.5 },
+            duration: 700, yoyo: true, repeat: -1, delay: 1200, ease: 'Sine.easeInOut',
+          });
+        }
+
+        // Sparkle when goal is complete
+        if (goalDone) {
+          for (let sp = 0; sp < 8; sp++) {
+            const sx = cx - 140 + sp * 40;
+            const star = this.add.graphics().setDepth(3).setAlpha(0);
+            star.fillStyle(0x44FF88, 0.85);
+            star.fillCircle(0, 0, 3);
+            star.setPosition(sx, barAreaY - 14);
+            this.tweens.add({
+              targets: star, alpha: { from: 0, to: 0.85 },
+              y: star.y - 12,
+              duration: 550 + sp * 70, delay: 900 + sp * 55,
+              ease: 'Quad.easeOut',
+              onComplete: () => {
+                this.tweens.add({
+                  targets: star, alpha: 0, duration: 400,
+                  delay: sp * 30,
+                  onComplete: () => star.destroy(),
+                });
+              },
+            });
+          }
+        }
       }
     }
 
-    // ── Buttons (staggered entrance) ──────────────────────────────────────────
+    // ── Buttons (staggered entrance) ───────────────────────────────────────────
     const btnY = 510 + retBtnOffset;
     const playBtn = this.makeBtnAnimated(cx, btnY, '▶  PLAY', 'btn_orange', () => this.scene.start('GameScene'), 650, 1.12);
     this.makeBtnAnimated(cx, btnY + 72, 'SETTINGS', 'btn_green', () => this.scene.start('SettingsScene'), 730);
     this.makeBtnAnimated(cx, btnY + 144, 'CREDITS', 'btn_green', () => this.scene.start('CreditsScene'), 800);
     void playBtn;
 
-    // ── Bottom food row ───────────────────────────────────────────────────────
+    // ── Bottom food row ─────────────────────────────────────────────────────────────
     [0, 1, 2, 3, 4].forEach((itemId, i) => {
       const ex = 52 + i * 92;
       const ey = 726 + (i % 2 === 0 ? 0 : 14);
@@ -310,7 +329,7 @@ export class MainMenuScene extends Phaser.Scene {
       this.tweens.add({ targets: fe, y: ey - 8, duration: 1200 + i * 150, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     });
 
-    // Ambient rising particles — small geometric sparkles give menu breathing life
+    // Ambient rising particles
     const spawnMenuParticle = () => {
       const px = Phaser.Math.Between(30, GAME_WIDTH - 30);
       const py = GAME_HEIGHT - 40;
@@ -318,16 +337,13 @@ export class MainMenuScene extends Phaser.Scene {
       const p = this.add.graphics().setDepth(2);
       const type = Phaser.Math.Between(0, 2);
       if (type === 0) {
-        // Diamond
         p.fillStyle(0xFFD700, 0.7);
         p.fillTriangle(0, -size, size, 0, 0, size);
         p.fillTriangle(0, -size, -size, 0, 0, size);
       } else if (type === 1) {
-        // Circle
         p.fillStyle(0xFFCC44, 0.6);
         p.fillCircle(0, 0, size * 0.6);
       } else {
-        // Cross
         p.fillStyle(0xFFEE88, 0.65);
         p.fillRect(-size * 0.2, -size, size * 0.4, size * 2);
         p.fillRect(-size, -size * 0.2, size * 2, size * 0.4);

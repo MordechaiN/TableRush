@@ -44,11 +44,11 @@ export class Customer extends Phaser.GameObjects.Container {
   private eatStartMs = 0;
   private eatDuration = 0;
 
-  // 48×72 sprite, origin 0.5 → container center at pixel (24, 36)
-  // Head center at pixel (24, 14) → container (0, 14−36) = (0, −22)
+  // 48x72 sprite, origin 0.5 => container center at pixel (24, 36)
+  // Head center at pixel (24, 14) => container (0, -22)
   private static readonly HEAD_CY = -22;
-  private static readonly EYE_Y = -24;   // 2px above head center
-  private static readonly MOUTH_Y = -19; // 3px below head center
+  private static readonly EYE_Y = -24;
+  private static readonly MOUTH_Y = -19;
 
   constructor(scene: Phaser.Scene, x: number, y: number, variantIndex: number, maxPatience: number) {
     super(scene, x, y);
@@ -62,7 +62,6 @@ export class Customer extends Phaser.GameObjects.Container {
     this.face = scene.add.graphics();
     this.add(this.face);
 
-    // Patience bar — 44×8px pill at y=−50 (above sprite top at −36)
     const patienceTrack = scene.add.graphics();
     patienceTrack.fillStyle(0x000000, 0.20);
     patienceTrack.fillRoundedRect(-22, -50, 44, 8, 4);
@@ -71,7 +70,6 @@ export class Customer extends Phaser.GameObjects.Container {
     this.patienceBarFill = scene.add.graphics();
     this.add(this.patienceBarFill);
 
-    // Eating progress bar — below sprite feet at y=38 (sprite bottom ≈ y=36)
     this.eatBarTrack = scene.add.graphics();
     this.eatBarTrack.fillStyle(0x000000, 0.15);
     this.eatBarTrack.fillRoundedRect(-22, 38, 44, 5, 2.5);
@@ -82,12 +80,10 @@ export class Customer extends Phaser.GameObjects.Container {
     this.eatBarFill.setVisible(false);
     this.add(this.eatBarFill);
 
-    // Bubble: body y=-18 to +18 local, tail tip at y=34 → abs y=-88+34=-54 = patience bar top (−50) − 4px gap
     this.bubble = scene.add.container(0, -88);
     this.bubble.setVisible(false);
     this.add(this.bubble);
 
-    // Depth 12: above table surface/glow (2-3), below table front face overlay (16) and arrows (15)
     this.setDepth(12);
     scene.add.existing(this);
     this.drawFace('neutral');
@@ -160,28 +156,40 @@ export class Customer extends Phaser.GameObjects.Container {
   }
 
   showFoodReaction() {
-    // Quick happy bob when food arrives at the table
+    // Excited jump + squash when food arrives
     this.bodySprite.setTint(0xAAEEAA);
     this.scene.tweens.add({
-      targets: this, y: this.y - 10,
-      duration: 150, yoyo: true, ease: 'Back.easeOut',
+      targets: this, y: this.y - 14,
+      duration: 170, yoyo: true, ease: 'Back.easeOut',
       onComplete: () => {
-        this.scene.time.delayedCall(80, () => this.bodySprite.clearTint());
+        this.scene.time.delayedCall(100, () => this.bodySprite.clearTint());
       },
     });
+    // Squash-and-stretch excitement
     this.scene.tweens.add({
-      targets: this.bodySprite, scaleX: { from: 1, to: 1.15 }, scaleY: { from: 1, to: 1.15 },
-      duration: 120, yoyo: true, ease: 'Quad.easeOut',
+      targets: this.bodySprite,
+      scaleX: { from: 1.25, to: 0.88 }, scaleY: { from: 0.78, to: 1.18 },
+      duration: 140, yoyo: true, repeat: 1, ease: 'Quad.easeOut',
     });
   }
 
   showHappyExit() {
-    // Gold flash + bounce before walking out after payment
+    // Big celebration before walking out after payment
     this.bodySprite.setTint(0xFFDD44);
+
+    // Jump high
     this.scene.tweens.add({
-      targets: this, y: this.y - 16,
-      duration: 180, yoyo: true, ease: 'Back.easeOut',
+      targets: this,
+      y: this.y - 30,
+      duration: 260, yoyo: true, ease: 'Quad.easeOut',
       onComplete: () => this.bodySprite.clearTint(),
+    });
+
+    // Happy squash-and-stretch
+    this.scene.tweens.add({
+      targets: this.bodySprite,
+      scaleX: { from: 0.82, to: 1.35 }, scaleY: { from: 1.35, to: 0.82 },
+      duration: 130, yoyo: true, repeat: 1, ease: 'Quad.easeOut',
     });
   }
 
@@ -192,12 +200,10 @@ export class Customer extends Phaser.GameObjects.Container {
     });
   }
 
-  // Face left or right based on target x position
   faceDirection(toX: number) {
     this.bodySprite.setFlipX(toX < this.x);
   }
 
-  // Walking bob — subtle scale pulse during escort (call with matchDuration)
   walkBob(duration: number) {
     this.scene.tweens.add({
       targets: this.bodySprite,
@@ -236,8 +242,6 @@ export class Customer extends Phaser.GameObjects.Container {
     this.bodySprite.setTint(0xFFBB00);
     this.maxPatience = Math.floor(this.maxPatience * 0.7);
     this.patience = this.maxPatience;
-
-    // VIP crown — drawn as a gold Graphics crown shape
     const crown = this.scene.add.graphics();
     crown.fillStyle(0xFFCC00, 1);
     crown.fillTriangle(-10, 0, -4, -8, 0, -2);
@@ -261,8 +265,6 @@ export class Customer extends Phaser.GameObjects.Container {
     this.bodySprite.setTint(0x7799BB);
     this.maxPatience = Math.floor(this.maxPatience * 0.9);
     this.patience = this.maxPatience;
-
-    // Notepad + pencil — the critic's signature prop
     const pad = this.scene.add.graphics();
     pad.fillStyle(0xFFF5E0, 1);
     pad.fillRoundedRect(-8, -5, 16, 18, 2);
@@ -272,7 +274,6 @@ export class Customer extends Phaser.GameObjects.Container {
     pad.fillRect(-5, 1, 10, 1.5);
     pad.fillRect(-5, 5, 10, 1.5);
     pad.fillRect(-5, 9, 7, 1.5);
-    // Pencil alongside pad
     pad.fillStyle(0xFFCC00, 1);
     pad.fillRect(7, -8, 3, 12);
     pad.fillStyle(0xFF8800, 1);
@@ -290,8 +291,6 @@ export class Customer extends Phaser.GameObjects.Container {
     this.maxPatience = Math.floor(this.maxPatience * 0.70);
     this.patience = this.maxPatience;
     this.bodySprite.setTint(0x5599CC);
-
-    // Briefcase — signals busy executive
     const brief = this.scene.add.graphics();
     brief.fillStyle(0x2A180A, 1);
     brief.fillRoundedRect(-9, -2, 18, 12, 2);
@@ -311,8 +310,6 @@ export class Customer extends Phaser.GameObjects.Container {
     this.isFamilyTable = true;
     this.maxPatience = Math.floor(this.maxPatience * 1.30);
     this.patience = this.maxPatience;
-
-    // Small family silhouette icon
     const fam = this.scene.add.graphics();
     fam.fillStyle(0xFFCC88, 1);
     fam.fillCircle(-7, -8, 4.5);
@@ -328,24 +325,18 @@ export class Customer extends Phaser.GameObjects.Container {
 
   makeBirthday() {
     this.isBirthday = true;
-
-    // Party hat above patience bar (hat base at y=-62, tip at y=-84)
     const hat = this.scene.add.graphics();
     hat.fillStyle(0xFF4488, 1);
     hat.fillTriangle(-10, 0, 10, 0, 0, -22);
     hat.fillStyle(0xFFDD00, 0.8);
     hat.fillTriangle(-7, 0, 7, 0, 0, -15);
     hat.fillStyle(0x00CCFF, 0.9);
-    // Polka dots on hat
     hat.fillCircle(-4, -6, 2);
     hat.fillCircle(3, -12, 2);
-    // Pom pom tip
     hat.fillStyle(0xFFFFFF, 0.95);
     hat.fillCircle(0, -22, 3);
     hat.setPosition(-1, -62);
     this.add(hat);
-
-    // Subtle continuous bounce to draw attention
     this.scene.tweens.add({
       targets: hat, y: { from: -62, to: -68 },
       duration: 500, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
@@ -368,7 +359,7 @@ export class Customer extends Phaser.GameObjects.Container {
   }
 
   private scheduleNextIdle() {
-    const delay = 1800 + Math.random() * 2800;
+    const delay = 1600 + Math.random() * 2400;
     this.idleTimer = this.scene.time.delayedCall(delay, () => {
       this.doIdleAction();
       if (this.state !== 'leaving') this.scheduleNextIdle();
@@ -379,32 +370,48 @@ export class Customer extends Phaser.GameObjects.Container {
     if (this.state === 'leaving' || this.state === 'entering') return;
 
     if (this.state === 'requesting' || this.state === 'ordering') {
-      // Shuffle: horizontal wiggle
+      // Impatient shuffle
       this.scene.tweens.add({
         targets: this.bodySprite,
-        x: { from: -3, to: 3 },
-        duration: 90, yoyo: true, repeat: 2, ease: 'Sine.easeInOut',
+        x: { from: -4, to: 4 },
+        duration: 80, yoyo: true, repeat: 3, ease: 'Sine.easeInOut',
       });
     } else if (this.state === 'waiting_food') {
-      // Tap table: lean forward
+      // Lean forward — tapping the table
       this.scene.tweens.add({
         targets: this.bodySprite,
-        y: { from: 0, to: 5 },
-        duration: 140, yoyo: true, ease: 'Quad.easeOut',
+        y: { from: 0, to: 6 },
+        duration: 150, yoyo: true, ease: 'Quad.easeOut',
       });
     } else if (this.state === 'eating') {
-      // Chewing bob
+      // Chewing: rapid bob + scaleY squish
       this.scene.tweens.add({
         targets: this.bodySprite,
-        y: { from: 0, to: -4 },
-        duration: 110, yoyo: true, repeat: 4, ease: 'Quad.easeInOut',
+        y: { from: 0, to: -5 },
+        duration: 90, yoyo: true, repeat: 5, ease: 'Quad.easeInOut',
       });
-    } else if (this.state === 'paying') {
-      // Wave for attention: wider wiggle
       this.scene.tweens.add({
         targets: this.bodySprite,
-        x: { from: -5, to: 5 },
-        duration: 75, yoyo: true, repeat: 4, ease: 'Sine.easeInOut',
+        scaleY: { from: 1.0, to: 0.93 },
+        duration: 90, yoyo: true, repeat: 5, ease: 'Quad.easeInOut',
+      });
+      // Occasional delighted wiggle
+      if (Math.random() < 0.4) {
+        this.scene.time.delayedCall(320, () => {
+          if (this.state !== 'eating') return;
+          this.scene.tweens.add({
+            targets: this.bodySprite,
+            x: { from: -3, to: 3 },
+            duration: 95, yoyo: true, repeat: 2, ease: 'Sine.easeInOut',
+          });
+        });
+      }
+    } else if (this.state === 'paying') {
+      // Wave urgently for the check
+      this.scene.tweens.add({
+        targets: this.bodySprite,
+        x: { from: -6, to: 6 },
+        duration: 60, yoyo: true, repeat: 5, ease: 'Sine.easeInOut',
       });
     }
   }
@@ -412,33 +419,22 @@ export class Customer extends Phaser.GameObjects.Container {
   private buildBubble(content: string, borderColor: number) {
     if (this.bubbleTween) { this.bubbleTween.stop(); this.bubbleTween = null; }
     this.bubble.removeAll(true);
-
     const bg = this.scene.add.graphics();
-
-    // Shadow (+2,+2)
     bg.fillStyle(0x000000, 0.15);
     bg.fillRoundedRect(-26, -16, 58, 38, 9);
-
-    // Bubble fill
     bg.fillStyle(0xFFF8F0);
     bg.fillRoundedRect(-28, -18, 58, 38, 9);
-
-    // Border
     bg.lineStyle(2, borderColor);
     bg.strokeRoundedRect(-28, -18, 58, 38, 9);
-
-    // Tail — tip at y=34 local = abs y −88+34 = −54, patience bar top at −50 → 4px gap
     bg.fillStyle(0xFFF8F0);
     bg.fillTriangle(-7, 16, 7, 16, 0, 34);
     bg.lineStyle(2, borderColor);
     bg.lineBetween(-7, 16, 0, 34);
     bg.lineBetween(7, 16, 0, 34);
-
     const txt = this.scene.add.text(0, -1, content, {
       fontSize: content.length > 3 ? '12px' : '22px',
       color: '#2C1810',
     }).setOrigin(0.5);
-
     this.bubble.add([bg, txt]);
     this.bubble.setScale(0);
     this.bubble.setVisible(true);
@@ -451,27 +447,19 @@ export class Customer extends Phaser.GameObjects.Container {
   private buildBubbleWithFood(itemId: number, borderColor: number) {
     if (this.bubbleTween) { this.bubbleTween.stop(); this.bubbleTween = null; }
     this.bubble.removeAll(true);
-
     const bg = this.scene.add.graphics();
-
     bg.fillStyle(0x000000, 0.15);
     bg.fillRoundedRect(-26, -16, 58, 38, 9);
-
     bg.fillStyle(0xFFF8F0);
     bg.fillRoundedRect(-28, -18, 58, 38, 9);
-
     bg.lineStyle(2, borderColor);
     bg.strokeRoundedRect(-28, -18, 58, 38, 9);
-
     bg.fillStyle(0xFFF8F0);
     bg.fillTriangle(-7, 16, 7, 16, 0, 34);
     bg.lineStyle(2, borderColor);
     bg.lineBetween(-7, 16, 0, 34);
     bg.lineBetween(7, 16, 0, 34);
-
-    const foodKey = `food_${itemId}`;
-    const foodImg = this.scene.add.image(0, -1, foodKey).setScale(0.55).setOrigin(0.5);
-
+    const foodImg = this.scene.add.image(0, -1, `food_${itemId}`).setScale(0.55).setOrigin(0.5);
     this.bubble.add([bg, foodImg]);
     this.bubble.setScale(0);
     this.bubble.setVisible(true);
@@ -495,18 +483,13 @@ export class Customer extends Phaser.GameObjects.Container {
     if (mood === this.lastMood) return;
     this.lastMood = mood;
     this.face.clear();
-
-    const eyeY = Customer.EYE_Y;     // −24
-    const mouthY = Customer.MOUTH_Y; // −19
+    const eyeY = Customer.EYE_Y;
+    const mouthY = Customer.MOUTH_Y;
     const eyeR = 3;
-
-    // Angry: red overlay on head region (head spans −36 to −8)
     if (mood === 'angry') {
       this.face.fillStyle(0xCC2222, 0.4);
       this.face.fillRoundedRect(-15, -36, 30, 28, 6);
     }
-
-    // Eyebrows
     this.face.fillStyle(0x2C1810);
     if (mood === 'angry') {
       this.face.fillRect(-10, eyeY - 6, 7, 2.5);
@@ -515,23 +498,15 @@ export class Customer extends Phaser.GameObjects.Container {
       this.face.fillRect(-10, eyeY - 5, 7, 2);
       this.face.fillRect(3, eyeY - 4, 7, 2);
     }
-
-    // Eye whites
     this.face.fillStyle(0xFFFFFF, 0.95);
     this.face.fillCircle(-5, eyeY, eyeR + 1);
     this.face.fillCircle(5, eyeY, eyeR + 1);
-
-    // Irises
     this.face.fillStyle(0x3C2010);
     this.face.fillCircle(-5, eyeY, eyeR);
     this.face.fillCircle(5, eyeY, eyeR);
-
-    // Eye highlights
     this.face.fillStyle(0xFFFFFF, 0.85);
     this.face.fillCircle(-4, eyeY - 1, 1.2);
     this.face.fillCircle(6, eyeY - 1, 1.2);
-
-    // Mouth
     if (mood === 'happy') {
       this.face.lineStyle(2, 0x3C2010);
       this.face.beginPath();
@@ -555,9 +530,7 @@ export class Customer extends Phaser.GameObjects.Container {
     if (this.patienceActive && this.patience > 0) {
       this.patience -= delta;
     }
-
     const frac = this.getPatienceFraction();
-
     if (this.state === 'eating' || this.state === 'paying') {
       this.drawFace('happy');
     } else if (frac < 0.2) {
@@ -567,16 +540,20 @@ export class Customer extends Phaser.GameObjects.Container {
     } else {
       this.drawFace('neutral');
     }
-
-    // Patience bar — 44×8px pill at y=−50
+    // Patience bar
     this.patienceBarFill.clear();
     if (this.patienceActive || this.state === 'waiting_food' || this.state === 'ordering') {
       const col = frac > 0.6 ? COLORS.UI_GREEN : frac > 0.3 ? 0xFF9800 : COLORS.UI_RED;
       this.patienceBarFill.fillStyle(col);
       this.patienceBarFill.fillRoundedRect(-22, -50, 44 * frac, 8, 4);
+      // Wobble the bar when critically low to add tension
+      if (frac < 0.15 && frac > 0) {
+        this.patienceBarFill.x = Math.sin(this.scene.time.now * 0.020) * 1.8;
+      } else {
+        this.patienceBarFill.x = 0;
+      }
     }
-
-    // Eating progress bar — below feet at y=38
+    // Eating progress bar
     if (this.state === 'eating' && this.eatDuration > 0) {
       const elapsed = this.scene.time.now - this.eatStartMs;
       const eatFrac = Math.min(1, elapsed / this.eatDuration);

@@ -81,11 +81,14 @@ export class Player extends Phaser.GameObjects.Container {
     });
   }
 
-  // Always-visible tray: shows all capacity slots, filled or empty.
-  // Call with itemIds=[] to show an empty tray. capacity=0 hides tray entirely.
+  // Tray display. capacity=0 hides entirely.
+  // FIX: For Level 1-2 (capacity≤2) don’t show empty slot rings — they look like
+  // food is already loaded and confuse first-time players. At Level 3+ showing
+  // empty slots is useful (communicates how many items you can carry).
   showTray(itemIds: number[], capacity: number) {
     this.clearCarry();
     if (capacity === 0) return;
+    if (itemIds.length === 0 && capacity <= 2) return;  // clean tray for new players
 
     const tray = this.scene.add.container(0, -52);
     tray.setDepth(1);
@@ -124,6 +127,7 @@ export class Player extends Phaser.GameObjects.Container {
           tray.add(dot);
         }
       } else {
+        // Empty slot ring (only shown at Level 3+ where capacity context matters)
         const ring = this.scene.add.graphics();
         ring.lineStyle(1.5, 0xFFFFFF, 0.45);
         ring.strokeCircle(sx, slotY, 8);
@@ -172,7 +176,6 @@ export class Player extends Phaser.GameObjects.Container {
   showDirtyDish() {
     this.dirtyBadge?.destroy();
     const g = this.scene.add.graphics();
-    // Dirty plate indicator — small grey plate with orange food smear
     g.fillStyle(0xD8D0C4, 1);
     g.fillCircle(22, 8, 8);
     g.fillStyle(0xC0B8B0, 1);
@@ -240,7 +243,6 @@ export class Player extends Phaser.GameObjects.Container {
 
   celebrateCombo(count: number) {
     if (count >= 15) {
-      // TABLE MASTER — full celebration: jump + spin + tray flourish
       this.setEmotion('excited', 5000);
       this.scene.tweens.add({
         targets: this,
@@ -293,7 +295,7 @@ export class Player extends Phaser.GameObjects.Container {
 
   private drawFace(emotion: PlayerEmotion) {
     this.face.clear();
-    const cx = 0, cy = -22;  // head center for 48×76 sprite (16-38=-22)
+    const cx = 0, cy = -22;
     this.face.fillStyle(0x3C2010);
     switch (emotion) {
       case 'normal':

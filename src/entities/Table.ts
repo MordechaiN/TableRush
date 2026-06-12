@@ -117,7 +117,8 @@ export class Table extends Phaser.GameObjects.Container {
     this.stateVisual.clear();
     this.drawDirtOverlay();
     this.dirtOverlay.setVisible(true);
-    this.tableBody.clearTint();
+    // Amber-orange tint on table surface — makes dirty state unmistakable at a glance
+    this.tableBody.setTint(0xCC7722);
     this.setGlowState('dirty');
     this.setPriority('dirty');
     this.clearSeatRing();

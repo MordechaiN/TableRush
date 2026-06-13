@@ -873,22 +873,34 @@ export class GameScene extends Phaser.Scene {
     // Cream panel background
     this.add.image(GAME_WIDTH / 2, 28, 'hud_panel').setOrigin(0.5, 0.5).setDepth(3);
 
-    // Score badge — left dark pill
+    // Score badge — warm premium pill with coin icon
     const scorePill = this.add.graphics().setDepth(3.5);
-    scorePill.fillStyle(0x2D1810, 0.92);
-    scorePill.fillRoundedRect(8, 7, 148, 42, 10);
+    this.drawPremiumPill(scorePill, 8, 7, 148, 42);
+    // Gold coin icon
+    scorePill.fillStyle(0xFFC21E, 1); scorePill.fillCircle(28, 28, 11);
+    scorePill.fillStyle(0xFFE680, 0.7); scorePill.fillEllipse(25, 25, 7, 5);
+    scorePill.lineStyle(2.5, 0xC98A0E, 1); scorePill.strokeCircle(28, 28, 11);
+    const coinDollar = this.add.text(28, 28, '$', {
+      fontSize: '12px', fontFamily: 'Arial Black', color: '#9A6500',
+    }).setOrigin(0.5).setDepth(4);
+    void coinDollar;
 
-    this.scoreTxt = this.add.text(82, 28, '$  0', {
-      fontSize: '19px', fontFamily: 'Arial Black', color: '#FFD700',
-    }).setOrigin(0.5, 0.5).setDepth(4);
+    this.scoreTxt = this.add.text(46, 28, '0', {
+      fontSize: '20px', fontFamily: 'Arial Black', color: '#FFE27A',
+    }).setOrigin(0, 0.5).setDepth(4);
 
-    // Timer badge — right dark pill
+    // Timer badge — warm premium pill with clock icon
     this.hudTimerPill = this.add.graphics().setDepth(3.5);
-    this.hudTimerPill.fillStyle(0x2D1810, 0.92);
-    this.hudTimerPill.fillRoundedRect(GAME_WIDTH - 156, 7, 148, 42, 10);
+    this.drawPremiumPill(this.hudTimerPill, GAME_WIDTH - 156, 7, 148, 42);
+    const clockIcon = this.add.graphics().setDepth(4);
+    clockIcon.fillStyle(0xFFF3D6, 1); clockIcon.fillCircle(GAME_WIDTH - 138, 28, 10);
+    clockIcon.lineStyle(2.5, 0xC98A0E, 1); clockIcon.strokeCircle(GAME_WIDTH - 138, 28, 10);
+    clockIcon.lineStyle(2, 0x5A3418, 1);
+    clockIcon.lineBetween(GAME_WIDTH - 138, 28, GAME_WIDTH - 138, 22);
+    clockIcon.lineBetween(GAME_WIDTH - 138, 28, GAME_WIDTH - 133, 30);
 
-    this.timeTxt = this.add.text(GAME_WIDTH - 90, 28, '3:00', {
-      fontSize: '19px', fontFamily: 'Arial Black', color: '#FFFFFF',
+    this.timeTxt = this.add.text(GAME_WIDTH - 78, 28, '3:00', {
+      fontSize: '20px', fontFamily: 'Arial Black', color: '#FFFFFF',
     }).setOrigin(0.5, 0.5).setDepth(4);
 
     if (!this.sys.game.device.input.touch) {
@@ -2038,7 +2050,7 @@ export class GameScene extends Phaser.Scene {
   private addScore(amount: number) {
     const adjusted = this.scoreMultiplier !== 1.0 ? Math.floor(amount * this.scoreMultiplier) : amount;
     this.score = Math.max(0, this.score + adjusted);
-    this.scoreTxt.setText(`$  ${fmtScore(this.score)}`);
+    this.scoreTxt.setText(fmtScore(this.score));
     this.scoreTxt.setColor(COLORS.TEXT_GOLD);
     const bounce = this.comboMultiplier >= 5 ? 1.7 : this.comboMultiplier >= 4 ? 1.55 : this.comboMultiplier >= 3 ? 1.45 : 1.3;
     const dur = this.comboMultiplier >= 3 ? 160 : 130;
@@ -2177,10 +2189,26 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
+  // Warm, premium HUD pill: soft shadow, warm-brown body, top sheen, gold border
+  private drawPremiumPill(g: Phaser.GameObjects.Graphics, x: number, y: number, w: number, h: number) {
+    g.fillStyle(0x000000, 0.16); g.fillRoundedRect(x, y + 2, w, h, 13);
+    g.fillStyle(0x57341A, 0.97); g.fillRoundedRect(x, y, w, h, 13);
+    g.fillStyle(0xFFFFFF, 0.10); g.fillRoundedRect(x + 4, y + 3, w - 8, 13, 8);
+    g.lineStyle(2, 0xF4C25A, 0.55); g.strokeRoundedRect(x, y, w, h, 13);
+  }
+
   private drawComboPill(color: number, alpha: number) {
     this.hudComboPill.clear();
+    // Warm shell so the combo badge always reads as a premium pill, with the
+    // tier colour layered on top.
+    this.hudComboPill.fillStyle(0x57341A, 0.55);
+    this.hudComboPill.fillRoundedRect(166, 7, 148, 42, 13);
     this.hudComboPill.fillStyle(color, alpha);
-    this.hudComboPill.fillRoundedRect(166, 7, 148, 42, 10);
+    this.hudComboPill.fillRoundedRect(166, 7, 148, 42, 13);
+    this.hudComboPill.fillStyle(0xFFFFFF, 0.08);
+    this.hudComboPill.fillRoundedRect(170, 10, 140, 12, 8);
+    this.hudComboPill.lineStyle(2, 0xF4C25A, 0.4);
+    this.hudComboPill.strokeRoundedRect(166, 7, 148, 42, 13);
   }
 
   private updateComboDisplay() {

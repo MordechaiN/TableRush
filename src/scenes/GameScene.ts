@@ -2792,28 +2792,56 @@ export class GameScene extends Phaser.Scene {
       duration: 480, ease: 'Quad.easeOut',
       onComplete: () => flash.destroy(),
     });
-    // 10 big gold coins arc outward
+    // 10 gold coins: burst outward, then home into the score counter (HUD) — the
+    // satisfying "money goes to the bank" collect feel from premium casual games.
+    const scoreX = 70, scoreY = 28; // score pill location in the HUD
     for (let i = 0; i < 10; i++) {
       const angle = (Math.PI * 2 / 10) * i - Math.PI / 2;
-      const dist = 66 + (i % 2) * 18;
-      const coin = this.add.graphics().setDepth(20);
-      coin.fillStyle(0xFFD700, 1);
-      coin.fillCircle(0, 0, 11);
-      coin.fillStyle(0xFFFF99, 0.55);
-      coin.fillCircle(-3, -3, 5);
-      coin.lineStyle(2, 0xCC9900, 1);
-      coin.strokeCircle(0, 0, 11);
-      coin.setPosition(x, y).setScale(0.4);
+      const dist = 50 + (i % 2) * 18;
+      const coin = this.add.container(x, y).setDepth(21).setScale(0.5);
+      const cg = this.add.graphics();
+      cg.fillStyle(0xFFC21E, 1); cg.fillCircle(0, 0, 10);
+      cg.fillStyle(0xFFE680, 0.7); cg.fillEllipse(-2.5, -3, 7, 5);
+      cg.lineStyle(2, 0xC98A0E, 1); cg.strokeCircle(0, 0, 10);
+      const dollar = this.add.text(0, 0, '$', {
+        fontSize: '11px', fontFamily: 'Arial Black', color: '#9A6500',
+      }).setOrigin(0.5);
+      coin.add([cg, dollar]);
+      const peakX = x + Math.cos(angle) * dist;
+      const peakY = y + Math.sin(angle) * dist - 18;
+      // Coin "spin" — flip scaleX to fake a 3D coin rotation
       this.tweens.add({
-        targets: coin,
-        x: x + Math.cos(angle) * dist,
-        y: y + Math.sin(angle) * dist - 14,
-        alpha: 0, scaleX: 0, scaleY: 0,
-        duration: 750, delay: i * 40,
-        ease: 'Quad.easeOut',
-        onComplete: () => coin.destroy(),
+        targets: coin, scaleX: { from: 0.5, to: -0.5 },
+        duration: 220, yoyo: true, repeat: 4, ease: 'Sine.easeInOut',
+      });
+      // 1) pop out to peak
+      this.tweens.add({
+        targets: coin, x: peakX, y: peakY, scale: 0.95,
+        duration: 280, delay: i * 25, ease: 'Back.easeOut',
+        onComplete: () => {
+          // 2) home into the score counter, accelerating
+          this.tweens.add({
+            targets: coin, x: scoreX, y: scoreY,
+            scaleX: 0.3, scaleY: 0.3, alpha: 0.9,
+            duration: 360 + i * 12, ease: 'Back.easeIn',
+            onComplete: () => {
+              coin.destroy();
+              if (i === 0) this.pulseScorePill();
+            },
+          });
+        },
       });
     }
+  }
+
+  // Quick pop on the score counter when coins land in it
+  private pulseScorePill() {
+    this.scoreTxt.setColor(COLORS.TEXT_GOLD);
+    this.tweens.add({
+      targets: this.scoreTxt, scaleX: 1.35, scaleY: 1.35,
+      duration: 120, yoyo: true, ease: 'Back.easeOut',
+      onComplete: () => this.scoreTxt.setColor('#FFFFFF'),
+    });
   }
 
   private getCustomerIdByInstance(target: Customer): number {

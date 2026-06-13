@@ -1,0 +1,152 @@
+import { fmtScore } from '../config/GameConfig';
+import { ProgressionSystem, RoundResult, RoundSummary } from '../systems/ProgressionSystem';
+import { SoundManager } from '../systems/SoundManager';
+import type { HudState, GameResult } from './RestaurantGame';
+
+let cssDone = false;
+function css() {
+  if (cssDone) return; cssDone = true;
+  const s = document.createElement('style'); s.textContent = `
+  .ui-pill{position:absolute;display:flex;align-items:center;gap:8px;background:rgba(74,42,20,.92);
+    border:2px solid rgba(244,194,90,.6);border-radius:18px;padding:8px 15px;color:#fff;
+    font-family:'Arial Black',Arial,sans-serif;box-shadow:0 6px 14px rgba(120,60,10,.35),inset 0 2px 0 rgba(255,255,255,.12)}
+  #hud{position:fixed;inset:0;z-index:5;pointer-events:none}
+  #hud .pointerable{pointer-events:auto}
+  #h-score{top:14px;left:14px;font-size:22px}
+  #h-score .ic{width:26px;height:26px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#FFE680,#FFC21E 60%,#C98A0E);box-shadow:inset 0 0 0 2px #C98A0E;display:grid;place-items:center;color:#9A6500;font-size:13px}
+  #h-score .v{color:#FFE27A}
+  #h-timer{top:14px;right:14px;font-size:22px}
+  #h-combo{top:14px;left:50%;transform:translateX(-50%);font-size:18px;color:#FFB14A;transition:transform .12s}
+  #h-mute{top:62px;right:14px;font-size:15px;padding:6px 12px;cursor:pointer}
+  #h-announce{position:fixed;top:32%;left:50%;transform:translate(-50%,-50%) scale(0);z-index:6;
+    font-family:'Arial Black';font-weight:900;font-size:42px;color:#FFE27A;text-align:center;
+    -webkit-text-stroke:6px #7a3a0a;paint-order:stroke fill;pointer-events:none;text-shadow:0 6px 16px rgba(0,0,0,.3)}
+  #h-tut{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);z-index:6;max-width:88vw;text-align:center;
+    background:rgba(40,22,8,.9);color:#FFE9C6;font-family:Arial;font-weight:bold;font-size:15px;padding:12px 20px;border-radius:16px;border:2px solid rgba(244,194,90,.5)}
+  @keyframes annPop{0%{transform:translate(-50%,-50%) scale(0)}60%{transform:translate(-50%,-50%) scale(1.18)}100%{transform:translate(-50%,-50%) scale(1)}}
+
+  .ov{position:fixed;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;font-family:'Arial Black',Arial,sans-serif;
+    background:radial-gradient(120% 90% at 50% 18%,rgba(255,243,221,.96),rgba(239,168,94,.96));transition:opacity .3s;}
+  .ov.hide{opacity:0;pointer-events:none}
+  .card{width:min(86vw,380px);background:#FFF7EC;border:3px solid #FF8A3D;border-radius:26px;padding:26px 22px;text-align:center;
+    box-shadow:0 18px 40px rgba(150,80,20,.35)}
+  .card h1{color:#E8442C;font-size:30px;-webkit-text-stroke:1px #fff;margin-bottom:4px}
+  .stars{font-size:46px;letter-spacing:6px;margin:6px 0 2px}
+  .big{font-size:46px;color:#F08A1E;margin:6px 0}
+  .sub{font-family:Arial;color:#9A551F;font-size:14px;font-weight:bold}
+  .row2{display:flex;gap:12px;justify-content:center;margin:14px 0}
+  .stat{background:rgba(255,210,122,.35);border-radius:14px;padding:8px 14px;color:#7a4516;font-size:13px}
+  .stat b{display:block;font-size:20px;color:#5A3A1E}
+  .xpwrap{margin:12px 4px 6px}
+  .xpbar{height:14px;background:rgba(120,70,20,.18);border-radius:8px;overflow:hidden}
+  .xpfill{height:100%;background:linear-gradient(90deg,#FF8A3D,#FFC21E);width:0;transition:width .8s ease}
+  .xplbl{font-family:Arial;font-size:12px;color:#9A551F;margin-top:4px;font-weight:bold}
+  .btn{display:block;width:100%;height:56px;margin-top:12px;border:none;border-radius:18px;cursor:pointer;
+    font-family:'Arial Black';font-size:20px;color:#fff;letter-spacing:1px}
+  .btn-p{background:linear-gradient(180deg,#FF8A3D,#F4671E);box-shadow:0 6px 0 #C24A12}
+  .btn-s{background:linear-gradient(180deg,#5BBF4A,#3E9E33);box-shadow:0 6px 0 #2C7A24}
+  .btn:active{transform:translateY(4px);box-shadow:none}
+  .credits-list{font-family:Arial;color:#7a4516;font-size:15px;line-height:2;margin:14px 0}
+  .toggle{display:flex;align-items:center;justify-content:space-between;background:rgba(255,210,122,.3);border-radius:14px;padding:14px 18px;margin:10px 0;color:#5A3A1E;font-size:16px}
+  .sw{width:54px;height:30px;border-radius:16px;background:#C9A36A;position:relative;cursor:pointer;transition:background .2s}
+  .sw.on{background:#5BBF4A}.sw i{position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:left .2s}.sw.on i{left:27px}
+  `;
+  document.head.appendChild(s);
+}
+
+export interface Hud { update: (h: HudState) => void; announce: (t: string, k: string) => void; destroy: () => void; }
+export function createHud(): Hud {
+  css();
+  const el = document.createElement('div'); el.id = 'hud';
+  el.innerHTML = `
+    <div class="ui-pill" id="h-score"><div class="ic">$</div><div class="v">0</div></div>
+    <div class="ui-pill" id="h-combo" style="display:none">×1</div>
+    <div class="ui-pill" id="h-timer">⏱ 3:00</div>
+    <div class="ui-pill pointerable" id="h-mute">🔊</div>
+    <div id="h-announce"></div>
+    <div id="h-tut" style="display:none"></div>`;
+  document.body.appendChild(el);
+  const scoreV = el.querySelector('#h-score .v') as HTMLElement;
+  const combo = el.querySelector('#h-combo') as HTMLElement;
+  const timer = el.querySelector('#h-timer') as HTMLElement;
+  const ann = el.querySelector('#h-announce') as HTMLElement;
+  const tut = el.querySelector('#h-tut') as HTMLElement;
+  const mute = el.querySelector('#h-mute') as HTMLElement;
+  mute.onclick = () => { const on = localStorage.getItem('tablerush_sfx') !== 'off'; const nv = on ? 'off' : 'on'; localStorage.setItem('tablerush_sfx', nv); localStorage.setItem('tablerush_music', nv); mute.textContent = nv === 'on' ? '🔊' : '🔇'; if (nv === 'on') { try { SoundManager.startMusic(); } catch { /* */ } } else { try { SoundManager.stopMusic(); } catch { /* */ } } };
+  mute.textContent = localStorage.getItem('tablerush_sfx') === 'off' ? '🔇' : '🔊';
+  let lastScore = -1, lastCombo = -1;
+  let tutTimer = 0;
+  return {
+    update: (h) => {
+      if (h.score !== lastScore) { scoreV.textContent = fmtScore(h.score); scoreV.style.transform = 'scale(1.3)'; setTimeout(() => scoreV.style.transform = 'scale(1)', 110); lastScore = h.score; }
+      const m = Math.max(0, h.timeLeft); timer.textContent = `⏱ ${Math.floor(m / 60)}:${String(Math.floor(m % 60)).padStart(2, '0')}`;
+      timer.style.color = m <= 15 ? '#FF5A4A' : '#fff';
+      if (h.combo !== lastCombo) {
+        if (h.combo >= 2) { combo.style.display = ''; combo.textContent = `🔥 ×${h.multiplier} · ${h.combo}`; combo.style.transform = 'translateX(-50%) scale(1.25)'; setTimeout(() => combo.style.transform = 'translateX(-50%) scale(1)', 120); }
+        else combo.style.display = 'none';
+        lastCombo = h.combo;
+      }
+    },
+    announce: (t, k) => {
+      if (k === 'tut') { tut.style.display = ''; tut.textContent = t; clearTimeout(tutTimer); tutTimer = window.setTimeout(() => tut.style.display = 'none', 4200); return; }
+      ann.textContent = t; ann.style.color = k === 'combo' ? '#FF7A1B' : '#FFE27A';
+      ann.style.animation = 'none'; void ann.offsetWidth; ann.style.animation = 'annPop .35s ease forwards';
+      setTimeout(() => { if (ann.textContent === t) { ann.style.animation = ''; ann.style.transform = 'translate(-50%,-50%) scale(0)'; } }, 900);
+    },
+    destroy: () => el.remove(),
+  };
+}
+
+function overlay(html: string): HTMLDivElement { css(); const d = document.createElement('div'); d.className = 'ov'; d.innerHTML = html; document.body.appendChild(d); return d; }
+function close(d: HTMLDivElement) { d.classList.add('hide'); setTimeout(() => d.remove(), 320); }
+
+export function showGameOver(result: GameResult, cbs: { onReplay: () => void; onMenu: () => void }) {
+  const summary: RoundSummary = ProgressionSystem.addRound({ score: result.score, stars: result.stars, customersHappy: result.happy, customersAngry: result.angry, comboRecord: result.comboRecord } as RoundResult);
+  const stars = '★★★'.slice(0, result.stars) + '☆☆☆'.slice(0, 3 - result.stars);
+  const thBase = summary.thresholdForLevel(summary.levelAfter);
+  const thNext = summary.thresholdForLevel(summary.levelAfter + 1);
+  const frac = Math.max(0, Math.min(1, (summary.xpAfter - thBase) / Math.max(1, thNext - thBase)));
+  const d = overlay(`<div class="card">
+    <h1>${result.stars >= 3 ? 'PERFECT SHIFT!' : result.stars >= 2 ? 'GREAT SHIFT!' : "SHIFT'S OVER"}</h1>
+    <div class="stars">${stars}</div>
+    <div class="big">$${fmtScore(result.score)}</div>
+    ${summary.isNewHighScore ? '<div class="sub" style="color:#E8442C">★ NEW BEST SCORE!</div>' : ''}
+    <div class="row2">
+      <div class="stat"><b>${result.happy}</b>served</div>
+      <div class="stat"><b>×${result.comboRecord}</b>best streak</div>
+      <div class="stat"><b>${result.angry}</b>walkouts</div>
+    </div>
+    <div class="xpwrap"><div class="xpbar"><div class="xpfill" id="xpf"></div></div>
+      <div class="xplbl">LEVEL ${summary.levelAfter} · +${summary.xpEarned} XP${summary.unlockedAbility ? ' · 🔓 ' + summary.unlockedAbility : ''}</div></div>
+    <button class="btn btn-p" id="go-replay">▶ PLAY AGAIN</button>
+    <button class="btn btn-s" id="go-menu">MENU</button>
+  </div>`);
+  requestAnimationFrame(() => { (d.querySelector('#xpf') as HTMLElement).style.width = (frac * 100) + '%'; });
+  (d.querySelector('#go-replay') as HTMLButtonElement).onclick = () => { try { SoundManager.uiClick(); } catch { /* */ } close(d); cbs.onReplay(); };
+  (d.querySelector('#go-menu') as HTMLButtonElement).onclick = () => { try { SoundManager.uiClick(); } catch { /* */ } close(d); cbs.onMenu(); };
+}
+
+export function showSettings(onBack: () => void) {
+  const sfx = () => localStorage.getItem('tablerush_sfx') !== 'off';
+  const mus = () => localStorage.getItem('tablerush_music') !== 'off';
+  const d = overlay(`<div class="card">
+    <h1>SETTINGS</h1>
+    <div class="toggle">Sound Effects <div class="sw ${sfx() ? 'on' : ''}" id="sw-sfx"><i></i></div></div>
+    <div class="toggle">Music <div class="sw ${mus() ? 'on' : ''}" id="sw-mus"><i></i></div></div>
+    <div class="sub" style="margin-top:10px">Best score: $${fmtScore(ProgressionSystem.getData().highScore)}</div>
+    <button class="btn btn-p" id="set-back">← BACK</button>
+  </div>`);
+  const swS = d.querySelector('#sw-sfx') as HTMLElement, swM = d.querySelector('#sw-mus') as HTMLElement;
+  swS.onclick = () => { const nv = sfx() ? 'off' : 'on'; localStorage.setItem('tablerush_sfx', nv); swS.classList.toggle('on', nv === 'on'); };
+  swM.onclick = () => { const nv = mus() ? 'off' : 'on'; localStorage.setItem('tablerush_music', nv); swM.classList.toggle('on', nv === 'on'); if (nv === 'on') { try { SoundManager.startMusic(); } catch { /* */ } } else { try { SoundManager.stopMusic(); } catch { /* */ } } };
+  (d.querySelector('#set-back') as HTMLButtonElement).onclick = () => { try { SoundManager.uiClick(); } catch { /* */ } close(d); onBack(); };
+}
+
+export function showCredits(onBack: () => void) {
+  const d = overlay(`<div class="card">
+    <h1>TABLE RUSH</h1>
+    <div class="credits-list">A cozy restaurant rush.<br>Built with Three.js 🍽️<br><br>Concept &amp; Product · Mordechai<br>Made with Claude</div>
+    <button class="btn btn-p" id="cr-back">← BACK</button>
+  </div>`);
+  (d.querySelector('#cr-back') as HTMLButtonElement).onclick = () => { try { SoundManager.uiClick(); } catch { /* */ } close(d); onBack(); };
+}

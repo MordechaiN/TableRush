@@ -9,10 +9,11 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
+    chunkSizeWarningLimit: 900,
     rollupOptions: {
       output: {
         manualChunks: {
-          phaser: ['phaser']
+          three: ['three']
         }
       }
     }

@@ -1,31 +1,43 @@
-import Phaser from 'phaser';
-import { GAME_WIDTH, GAME_HEIGHT } from './config/GameConfig';
-import { BootScene } from './scenes/BootScene';
-import { MainMenuScene } from './scenes/MainMenuScene';
-import { GameScene } from './scenes/GameScene';
-import { PauseScene } from './scenes/PauseScene';
-import { GameOverScene } from './scenes/GameOverScene';
-import { CreditsScene } from './scenes/CreditsScene';
-import { SettingsScene } from './scenes/SettingsScene';
-import { initIntro } from './intro';
+import { initTitle, showTitle, hideTitle } from './three/title';
+import { RestaurantGame, GameResult } from './three/RestaurantGame';
+import { createHud, showGameOver, showSettings, showCredits, Hud } from './three/ui';
+import { ProgressionSystem } from './systems/ProgressionSystem';
+import { SoundManager } from './systems/SoundManager';
 
-const config: Phaser.Types.Core.GameConfig = {
-  type: Phaser.AUTO,
-  width: GAME_WIDTH,
-  height: GAME_HEIGHT,
-  parent: 'game-container',
-  backgroundColor: '#F3E2C4',
-  scale: {
-    mode: Phaser.Scale.FIT,
-    autoCenter: Phaser.Scale.CENTER_BOTH,
-  },
-  scene: [BootScene, MainMenuScene, GameScene, PauseScene, GameOverScene, CreditsScene, SettingsScene],
-};
+// ── Table Rush v2 — Three.js client ───────────────────────────────────────────
+const container = document.getElementById('game-container') as HTMLElement;
+let game: RestaurantGame | null = null;
+let hud: Hud | null = null;
+let wasTutorial = false;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const game = new Phaser.Game(config);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-(window as any).game = game;
+function startGame() {
+  hideTitle();
+  try { SoundManager.unlock(); } catch { /* */ }
+  wasTutorial = !ProgressionSystem.isTutorialDone();
+  hud = createHud();
+  game = new RestaurantGame(
+    container,
+    (h) => hud?.update(h),
+    (r) => endGame(r),
+    (text, kind) => hud?.announce(text, kind),
+  );
+  game.start(wasTutorial);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (window as any).__game = game;
+}
 
-// Three.js 3D title / menu — the landing experience that launches the game.
-initIntro(game as unknown as { scene: { start: (k: string) => void; stop: (k: string) => void } });
+function endGame(result: GameResult) {
+  if (wasTutorial) ProgressionSystem.markTutorialDone();
+  hud?.destroy(); hud = null;
+  const g = game; game = null;
+  showGameOver(result, {
+    onReplay: () => { g?.dispose(); startGame(); },
+    onMenu: () => { g?.dispose(); showTitle(); },
+  });
+}
+
+initTitle({
+  onPlay: startGame,
+  onSettings: () => showSettings(() => { /* title stays */ }),
+  onCredits: () => showCredits(() => { /* title stays */ }),
+});

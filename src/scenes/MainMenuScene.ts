@@ -12,20 +12,20 @@ export class MainMenuScene extends Phaser.Scene {
     // Ambient music — plays if AudioContext is already active (returns from game session)
     SoundManager.startMusic();
 
-    // Dark walnut hardwood plank floor
+    // Warm honey-oak hardwood plank floor — bright & inviting
     const PLANK_H = 34;
-    const plankCols = [0x2E1E0F, 0x251508, 0x2B1B0D, 0x221307, 0x301F10];
+    const plankCols = [0xEBCB97, 0xE3C089, 0xF0D29F, 0xDDB87E, 0xE7C68F];
     const menuFloor = this.add.graphics();
     const rowCount = Math.ceil(GAME_HEIGHT / PLANK_H) + 1;
     for (let row = 0; row < rowCount; row++) {
       menuFloor.fillStyle(plankCols[row % plankCols.length], 1);
       menuFloor.fillRect(0, row * PLANK_H, GAME_WIDTH, PLANK_H);
     }
-    menuFloor.fillStyle(0x000000, 0.25);
+    menuFloor.fillStyle(0xB68A4E, 0.32);
     for (let row = 1; row < rowCount; row++) {
       menuFloor.fillRect(0, row * PLANK_H - 1, GAME_WIDTH, 1);
     }
-    menuFloor.fillStyle(0xFF9944, 0.04);
+    menuFloor.fillStyle(0xFFFFFF, 0.16);
     for (let row = 0; row < rowCount; row++) {
       menuFloor.fillRect(0, row * PLANK_H, GAME_WIDTH, 2);
     }
@@ -79,10 +79,17 @@ export class MainMenuScene extends Phaser.Scene {
     // ── Logo card backdrop ───────────────────────────────────────────────
     const logoY = 155;
     const logoBg = this.add.graphics();
-    logoBg.fillStyle(0x1A0E08, 0.72);
-    logoBg.fillRoundedRect(cx - 210, logoY - 30, 420, 240, 20);
-    logoBg.lineStyle(1.5, 0xD4A849, 0.45);
-    logoBg.strokeRoundedRect(cx - 210, logoY - 30, 420, 240, 20);
+    // Soft drop shadow
+    logoBg.fillStyle(0x6B4A1E, 0.22);
+    logoBg.fillRoundedRect(cx - 206, logoY - 22, 420, 240, 22);
+    // Warm cream card
+    logoBg.fillStyle(0xFFF7EC, 0.97);
+    logoBg.fillRoundedRect(cx - 210, logoY - 30, 420, 240, 22);
+    // Warm orange border
+    logoBg.lineStyle(3, 0xFF8A3D, 0.85);
+    logoBg.strokeRoundedRect(cx - 210, logoY - 30, 420, 240, 22);
+    logoBg.lineStyle(1.5, 0xFFFFFF, 0.6);
+    logoBg.strokeRoundedRect(cx - 205, logoY - 25, 410, 230, 19);
     logoBg.setAlpha(0);
     this.tweens.add({ targets: logoBg, alpha: 1, duration: 500, ease: 'Quad.easeOut' });
 
@@ -94,20 +101,24 @@ export class MainMenuScene extends Phaser.Scene {
     // "TABLE" word
     const tableWord = this.add.text(cx, logoY + 68, 'TABLE', {
       fontSize: '74px', fontFamily: 'Arial Black',
-      color: COLORS.TEXT_LIGHT, fontStyle: 'bold',
+      color: '#E8442C', fontStyle: 'bold',
+      stroke: '#FFFFFF', strokeThickness: 5,
+      shadow: { offsetX: 0, offsetY: 3, color: '#00000033', blur: 4, fill: true },
     }).setOrigin(0.5).setAlpha(0);
     this.tweens.add({ targets: tableWord, alpha: 1, y: tableWord.y - 10, duration: 380, delay: 200, ease: 'Quad.easeOut' });
 
     // "RUSH" word
     const rushWord = this.add.text(cx, logoY + 140, 'RUSH', {
       fontSize: '74px', fontFamily: 'Arial Black',
-      color: COLORS.TEXT_GOLD, fontStyle: 'bold',
+      color: '#FF9E1B', fontStyle: 'bold',
+      stroke: '#7A3A0A', strokeThickness: 5,
+      shadow: { offsetX: 0, offsetY: 3, color: '#00000033', blur: 4, fill: true },
     }).setOrigin(0.5).setAlpha(0);
     this.tweens.add({ targets: rushWord, alpha: 1, y: rushWord.y - 10, duration: 380, delay: 340, ease: 'Quad.easeOut' });
 
     // Tagline
     const tagline = this.add.text(cx, logoY + 200, 'Fast-Paced Restaurant Service', {
-      fontSize: '15px', fontFamily: 'Arial', color: '#DDCCAA',
+      fontSize: '15px', fontFamily: 'Arial', color: '#A0673A', fontStyle: 'bold',
     }).setOrigin(0.5).setAlpha(0);
     this.tweens.add({ targets: tagline, alpha: 0.8, duration: 380, delay: 480, ease: 'Quad.easeOut' });
 
@@ -174,17 +185,19 @@ export class MainMenuScene extends Phaser.Scene {
     // ── Stats row ─────────────────────────────────────────────────────────────────
     const statsY = 424;
     const statBg = this.add.graphics().setAlpha(0);
-    statBg.fillStyle(0x000000, 0.28);
-    statBg.fillRoundedRect(cx - 180, statsY - 22, 360, 52, 12);
+    statBg.fillStyle(0xFFFFFF, 0.85);
+    statBg.fillRoundedRect(cx - 180, statsY - 22, 360, 52, 14);
+    statBg.lineStyle(2, 0xFFD27A, 0.7);
+    statBg.strokeRoundedRect(cx - 180, statsY - 22, 360, 52, 14);
     this.tweens.add({ targets: statBg, alpha: 1, duration: 350, delay: 550 });
 
     const statsGrp = [
       this.add.text(cx - 86, statsY + 4, `BEST: ${fmtScore(prog.highScore)}`, {
-        fontSize: '18px', fontFamily: 'Arial Black', color: COLORS.TEXT_GOLD,
+        fontSize: '18px', fontFamily: 'Arial Black', color: '#F08A1E',
       }).setOrigin(0.5).setAlpha(0),
-      this.add.text(cx, statsY + 4, '|', { fontSize: '16px', color: '#CCBBAA' }).setOrigin(0.5).setAlpha(0),
+      this.add.text(cx, statsY + 4, '|', { fontSize: '16px', color: '#D8B888' }).setOrigin(0.5).setAlpha(0),
       this.add.text(cx + 86, statsY + 4, `Level ${prog.level}`, {
-        fontSize: '18px', fontFamily: 'Arial Black', color: COLORS.TEXT_LIGHT,
+        fontSize: '18px', fontFamily: 'Arial Black', color: '#5A3A1E',
       }).setOrigin(0.5).setAlpha(0),
     ];
     this.tweens.add({ targets: statsGrp, alpha: 1, duration: 350, delay: 580 });

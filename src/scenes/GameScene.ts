@@ -196,28 +196,28 @@ export class GameScene extends Phaser.Scene {
   // ─── Restaurant Layout ─────────────────────────────────────────────────────
 
   private buildRestaurant() {
-    // ── Dining floor — dark walnut hardwood planks (Fix 1) ───────────────────
+    // ── Dining floor — warm honey-oak hardwood planks (bright & inviting) ─────
     const PLANK_H = 34;
-    const plankCols = [0x2E1E0F, 0x251508, 0x2B1B0D, 0x221307, 0x301F10];
+    const plankCols = [0xEBCB97, 0xE3C089, 0xF0D29F, 0xDDB87E, 0xE7C68F];
     const floorGfx = this.add.graphics().setDepth(0);
     const rowCount = Math.ceil((GAME_HEIGHT - 188) / PLANK_H) + 1;
     for (let row = 0; row < rowCount; row++) {
       floorGfx.fillStyle(plankCols[row % plankCols.length], 1);
       floorGfx.fillRect(0, 188 + row * PLANK_H, GAME_WIDTH, PLANK_H);
     }
-    // Plank gap shadow (bottom edge of each board)
-    floorGfx.fillStyle(0x000000, 0.28);
+    // Plank gap shadow (bottom edge of each board) — soft warm seam, not harsh black
+    floorGfx.fillStyle(0xB68A4E, 0.35);
     for (let row = 1; row < rowCount; row++) {
       floorGfx.fillRect(0, 188 + row * PLANK_H - 1, GAME_WIDTH, 1);
     }
-    // Grain highlight (top edge of each board — subtle warm sheen)
-    floorGfx.fillStyle(0xFF9944, 0.04);
+    // Grain highlight (top edge of each board — warm creamy sheen)
+    floorGfx.fillStyle(0xFFFFFF, 0.16);
     for (let row = 0; row < rowCount; row++) {
       floorGfx.fillRect(0, 188 + row * PLANK_H, GAME_WIDTH, 2);
     }
     // Board end-grain joints (staggered vertical lines)
     const jointGfx = this.add.graphics().setDepth(0.1);
-    jointGfx.lineStyle(1, 0x160A02, 0.28);
+    jointGfx.lineStyle(1, 0xBB8F50, 0.30);
     for (let row = 0; row < rowCount; row++) {
       const py = 188 + row * PLANK_H;
       const xOff = (row % 3) * 26;
@@ -226,18 +226,18 @@ export class GameScene extends Phaser.Scene {
       }
     }
 
-    // ── Kitchen floor — cool steel slate tiles (Fix 2) ───────────────────────
+    // ── Kitchen floor — bright cream & terracotta checker tiles ──────────────
     const SLATE_W = 38, SLATE_H = 30;
     const kitchenSlate = this.add.graphics().setDepth(0.15);
     const slateRows = Math.ceil(100 / SLATE_H) + 1;
     const slateCols = Math.ceil(GAME_WIDTH / SLATE_W) + 1;
     for (let sr = 0; sr < slateRows; sr++) {
       for (let sc = 0; sc < slateCols; sc++) {
-        kitchenSlate.fillStyle((sr + sc) % 2 === 0 ? 0x1E2523 : 0x191F1E, 1);
+        kitchenSlate.fillStyle((sr + sc) % 2 === 0 ? 0xF3E2C4 : 0xE9D2AC, 1);
         kitchenSlate.fillRect(sc * SLATE_W, 88 + sr * SLATE_H, SLATE_W, SLATE_H);
       }
     }
-    kitchenSlate.lineStyle(1, 0x0D1110, 0.65);
+    kitchenSlate.lineStyle(1, 0xCBA470, 0.45);
     for (let sc = 1; sc < slateCols; sc++) {
       kitchenSlate.lineBetween(sc * SLATE_W, 88, sc * SLATE_W, 188);
     }

@@ -296,36 +296,53 @@ export class Player extends Phaser.GameObjects.Container {
   private drawFace(emotion: PlayerEmotion) {
     this.face.clear();
     const cx = 0, cy = -22;
-    this.face.fillStyle(0x3C2010);
+    const ex = 6;
+    // Big round cute eyes (whites + iris + catchlight) — shared base, except for
+    // emotions that squint the eyes into happy curves.
+    const drawEyes = (open: boolean, iris = 0.4) => {
+      this.face.fillStyle(0xFFFFFF, 1);
+      this.face.fillCircle(cx - ex, cy - 1, 4.4); this.face.fillCircle(cx + ex, cy - 1, 4.4);
+      if (open) {
+        this.face.fillStyle(0x2C1810);
+        this.face.fillCircle(cx - ex, cy - 1 + iris, 3.1); this.face.fillCircle(cx + ex, cy - 1 + iris, 3.1);
+        this.face.fillStyle(0xFFFFFF, 0.95);
+        this.face.fillCircle(cx - ex + 1.2, cy - 2, 1.4); this.face.fillCircle(cx + ex + 1.2, cy - 2, 1.4);
+      } else {
+        this.face.lineStyle(3, 0x2C1810);
+        this.face.beginPath(); this.face.arc(cx - ex, cy, 3, Math.PI + 0.25, -0.25, false); this.face.strokePath();
+        this.face.beginPath(); this.face.arc(cx + ex, cy, 3, Math.PI + 0.25, -0.25, false); this.face.strokePath();
+      }
+    };
     switch (emotion) {
       case 'normal':
-        this.face.fillCircle(cx - 5, cy - 2, 2); this.face.fillCircle(cx + 5, cy - 2, 2);
-        this.face.fillRect(cx - 4, cy + 4, 8, 2);
+        drawEyes(true);
+        this.face.lineStyle(2.2, 0x3C2010); this.face.beginPath();
+        this.face.arc(cx, cy + 4, 4, 0.25, Math.PI - 0.25, false); this.face.strokePath();
         break;
       case 'happy':
-        this.face.fillCircle(cx - 5, cy - 2, 2); this.face.fillCircle(cx + 5, cy - 2, 2);
-        this.face.lineStyle(2.5, 0x3C2010); this.face.beginPath();
-        this.face.arc(cx, cy + 3, 5, 0, Math.PI, false); this.face.strokePath();
+        drawEyes(false);
+        this.face.fillStyle(0x6B2A1A); this.face.beginPath();
+        this.face.arc(cx, cy + 4, 5.5, 0.12, Math.PI - 0.12, false);
+        this.face.lineTo(cx - 5.4, cy + 4); this.face.closePath(); this.face.fillPath();
         break;
       case 'proud':
-        this.face.lineStyle(2.5, 0x3C2010);
-        this.face.beginPath(); this.face.arc(cx - 5, cy - 2, 3, Math.PI, 0, false); this.face.strokePath();
-        this.face.beginPath(); this.face.arc(cx + 5, cy - 2, 3, Math.PI, 0, false); this.face.strokePath();
+        drawEyes(false);
         this.face.lineStyle(3, 0x3C2010); this.face.beginPath();
-        this.face.arc(cx, cy + 3, 6, 0, Math.PI, false); this.face.strokePath();
+        this.face.arc(cx, cy + 4, 6, 0, Math.PI, false); this.face.strokePath();
         break;
       case 'excited':
-        this.face.fillCircle(cx - 5, cy - 2, 2.8); this.face.fillCircle(cx + 5, cy - 2, 2.8);
-        this.face.fillStyle(0xFFFFFF, 0.9);
-        this.face.fillCircle(cx - 4, cy - 3, 1.2); this.face.fillCircle(cx + 6, cy - 3, 1.2);
-        this.face.fillStyle(0x3C2010); this.face.lineStyle(3, 0x3C2010); this.face.beginPath();
-        this.face.arc(cx, cy + 3, 6, 0, Math.PI, false); this.face.strokePath();
+        drawEyes(true, 0);
+        this.face.fillStyle(0x6B2A1A); this.face.beginPath();
+        this.face.arc(cx, cy + 4, 6, 0.1, Math.PI - 0.1, false);
+        this.face.lineTo(cx - 6, cy + 4); this.face.closePath(); this.face.fillPath();
+        this.face.fillStyle(0xFF7A7A); this.face.fillEllipse(cx, cy + 8, 6, 3);
         break;
       case 'stressed':
-        this.face.fillRect(cx - 8, cy - 6, 6, 2); this.face.fillRect(cx + 2, cy - 5, 6, 2);
-        this.face.fillCircle(cx - 5, cy - 1, 2); this.face.fillCircle(cx + 5, cy - 1, 2);
+        this.face.fillStyle(0x2C1810);
+        this.face.fillRoundedRect(cx - 9, cy - 6, 6, 2.4, 1.2); this.face.fillRoundedRect(cx + 3, cy - 5, 6, 2.4, 1.2);
+        drawEyes(true, 1);
         this.face.lineStyle(2, 0x3C2010); this.face.beginPath();
-        this.face.arc(cx, cy + 7, 5, Math.PI, 0, false); this.face.strokePath();
+        this.face.arc(cx, cy + 8, 5, Math.PI, 0, false); this.face.strokePath();
         break;
     }
   }

@@ -140,6 +140,37 @@ Every shift generates up to 4 story highlights on the game over screen:
 
 ---
 
+## Art Direction & Design Philosophy
+
+TableRush targets the warm, friendly, "I want to play this" feel of commercial
+casual cooking games (Cooking Fever, Good Pizza Great Pizza, Diner Dash) — never
+a debug tool or management spreadsheet.
+
+**Color system** — warm and bright, never dark or muddy:
+
+| Role | Tone |
+|------|------|
+| Dining floor | Honey-oak hardwood planks |
+| Kitchen floor | Cream & terracotta checker tiles |
+| Panels / cards | Warm cream with soft orange borders |
+| Accents | Tomato red, cozy orange, soft gold, mint green |
+| Walls | Terracotta upper + cream wainscoting |
+
+**Readability first** — every customer state, table action, and reward is
+communicated *visually* before any text. A single priority arrow always points
+at the most valuable next action, so the player never has to think "what now?".
+
+**Game feel** — squash-and-stretch on pickups and deliveries, coin bursts and
+number pops on payment, combo heat overlays, and customer reactions give every
+action a satisfying, dopamine-positive response.
+
+> **Visual reboot (current):** the palette was rebuilt from a dark
+> walnut/slate/charcoal scheme to the warm, bright direction above — the single
+> highest-impact change moving the game from "developer prototype" to
+> "commercial casual game".
+
+---
+
 ## Architecture
 
 ### Tech Stack
@@ -279,6 +310,10 @@ See [KNOWN_ISSUES.md](KNOWN_ISSUES.md).
 - No keyboard gameplay (ESC for pause only)
 - No social sharing
 - No cancel for waiter movement
+- Characters are 48px SVGs in a semi-realistic style — recognizable and
+  expressive, but a chibi/mascot redesign would add more charm (next visual pass)
+- `GameScene.ts` is an intentional 3,200-line monolith — fast to ship, but a
+  candidate for extraction into systems as it grows
 
 ---
 

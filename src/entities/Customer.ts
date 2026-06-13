@@ -46,9 +46,9 @@ export class Customer extends Phaser.GameObjects.Container {
 
   // 48×72 sprite, origin 0.5 → container center at pixel (24, 36)
   // Head center at pixel (24, 14) → container (0, 14−36) = (0, −22)
-  private static readonly HEAD_CY = -22;
-  private static readonly EYE_Y = -24;   // 2px above head center
-  private static readonly MOUTH_Y = -19; // 3px below head center
+  private static readonly HEAD_CY = -21;
+  private static readonly EYE_Y = -22;   // big chibi eyes, just above head center
+  private static readonly MOUTH_Y = -15; // wide smile below center
 
   constructor(scene: Phaser.Scene, x: number, y: number, variantIndex: number, maxPatience: number) {
     super(scene, x, y);
@@ -526,58 +526,76 @@ export class Customer extends Phaser.GameObjects.Container {
     this.lastMood = mood;
     this.face.clear();
 
-    const eyeY = Customer.EYE_Y;     // −24
-    const mouthY = Customer.MOUTH_Y; // −19
-    const eyeR = 3;
+    const eyeY = Customer.EYE_Y;
+    const mouthY = Customer.MOUTH_Y;
+    const eyeX = 6;          // eye spacing from center
+    const irisR = 3.3;       // big chibi pupils
+    const whiteR = 4.6;
 
-    // Angry: red overlay on head region (head spans −36 to −8)
+    // Angry: red overlay on head region
     if (mood === 'angry') {
-      this.face.fillStyle(0xCC2222, 0.4);
-      this.face.fillRoundedRect(-15, -36, 30, 28, 6);
+      this.face.fillStyle(0xE34234, 0.32);
+      this.face.fillRoundedRect(-15, -36, 30, 30, 8);
+    }
+
+    // Eye whites
+    this.face.fillStyle(0xFFFFFF, 1);
+    this.face.fillCircle(-eyeX, eyeY, whiteR);
+    this.face.fillCircle(eyeX, eyeY, whiteR);
+
+    // Irises (big, friendly) — happy/eating squints into a curve instead
+    if (mood === 'happy') {
+      this.face.lineStyle(3, 0x2C1810);
+      this.face.beginPath(); this.face.arc(-eyeX, eyeY + 1, 3.2, Math.PI + 0.25, -0.25, false); this.face.strokePath();
+      this.face.beginPath(); this.face.arc(eyeX, eyeY + 1, 3.2, Math.PI + 0.25, -0.25, false); this.face.strokePath();
+    } else {
+      this.face.fillStyle(0x2C1810);
+      this.face.fillCircle(-eyeX, eyeY + 0.4, irisR);
+      this.face.fillCircle(eyeX, eyeY + 0.4, irisR);
+      // Big catchlights
+      this.face.fillStyle(0xFFFFFF, 0.95);
+      this.face.fillCircle(-eyeX + 1.3, eyeY - 1, 1.5);
+      this.face.fillCircle(eyeX + 1.3, eyeY - 1, 1.5);
+      this.face.fillStyle(0xFFFFFF, 0.6);
+      this.face.fillCircle(-eyeX - 1.2, eyeY + 1.2, 0.8);
+      this.face.fillCircle(eyeX - 1.2, eyeY + 1.2, 0.8);
     }
 
     // Eyebrows
     this.face.fillStyle(0x2C1810);
     if (mood === 'angry') {
-      this.face.fillRect(-10, eyeY - 6, 7, 2.5);
-      this.face.fillRect(3, eyeY - 5, 7, 2.5);
+      this.face.fillRoundedRect(-11, eyeY - 7, 8, 2.6, 1.3);
+      this.face.fillRoundedRect(3, eyeY - 6, 8, 2.6, 1.3);
     } else if (mood === 'hungry') {
-      this.face.fillRect(-10, eyeY - 5, 7, 2);
-      this.face.fillRect(3, eyeY - 4, 7, 2);
+      this.face.fillRoundedRect(-10, eyeY - 6, 7, 2, 1);
+      this.face.fillRoundedRect(3, eyeY - 5, 7, 2, 1);
     }
-
-    // Eye whites
-    this.face.fillStyle(0xFFFFFF, 0.95);
-    this.face.fillCircle(-5, eyeY, eyeR + 1);
-    this.face.fillCircle(5, eyeY, eyeR + 1);
-
-    // Irises
-    this.face.fillStyle(0x3C2010);
-    this.face.fillCircle(-5, eyeY, eyeR);
-    this.face.fillCircle(5, eyeY, eyeR);
-
-    // Eye highlights
-    this.face.fillStyle(0xFFFFFF, 0.85);
-    this.face.fillCircle(-4, eyeY - 1, 1.2);
-    this.face.fillCircle(6, eyeY - 1, 1.2);
 
     // Mouth
     if (mood === 'happy') {
-      this.face.lineStyle(2, 0x3C2010);
+      this.face.fillStyle(0x6B2A1A);
       this.face.beginPath();
-      this.face.arc(0, mouthY - 1, 5, 0.1, Math.PI - 0.1, false);
-      this.face.strokePath();
+      this.face.arc(0, mouthY - 1, 5.5, 0.12, Math.PI - 0.12, false);
+      this.face.lineTo(-5.4, mouthY - 1);
+      this.face.closePath(); this.face.fillPath();
+      // tongue
+      this.face.fillStyle(0xFF7A7A);
+      this.face.fillEllipse(0, mouthY + 2.5, 5, 2.6);
     } else if (mood === 'angry') {
-      this.face.lineStyle(2, 0xCC2222);
+      this.face.lineStyle(2.4, 0x9E2A1E);
       this.face.beginPath();
-      this.face.arc(0, mouthY + 2, 5, Math.PI + 0.2, -0.2, false);
+      this.face.arc(0, mouthY + 3, 5, Math.PI + 0.2, -0.2, false);
       this.face.strokePath();
     } else if (mood === 'hungry') {
-      this.face.fillStyle(0x8B5E3C);
-      this.face.fillRoundedRect(-5, mouthY, 10, 2, 1);
+      this.face.lineStyle(2.2, 0x8B5E3C);
+      this.face.beginPath();
+      this.face.arc(0, mouthY + 2, 3.5, Math.PI + 0.3, -0.3, false);
+      this.face.strokePath();
     } else {
-      this.face.fillStyle(0x3C2010);
-      this.face.fillRect(-4, mouthY, 8, 2);
+      this.face.lineStyle(2.2, 0x3C2010);
+      this.face.beginPath();
+      this.face.arc(0, mouthY - 1, 4, 0.25, Math.PI - 0.25, false);
+      this.face.strokePath();
     }
   }
 

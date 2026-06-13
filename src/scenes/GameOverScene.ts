@@ -327,7 +327,12 @@ export class GameOverScene extends Phaser.Scene {
     // Buttons
     const btnY = GAME_HEIGHT - 160;
     this.makeBtn(cx, btnY, 'PLAY AGAIN', 'btn_orange', () => this.scene.start('GameScene'));
-    this.makeBtn(cx, btnY + 64, 'MAIN MENU', 'btn_green', () => this.scene.start('MainMenuScene'));
+    this.makeBtn(cx, btnY + 64, 'MAIN MENU', 'btn_green', () => {
+      this.scene.stop('GameScene');
+      this.scene.stop();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (window as any).TableRushUI?.show();
+    });
 
     if (summary.isNewHighScore || isNewBestStars) {
       this.spawnConfetti();

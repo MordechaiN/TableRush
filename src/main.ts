@@ -7,6 +7,7 @@ import { PauseScene } from './scenes/PauseScene';
 import { GameOverScene } from './scenes/GameOverScene';
 import { CreditsScene } from './scenes/CreditsScene';
 import { SettingsScene } from './scenes/SettingsScene';
+import { initIntro } from './intro';
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
@@ -22,4 +23,9 @@ const config: Phaser.Types.Core.GameConfig = {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-(window as any).game = new Phaser.Game(config);
+const game = new Phaser.Game(config);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+(window as any).game = game;
+
+// Three.js 3D title / menu — the landing experience that launches the game.
+initIntro(game as unknown as { scene: { start: (k: string) => void; stop: (k: string) => void } });

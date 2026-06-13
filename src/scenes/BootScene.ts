@@ -356,6 +356,7 @@ export class BootScene extends Phaser.Scene {
 
   create() {
     this.createTextures();
-    this.scene.start('MainMenuScene');
+    // The 3D Three.js intro (src/intro.ts) is the landing screen and launches
+    // GameScene on PLAY — so Boot just prepares textures and idles behind it.
   }
 }

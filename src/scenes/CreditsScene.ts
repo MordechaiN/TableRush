@@ -108,7 +108,11 @@ export class CreditsScene extends Phaser.Scene {
       fontSize: '13px', fontFamily: 'Arial', color: '#CCBBAA',
     }).setOrigin(0.5);
 
-    this.makeBtn(cx, GAME_HEIGHT - 44, '← BACK', () => this.scene.start('MainMenuScene'));
+    this.makeBtn(cx, GAME_HEIGHT - 44, '← BACK', () => {
+      this.scene.stop();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (window as any).TableRushUI?.show();
+    });
   }
 
   private makeBtn(x: number, y: number, label: string, cb: () => void) {

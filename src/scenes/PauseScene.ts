@@ -40,7 +40,8 @@ export class PauseScene extends Phaser.Scene {
     this.makeBtn(cx, cy + 68, 'MAIN MENU', 0x5A3A1E, () => {
       this.scene.stop('GameScene');
       this.scene.stop();
-      this.scene.start('MainMenuScene');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (window as any).TableRushUI?.show();
     });
 
     // Divider

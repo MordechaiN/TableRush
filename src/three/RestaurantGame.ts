@@ -13,7 +13,7 @@ type CState = 'incoming' | 'ordered' | 'serving' | 'eating' | 'paying' | 'leavin
 interface Customer {
   obj: THREE.Group; table: Table; dish: number; state: CState;
   patience: number; maxPat: number; eat: number; payPat: number; bob: number; t: number;
-  bubble: Bubble | null; vip: boolean;
+  bubble: Bubble | null; vip: boolean; bAcc: number; lastBucket: number;
 }
 interface Table {
   i: number; pos: THREE.Vector3; seat: THREE.Vector3; state: 'empty' | CState;
@@ -68,12 +68,18 @@ export class RestaurantGame {
   private floats: { spr: THREE.Sprite; t: number }[] = [];
   private onTutorialServe: (() => void) | null = null;
   private tutorialDone = true;
+  private arrowMat!: THREE.MeshBasicMaterial;
+  private static coinGeo = new THREE.CylinderGeometry(0.13, 0.13, 0.04, 12);
+  private static coinMat = new THREE.MeshStandardMaterial({ color: 0xFFC21E, metalness: 0.5, roughness: 0.35 });
+  private static sparkGeo = new THREE.SphereGeometry(0.07, 6, 5);
 
+  private arrow!: THREE.Group;
   constructor(
     private container: HTMLElement,
     private onHud: (h: HudState) => void,
     private onOver: (r: GameResult) => void,
     private onAnnounce: (text: string, kind: 'combo' | 'speed' | 'tut') => void,
+    private onFlash: (kind: string) => void,
   ) {
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
     this.renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
@@ -95,6 +101,7 @@ export class RestaurantGame {
     this.waiter.position.set(0, 0, 6.5); this.waiter.scale.setScalar(1.1); this.scene.add(this.waiter);
     this.tray = new THREE.Group(); this.tray.position.set(0.55, 1.05, 0.2); this.waiter.add(this.tray);
     this.tray.add(new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.4, 0.06, 20), M(0xC0884A)));
+    this.buildArrow();
 
     this.resize = this.resize.bind(this);
     this.onPointer = this.onPointer.bind(this);
@@ -109,7 +116,7 @@ export class RestaurantGame {
     this.scene.add(new THREE.HemisphereLight(0xfff6e6, 0xE6A65A, 0.62));
     const key = new THREE.DirectionalLight(0xffffff, 1.15);
     key.position.set(6, 14, 8); key.castShadow = true;
-    key.shadow.mapSize.set(2048, 2048); key.shadow.bias = -0.0005;
+    key.shadow.mapSize.set(1024, 1024); key.shadow.bias = -0.0005;
     Object.assign(key.shadow.camera, { near: 1, far: 55, left: -18, right: 18, top: 18, bottom: -18 });
     key.shadow.camera.updateProjectionMatrix();
     this.scene.add(key);
@@ -171,6 +178,15 @@ export class RestaurantGame {
     }
   }
 
+  private buildArrow() {
+    this.arrow = new THREE.Group();
+    this.arrowMat = new THREE.MeshBasicMaterial({ color: 0xFF8A3D, depthTest: false, transparent: true });
+    const cone = new THREE.Mesh(new THREE.ConeGeometry(0.42, 0.55, 4), this.arrowMat); cone.rotation.x = Math.PI; cone.renderOrder = 998;
+    const outline = new THREE.Mesh(new THREE.ConeGeometry(0.52, 0.68, 4), new THREE.MeshBasicMaterial({ color: 0xffffff, depthTest: false, transparent: true })); outline.rotation.x = Math.PI; outline.position.y = 0.02; outline.renderOrder = 997;
+    this.arrow.add(outline, cone);
+    this.arrow.visible = false; this.scene.add(this.arrow);
+  }
+
   // ── lifecycle ──────────────────────────────────────────────────────────────
   start(tutorial: boolean) {
     this.tutorialDone = !tutorial;
@@ -202,7 +218,7 @@ export class RestaurantGame {
     c.position.copy(DOOR); this.scene.add(c);
     const dish = (Math.random() * MENU_ITEMS.length) | 0;
     table.state = 'incoming';
-    const cust: Customer = { obj: c, table, dish, state: 'incoming', patience: pat, maxPat: pat, eat: 2.8, payPat: 12, bob: Math.random() * 6, t: 0, bubble: null, vip };
+    const cust: Customer = { obj: c, table, dish, state: 'incoming', patience: pat, maxPat: pat, eat: 2.8, payPat: 12, bob: Math.random() * 6, t: 0, bubble: null, vip, bAcc: 0, lastBucket: -1 };
     table.customer = cust; this.customers.push(cust);
   }
 
@@ -234,9 +250,10 @@ export class RestaurantGame {
     const c = t.customer; if (!c) return;
     if (this.carried) { this.tray.remove(this.carried); this.carried = null; }
     const pl = plate(); const f = buildDish(c.dish); f.scale.setScalar(0.8); pl.add(f); pl.position.set(t.pos.x, 1.06, t.pos.z); pl.scale.setScalar(0.01); this.scene.add(pl); this.pop(pl, 0.9); t.food = pl;
-    c.state = 'eating'; t.state = 'eating'; c.eat = 2.8; if (c.bubble) c.bubble.draw('😋', 1, 1);
-    if (c.bubble) { /* keep until paying */ }
-    try { SoundManager.paymentCollected(); } catch { /* */ }
+    c.state = 'eating'; t.state = 'eating'; c.eat = 2.8; c.lastBucket = -1; if (c.bubble) c.bubble.draw('😋', 1, 1);
+    this.happyHop(c.obj);
+    this.sparkle(new THREE.Vector3(t.pos.x, 1.4, t.pos.z), 0xFFF0B0, 8);
+    try { SoundManager.foodReady(); } catch { /* */ }
     if (!this.tutorialDone) { this.tutorialDone = true; this.onAnnounce('Nice! Now let them eat, then collect 💰', 'tut'); this.onTutorialServe?.(); }
   }
   private collect(t: Table) {
@@ -251,11 +268,14 @@ export class RestaurantGame {
     this.combo++; if (this.combo > this.comboRecord) this.comboRecord = this.combo;
     const ms = COMBO_MILESTONES; let mil = ms[0]; for (const m of ms) if (this.combo >= m.min) mil = m;
     const prevMul = this.comboMul; this.comboMul = mil.multiplier;
-    this.coinBurst(new THREE.Vector3(t.pos.x, 1.4, t.pos.z));
+    this.coinBurst(new THREE.Vector3(t.pos.x, 1.4, t.pos.z), 12 + Math.min(20, this.combo * 2));
     this.addFloat(floatSprite('+$' + val), t.pos.x, t.pos.z);
+    this.happyHop(c.obj); this.fx.push({ k: 'whop', t: 0 });
+    const milestone = !!(mil.label && this.comboMul > prevMul);
+    this.onFlash(milestone ? 'combo' : 'gold');
     if (c.vip) this.addFloat(floatSprite('VIP! ×2.5', '#FFE27A'), t.pos.x, t.pos.z + 0.4);
-    if (speedLabel && speed > 1) this.onAnnounce(speedLabel + '!', 'speed');
-    if (mil.label && this.comboMul > prevMul) { this.onAnnounce(mil.label + '  ×' + this.comboMul, 'combo'); try { SoundManager.comboUp(Math.min(4, this.comboMul)); } catch { /* */ } this.camPunch(); }
+    if (speedLabel && speed > 1 && !milestone) this.onAnnounce(speedLabel + '!', 'speed');
+    if (milestone) { this.onAnnounce(mil.label + '  ×' + this.comboMul, 'combo'); try { SoundManager.comboUp(Math.min(4, this.comboMul)); } catch { /* */ } this.camPunch(); this.sparkle(new THREE.Vector3(t.pos.x, 1.6, t.pos.z), 0xFFB347, 14); }
     try { SoundManager.paymentCollected(); } catch { /* */ }
     if (t.food) { this.scene.remove(t.food); t.food = null; }
     if (c.bubble) { c.obj.remove(c.bubble.spr); c.bubble = null; }
@@ -270,17 +290,32 @@ export class RestaurantGame {
   private despawn(c: Customer) { this.scene.remove(c.obj); if (c.table.customer === c) { c.table.state = 'empty'; c.table.customer = null; c.table.food = null; } this.customers = this.customers.filter(x => x !== c); }
 
   // ── fx ───────────────────────────────────────────────────────────────────
-  private ring(t: Table, op: number) { (t.ring.userData as any).target = op; }
+  private ring(t: Table, op: number, color?: number) { (t.ring.userData as any).target = op; if (color !== undefined) (t.ring.material as THREE.MeshBasicMaterial).color.setHex(color); }
   private pop(o: THREE.Object3D, s = 1) { o.scale.setScalar(0.01); this.fx.push({ k: 'pop', o, t: 0, s }); }
   private bump() { this.fx.push({ k: 'bump', t: 0 }); }
   private camPunch() { this.fx.push({ k: 'punch', t: 0 }); }
-  private coinBurst(pos: THREE.Vector3) {
-    for (let i = 0; i < 14; i++) {
-      const coin = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.04, 14), M(0xFFC21E, { metalness: 0.5, roughness: 0.35 }));
+  private coinBurst(pos: THREE.Vector3, n = 14) {
+    for (let i = 0; i < n; i++) {
+      const coin = new THREE.Mesh(RestaurantGame.coinGeo, RestaurantGame.coinMat);
       coin.position.copy(pos); this.scene.add(coin);
-      const a = Math.random() * Math.PI * 2, sp = 2 + Math.random() * 3;
-      this.fx.push({ k: 'coin', o: coin, t: 0, vx: Math.cos(a) * sp, vy: 4 + Math.random() * 3, vz: Math.sin(a) * sp, rot: Math.random() * 10 });
+      const a = Math.random() * Math.PI * 2, sp = 2 + Math.random() * 3.5;
+      this.fx.push({ k: 'coin', o: coin, t: 0, vx: Math.cos(a) * sp, vy: 4.5 + Math.random() * 3.5, vz: Math.sin(a) * sp, rot: Math.random() * 12 });
     }
+  }
+  private sparkle(pos: THREE.Vector3, color: number, n = 8) {
+    const mat = new THREE.MeshBasicMaterial({ color, transparent: true });
+    for (let i = 0; i < n; i++) {
+      const s = new THREE.Mesh(RestaurantGame.sparkGeo, mat);
+      s.position.copy(pos); this.scene.add(s);
+      const a = (i / n) * Math.PI * 2, sp = 1.5 + Math.random() * 2;
+      this.fx.push({ k: 'spark', o: s, t: 0, vx: Math.cos(a) * sp, vy: 1.5 + Math.random() * 2, vz: Math.sin(a) * sp, mat });
+    }
+  }
+  private happyHop(o: THREE.Object3D) { this.fx.push({ k: 'happy', o, t: 0 }); }
+  // throttled bubble redraw — avoids a CanvasTexture upload every frame per customer
+  private tickBubble(c: Customer, emoji: string, frac: number, dt: number) {
+    if (!c.bubble) return; c.bAcc += dt; const bucket = Math.round(frac * 24);
+    if (c.bAcc >= 0.12 || bucket !== c.lastBucket) { c.bubble.draw(emoji, Math.max(0, frac), frac); c.lastBucket = bucket; c.bAcc = 0; }
   }
   private addFloat(spr: THREE.Sprite, x: number, z: number) { spr.position.set(x, 2.2, z); this.scene.add(spr); this.floats.push({ spr, t: 0 }); }
 
@@ -300,36 +335,46 @@ export class RestaurantGame {
       this.spawn();
       const elapsed = (now - this.startMs) / 1000; const tier = this.tierFor(elapsed);
       const prog = Math.min(1, elapsed / tier.maxTime);
-      this.nextSpawn = (tier.spawnStart + (tier.spawnEnd - tier.spawnStart) * prog) / 1000;
+      // Front-loaded pacing: a lively restaurant within the first 15s (mobile retention),
+      // ramping to fast spawns late. ~0.55x the base curve, floored at 1.4s.
+      const base = (tier.spawnStart + (tier.spawnEnd - tier.spawnStart) * prog) / 1000;
+      this.nextSpawn = Math.max(1.4, base * 0.55);
     }
 
-    // waiter
+    // waiter — responsive move with smooth turn, bob and lean for personality
     if (this.wTarget) {
       this.tmp.copy(this.wTarget).sub(this.waiter.position); this.tmp.y = 0; const d = this.tmp.length();
       if (d < 0.06) { this.waiter.position.copy(this.wTarget); const cb = this.wCb; this.wCb = null; cb?.(); this.nextStep(); }
-      else { this.tmp.normalize(); this.waiter.position.addScaledVector(this.tmp, Math.min(7 * dt, d)); this.waiter.rotation.y = Math.atan2(this.tmp.x, this.tmp.z); this.waiter.position.y = Math.abs(Math.sin(now / 80)) * 0.13; }
-    } else this.waiter.position.y = Math.sin(now / 600) * 0.04;
+      else {
+        this.tmp.normalize(); this.waiter.position.addScaledVector(this.tmp, Math.min(7.5 * dt, d));
+        let dr = Math.atan2(this.tmp.x, this.tmp.z) - this.waiter.rotation.y; dr = Math.atan2(Math.sin(dr), Math.cos(dr));
+        this.waiter.rotation.y += dr * Math.min(1, dt * 16);
+        this.waiter.position.y = Math.abs(Math.sin(now / 75)) * 0.14;
+        this.waiter.rotation.z = Math.sin(now / 75) * 0.05;
+      }
+    } else { this.waiter.position.y = Math.sin(now / 600) * 0.04; this.waiter.rotation.z *= 0.85; }
+    this.updateArrow(now);
 
     // customers
     for (const c of this.customers) {
       c.t += dt; const o = c.obj;
       if (c.state === 'incoming') {
         this.tmp.copy(c.table.seat).sub(o.position); this.tmp.y = 0; const d = this.tmp.length();
-        if (d < 0.08) { o.position.copy(c.table.seat); o.rotation.y = Math.PI * (c.table.pos.x <= 0 ? 0.82 : -0.82); c.state = 'ordered'; c.table.state = 'ordered'; const b = makeBubble(); b.spr.position.set(0, 2.05, 0); o.add(b.spr); c.bubble = b; b.draw(DISH_EMOJI[c.dish], 1, 1); this.ring(c.table, 0.7); }
+        if (d < 0.08) { o.position.copy(c.table.seat); o.rotation.y = Math.PI * (c.table.pos.x <= 0 ? 0.82 : -0.82); c.state = 'ordered'; c.table.state = 'ordered'; const b = makeBubble(); b.spr.position.set(0, 2.05, 0); o.add(b.spr); c.bubble = b; b.draw(DISH_EMOJI[c.dish], 1, 1); this.ring(c.table, 0.7, 0xFF8A3D); }
         else { this.tmp.normalize(); o.position.addScaledVector(this.tmp, Math.min(4.5 * dt, d)); o.rotation.y = Math.atan2(this.tmp.x, this.tmp.z); o.position.y = Math.abs(Math.sin(c.t * 9)) * 0.1; }
       } else if (c.state === 'ordered') {
         c.patience -= dt; o.position.y = Math.sin(c.t * 2 + c.bob) * 0.03;
-        if (c.bubble) c.bubble.draw(DISH_EMOJI[c.dish], Math.max(0, c.patience / c.maxPat), c.patience / c.maxPat);
+        this.tickBubble(c, DISH_EMOJI[c.dish], c.patience / c.maxPat, dt);
         if (c.patience <= 0) this.angryLeave(c);
       } else if (c.state === 'serving') {
         c.patience -= dt * 0.5; o.position.y = Math.sin(c.t * 2 + c.bob) * 0.03;
-        if (c.bubble) c.bubble.draw(DISH_EMOJI[c.dish], Math.max(0, c.patience / c.maxPat), c.patience / c.maxPat);
+        this.tickBubble(c, DISH_EMOJI[c.dish], c.patience / c.maxPat, dt);
       } else if (c.state === 'eating') {
         c.eat -= dt; o.position.y = Math.abs(Math.sin(c.t * 6)) * 0.06;
-        if (c.eat <= 0) { c.state = 'paying'; c.table.state = 'paying'; if (c.bubble) c.bubble.draw('💰', 1, 1); this.ring(c.table, 0.9); }
+        if (c.eat <= 0) { c.state = 'paying'; c.table.state = 'paying'; if (c.bubble) c.bubble.draw('💰', 1, 1); this.ring(c.table, 0.9, 0xFFC21E); }
       } else if (c.state === 'paying') {
-        c.payPat -= dt; o.position.y = Math.sin(c.t * 3 + c.bob) * 0.04;
-        if (c.bubble) c.bubble.draw('💰', Math.max(0, c.payPat / 12), c.payPat / 12);
+        c.payPat -= dt; o.position.y = Math.abs(Math.sin(c.t * 4.5)) * 0.05;
+        this.tickBubble(c, '💰', c.payPat / 12, dt);
         if (c.payPat <= 0) { if (c.bubble) { c.obj.remove(c.bubble.spr); c.bubble = null; } this.angryLeave(c); }
       } else if (c.state === 'leaving') {
         this.tmp.copy(DOOR).sub(o.position); this.tmp.y = 0; const d = this.tmp.length();
@@ -346,6 +391,9 @@ export class RestaurantGame {
       if (e.k === 'pop') { const s = e.s * Math.min(1, backOut(e.t / 0.32)); e.o.scale.setScalar(Math.max(0.001, s)); if (e.t > 0.34) { e.o.scale.setScalar(e.s); this.fx.splice(i, 1); } }
       else if (e.k === 'bump') { this.waiter.scale.setScalar(1.1 * (1 + Math.sin(e.t * 30) * 0.05 * Math.max(0, 1 - e.t * 4))); if (e.t > 0.25) { this.waiter.scale.setScalar(1.1); this.fx.splice(i, 1); } }
       else if (e.k === 'coin') { e.vy -= 14 * dt; e.o.position.x += e.vx * dt; e.o.position.y += e.vy * dt; e.o.position.z += e.vz * dt; e.o.rotation.x += e.rot * dt; e.o.rotation.y += e.rot * dt; if (e.o.position.y < 0.12) { this.scene.remove(e.o); this.fx.splice(i, 1); } }
+      else if (e.k === 'spark') { e.vy -= 6 * dt; e.o.position.x += e.vx * dt; e.o.position.y += e.vy * dt; e.o.position.z += e.vz * dt; e.mat.opacity = Math.max(0, 1 - e.t / 0.6); if (e.t > 0.6) { this.scene.remove(e.o); e.mat.dispose(); this.fx.splice(i, 1); } }
+      else if (e.k === 'happy') { const s = 1 + Math.sin(Math.min(1, e.t / 0.34) * Math.PI) * 0.22; e.o.scale.setScalar(s); if (e.t > 0.34) { e.o.scale.setScalar(1); this.fx.splice(i, 1); } }
+      else if (e.k === 'whop') { const s = 1.1 * (1 + Math.sin(Math.min(1, e.t / 0.3) * Math.PI) * 0.14); this.waiter.scale.setScalar(s); if (e.t > 0.3) { this.waiter.scale.setScalar(1.1); this.fx.splice(i, 1); } }
       else if (e.k === 'punch') { if (e.t > 0.18) this.fx.splice(i, 1); }
     }
     for (let i = this.floats.length - 1; i >= 0; i--) { const f = this.floats[i]; f.t += dt; f.spr.position.y += dt * 1.5; (f.spr.material as THREE.SpriteMaterial).opacity = Math.max(0, 1 - f.t / 1.1); if (f.t > 1.1) { this.scene.remove(f.spr); this.floats.splice(i, 1); } }
@@ -358,6 +406,22 @@ export class RestaurantGame {
     this.camera.lookAt(this.look);
 
     this.renderer.render(this.scene, this.camera);
+  }
+
+  // Floating priority cue over the single most-urgent table (Diner-Dash "do this next")
+  private updateArrow(now: number) {
+    let best: Table | null = null, bestFrac = 2, isPay = false;
+    for (const t of this.tables) {
+      if (t.state === 'ordered' && t.customer) { const f = t.customer.patience / t.customer.maxPat; if (f < bestFrac) { bestFrac = f; best = t; isPay = false; } }
+      else if (t.state === 'paying' && t.customer) { const f = t.customer.payPat / 12; if (f < bestFrac) { bestFrac = f; best = t; isPay = true; } }
+    }
+    if (best) {
+      this.arrow.visible = true;
+      this.arrow.position.set(best.seat.x, 3.05 + Math.sin(now / 220) * 0.13, best.seat.z);
+      this.arrowMat.color.setHex(isPay ? 0xFFC21E : 0xFF8A3D);
+      const pulse = bestFrac < 0.3 ? 1 + Math.sin(now / 90) * 0.18 : 1;
+      this.arrow.scale.setScalar(pulse);
+    } else this.arrow.visible = false;
   }
 
   private end() { this.running = false; cancelAnimationFrame(this.raf); const stars = this.score >= 3500 ? 3 : this.score >= 1500 ? 2 : 1; this.onOver({ score: this.score, stars, happy: this.happy, angry: this.angry, comboRecord: this.comboRecord }); }
@@ -382,11 +446,11 @@ export class RestaurantGame {
       const c = chibi(SKINS[ti % SKINS.length], cv.outfit, cv.hair);
       c.position.copy(t.seat); c.rotation.y = Math.PI * (t.pos.x <= 0 ? 0.82 : -0.82); this.scene.add(c);
       const b = makeBubble(); b.spr.position.set(0, 2.05, 0); c.add(b.spr);
-      const cust: Customer = { obj: c, table: t, dish, state: st, patience: 8, maxPat: 12, eat: 2, payPat: 12, bob: 0, t: 0, bubble: b, vip: false };
+      const cust: Customer = { obj: c, table: t, dish, state: st, patience: 8, maxPat: 12, eat: 2, payPat: 12, bob: 0, t: 0, bubble: b, vip: false, bAcc: 0, lastBucket: -1 };
       t.customer = cust; t.state = st; this.customers.push(cust);
       if (st === 'eating') { const pl = plate(); const f = buildDish(dish); f.scale.setScalar(0.8); pl.add(f); pl.position.set(t.pos.x, 1.06, t.pos.z); this.scene.add(pl); t.food = pl; b.draw('😋', 1, 1); }
-      else if (st === 'paying') { b.draw('💰', 1, 1); this.ring(t, 0.9); }
-      else { b.draw(DISH_EMOJI[dish], 0.7, 0.7); this.ring(t, 0.7); }
+      else if (st === 'paying') { b.draw('💰', 1, 1); this.ring(t, 0.9, 0xFFC21E); }
+      else { b.draw(DISH_EMOJI[dish], 0.7, 0.7); this.ring(t, 0.7, 0xFF8A3D); }
     };
     seat(3, 4, 'eating'); seat(1, 2, 'ordered'); seat(4, 1, 'paying');
     this.score = 240; this.combo = 4; this.comboMul = 2; this.emitHud();

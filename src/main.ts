@@ -20,6 +20,7 @@ function startGame() {
     (h) => hud?.update(h),
     (r) => endGame(r),
     (text, kind) => hud?.announce(text, kind),
+    (kind) => hud?.flash(kind),
   );
   game.start(wasTutorial);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

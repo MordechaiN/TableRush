@@ -16,8 +16,10 @@ function css() {
   #h-score .ic{width:26px;height:26px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#FFE680,#FFC21E 60%,#C98A0E);box-shadow:inset 0 0 0 2px #C98A0E;display:grid;place-items:center;color:#9A6500;font-size:13px}
   #h-score .v{color:#FFE27A}
   #h-timer{top:14px;right:14px;font-size:22px}
-  #h-combo{top:14px;left:50%;transform:translateX(-50%);font-size:18px;color:#FFB14A;transition:transform .12s}
+  #h-combo{top:14px;left:50%;transform:translateX(-50%);font-size:18px;color:#FFB14A;transition:transform .12s,background .2s,border-color .2s}
   #h-mute{top:62px;right:14px;font-size:15px;padding:6px 12px;cursor:pointer}
+  #h-flash{position:fixed;inset:0;z-index:4;pointer-events:none;opacity:0;
+    background:radial-gradient(120% 80% at 50% 45%,rgba(255,215,90,.0),rgba(255,200,60,.55));transition:opacity .4s ease}
   #h-announce{position:fixed;top:32%;left:50%;transform:translate(-50%,-50%) scale(0);z-index:6;
     font-family:'Arial Black';font-weight:900;font-size:42px;color:#FFE27A;text-align:center;
     -webkit-text-stroke:6px #7a3a0a;paint-order:stroke fill;pointer-events:none;text-shadow:0 6px 16px rgba(0,0,0,.3)}
@@ -54,11 +56,12 @@ function css() {
   document.head.appendChild(s);
 }
 
-export interface Hud { update: (h: HudState) => void; announce: (t: string, k: string) => void; destroy: () => void; }
+export interface Hud { update: (h: HudState) => void; announce: (t: string, k: string) => void; flash: (kind: string) => void; destroy: () => void; }
 export function createHud(): Hud {
   css();
   const el = document.createElement('div'); el.id = 'hud';
   el.innerHTML = `
+    <div id="h-flash"></div>
     <div class="ui-pill" id="h-score"><div class="ic">$</div><div class="v">0</div></div>
     <div class="ui-pill" id="h-combo" style="display:none">×1</div>
     <div class="ui-pill" id="h-timer">⏱ 3:00</div>
@@ -66,6 +69,7 @@ export function createHud(): Hud {
     <div id="h-announce"></div>
     <div id="h-tut" style="display:none"></div>`;
   document.body.appendChild(el);
+  const flashEl = el.querySelector('#h-flash') as HTMLElement;
   const scoreV = el.querySelector('#h-score .v') as HTMLElement;
   const combo = el.querySelector('#h-combo') as HTMLElement;
   const timer = el.querySelector('#h-timer') as HTMLElement;
@@ -82,10 +86,24 @@ export function createHud(): Hud {
       const m = Math.max(0, h.timeLeft); timer.textContent = `⏱ ${Math.floor(m / 60)}:${String(Math.floor(m % 60)).padStart(2, '0')}`;
       timer.style.color = m <= 15 ? '#FF5A4A' : '#fff';
       if (h.combo !== lastCombo) {
-        if (h.combo >= 2) { combo.style.display = ''; combo.textContent = `🔥 ×${h.multiplier} · ${h.combo}`; combo.style.transform = 'translateX(-50%) scale(1.25)'; setTimeout(() => combo.style.transform = 'translateX(-50%) scale(1)', 120); }
-        else combo.style.display = 'none';
+        if (h.combo >= 2) {
+          combo.style.display = '';
+          combo.textContent = `🔥 ×${h.multiplier} · ${h.combo}`;
+          const tier = h.multiplier >= 5 ? ['#FFD700', '#7a3a0a'] : h.multiplier >= 4 ? ['#FF4FA0', '#7a0a3a'] : h.multiplier >= 3 ? ['#FF5722', '#7a2200'] : ['#FF8A3D', '#7a3a0a'];
+          combo.style.background = `rgba(${parseInt(tier[0].slice(1, 3), 16)},${parseInt(tier[0].slice(3, 5), 16)},${parseInt(tier[0].slice(5, 7), 16)},.92)`;
+          combo.style.borderColor = '#fff'; combo.style.color = '#fff';
+          combo.style.transform = `translateX(-50%) scale(${h.multiplier >= 3 ? 1.4 : 1.25})`;
+          setTimeout(() => combo.style.transform = 'translateX(-50%) scale(1)', 130);
+        } else combo.style.display = 'none';
         lastCombo = h.combo;
       }
+    },
+    flash: (kind) => {
+      flashEl.style.background = kind === 'combo'
+        ? 'radial-gradient(120% 80% at 50% 45%,rgba(255,120,40,0),rgba(255,90,30,.6))'
+        : 'radial-gradient(120% 80% at 50% 45%,rgba(255,215,90,0),rgba(255,200,60,.55))';
+      flashEl.style.transition = 'opacity .05s'; flashEl.style.opacity = '1';
+      requestAnimationFrame(() => { flashEl.style.transition = 'opacity .45s ease'; flashEl.style.opacity = '0'; });
     },
     announce: (t, k) => {
       if (k === 'tut') { tut.style.display = ''; tut.textContent = t; clearTimeout(tutTimer); tutTimer = window.setTimeout(() => tut.style.display = 'none', 4200); return; }

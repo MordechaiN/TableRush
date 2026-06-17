@@ -113,8 +113,10 @@ npm run type-check
 
 - **Premium & friendly first.** Warm creams, oranges, tomato reds, soft wood; soft
   shadows and cozy lighting. Never dark, muddy, or "debug".
-- **Readable in < 1 second.** Visual state before text: glowing rings, emoji bubbles,
-  patience rings, coin bursts. UI-UX-PRO principles — big touch targets, clear hierarchy.
+- **Readable in < 1 second.** Visual state before text: **action-colored rings**
+  (orange = serve, gold = collect), a **floating priority arrow** over the single
+  most-urgent table, emoji order/pay bubbles with patience rings, and coin bursts.
+  UI-UX-PRO principles — big touch targets, one obvious next action, clear hierarchy.
 - **Satisfying.** Every action has squash/pop/bounce; payments spray coins and pop the
   score; combos punch the camera.
 - **Short & replayable.** A 3-minute shift you immediately want to beat.

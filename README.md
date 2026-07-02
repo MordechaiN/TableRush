@@ -57,6 +57,9 @@ taps ahead — queued tables dim their ring while the waiter works.
 - **Combos**: consecutive payments climb ×2 HOT STREAK → ×5 TABLE MASTER.
 - **Speed bonus**: deliver while patience is high for FAST ×1.5 / LIGHTNING ×2.
 - **VIPs** (gold crown, level 5+) pay ×2.5 but have a short fuse.
+- **The Food Critic** (level 7+, at most once per shift): dark suit, notepad.
+  Land the food FAST or LIGHTNING and the rave review pays ×3 — anything
+  slower gets a *"meh."*
 - **Final Rush**: the last 30 seconds pay double.
 - **Personalities**: the Elder shuffles in but waits patiently; the Teen
   sprints and won't. Seven archetypes with distinct outfits, accessories,
@@ -71,6 +74,7 @@ taps ahead — queued tables dim their ring while the waiter works.
 | 4 | Cake 🍰 joins the menu |
 | 5 | VIP guests 👑 |
 | 6 | Full tray — 3 plates |
+| 7 | The Food Critic 🖋 |
 
 XP = score ÷ 10. A daily goal (60% of your best) gives every session a target.
 First launch runs a guided 6-step tutorial with a frozen clock.
@@ -178,7 +182,7 @@ Everything lives in `src/config/GameConfig.ts`:
 
 ## Roadmap
 
-- [ ] Special events: birthday parties, food critic visits
+- [ ] More special events: birthday parties, health inspector
 - [ ] Skeletal characters to replace the primitive chibis
 - [ ] Localized UI
 

@@ -13,7 +13,7 @@ const UNLOCK_HINTS = [
   'Reach Level 4 to add Cake 🍰 to the menu!',
   'Reach Level 5 to unlock VIP guests 👑 (tips ×2.5).',
   'Reach Level 6 for the full tray — carry 3 plates at once.',
-  'Master rank ahead — chase your best score!',
+  'Reach Level 7 — the FOOD CRITIC 🖋 starts visiting…',
   'Master rank ahead — chase your best score!',
   'Master rank ahead — chase your best score!',
   'Level 10 — TABLE MASTER. The restaurant is yours.',
@@ -25,6 +25,7 @@ const ABILITY_AT_LEVEL: Record<number, string> = {
   4: 'NEW DISH — Cake 🍰 joins the menu',
   5: 'VIP GUESTS — gold crowns tip ×2.5',
   6: 'FULL TRAY — carry 3 plates at once',
+  7: 'FOOD CRITIC — impress them for a ×3 RAVE REVIEW',
 };
 
 export type Upgrades = { shoes: number; stove: number; decor: number };

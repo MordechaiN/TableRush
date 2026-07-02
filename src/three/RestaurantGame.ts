@@ -5,6 +5,7 @@ import {
   WAIT_PATIENCE_MUL, COLD_DECAY, SERVING_DECAY, PAY_PATIENCE,
   VIP_UNLOCK_LEVEL, VIP_CHANCE, VIP_PAY, VIP_PATIENCE,
   FINAL_RUSH_AT, FINAL_RUSH_MUL, trayCapacity, STAR_2, STAR_3,
+  CRITIC_UNLOCK_LEVEL, CRITIC_CHANCE, CRITIC_PAY,
 } from '../config/GameConfig';
 import {
   M, G, shadows, DISH_EMOJI, chibi, Chibi,
@@ -36,7 +37,7 @@ type CustState = 'entering' | 'ordering' | 'waiting' | 'eating' | 'paying' | 'le
 
 interface Customer {
   c: Chibi; table: TableData; dish: number; state: CustState;
-  variant: Archetype; vip: boolean;
+  variant: Archetype; vip: boolean; critic: boolean;
   patience: number; maxPat: number; payPat: number; eat: number; eatTotal: number;
   speedMul: number; speedLabel: string; happy: boolean;
   path: THREE.Vector3[]; t: number; bob: number;
@@ -115,6 +116,7 @@ export class RestaurantGame {
   private rushOn = false;
   private warned15 = false;
   private warned5 = false;
+  private criticSeen = false;
 
   private tutorial = false;
   private tutStep = -1;
@@ -367,14 +369,23 @@ export class RestaurantGame {
     const variant = CUSTOMER_VARIANTS[vi];
     const tier = this.tierNow();
     const vip = !this.tutorial && this.level >= VIP_UNLOCK_LEVEL && Math.random() < VIP_CHANCE;
+    const critic = !this.tutorial && !vip && !this.criticSeen
+      && this.level >= CRITIC_UNLOCK_LEVEL && Math.random() < CRITIC_CHANCE;
+    if (critic) this.criticSeen = true;
     let pat = tier.orderPatience * variant.patienceMul * this.boosts.patience * (0.92 + Math.random() * 0.16);
     if (vip) pat *= VIP_PATIENCE;
     if (this.tutorial && this.tutStep < 7) pat = 999; // no walkouts during the tutorial
 
-    const ch = chibi({ skin: SKINS[vi], outfit: variant.outfit, hair: variant.hair, accessory: variant.accessory });
+    const ch = critic
+      ? chibi({ skin: SKINS[vi], outfit: 0x2A2A33, hair: 0xB8B8B8, accessory: 'sunglasses' })
+      : chibi({ skin: SKINS[vi], outfit: variant.outfit, hair: variant.hair, accessory: variant.accessory });
     if (vip) {
       const crown = new THREE.Mesh(G('crown', () => new THREE.CylinderGeometry(0.22, 0.26, 0.16, 5)), M(0xFFC21E, { metalness: 0.6, roughness: 0.3 }));
       crown.position.y = 0.48; ch.head.add(crown);
+    }
+    if (critic) { // notepad in the left hand
+      const pad = new THREE.Mesh(G('notepad', () => new THREE.BoxGeometry(0.2, 0.26, 0.04)), M(0xFDFDF5, { roughness: 0.9 }));
+      pad.position.set(0, -0.34, 0.14); pad.rotation.x = -0.5; ch.armL.add(pad);
     }
     ch.g.position.copy(DOOR);
     this.scene.add(ch.g);
@@ -388,7 +399,7 @@ export class RestaurantGame {
     ];
 
     const cust: Customer = {
-      c: ch, table, dish, state: 'entering', variant, vip,
+      c: ch, table, dish, state: 'entering', variant, vip, critic,
       patience: pat, maxPat: pat, payPat: PAY_PATIENCE, eat: 0, eatTotal: tier.eatTime,
       speedMul: 1, speedLabel: '', happy: false,
       path, t: Math.random() * 6, bob: Math.random() * 6,
@@ -398,6 +409,7 @@ export class RestaurantGame {
     table.customer = cust;
     this.customers.push(cust);
     if (vip) { this.cbs.onAnnounce('VIP GUEST!', 'vip'); this.fx.float('👑 VIP', table.pos.x, table.pos.z, '#FFE27A', 2.6); }
+    if (critic) { this.cbs.onAnnounce('FOOD CRITIC! Serve them fast 🖋', 'vip'); this.fx.float('🖋 CRITIC', table.pos.x, table.pos.z, '#D8E4F0', 2.6); }
   }
 
   private seat(c: Customer) {
@@ -645,9 +657,20 @@ export class RestaurantGame {
     this.comboMul = mil.multiplier;
     const vipMul = c.vip ? VIP_PAY : 1;
     const rushMul = this.rushOn ? FINAL_RUSH_MUL : 1;
-    const val = Math.round(item.price * 5 * c.speedMul * this.comboMul * vipMul * rushMul);
+    const rave = c.critic && c.speedMul >= 1.5;
+    const criticMul = rave ? CRITIC_PAY : 1;
+    const val = Math.round(item.price * 5 * c.speedMul * this.comboMul * vipMul * rushMul * criticMul);
     this.score += val;
     this.happy++;
+    if (c.critic) {
+      if (rave) {
+        this.cbs.onAnnounce('RAVE REVIEW! ×' + CRITIC_PAY, 'combo');
+        this.fx.sparkle(new THREE.Vector3(t.pos.x, 1.8, t.pos.z), 0xD8E4F0, 14);
+        try { SoundManager.unlockEarned(); } catch { /* */ }
+      } else {
+        this.fx.float('"meh."', t.pos.x, t.pos.z + 0.5, '#B9C0CC', 2.7);
+      }
+    }
     // coins: 3D burst + DOM flight into the score pill
     this.fx.coinBurst(new THREE.Vector3(t.pos.x, 1.4, t.pos.z), 8);
     const scr = this.toScreen(new THREE.Vector3(t.pos.x, 1.5, t.pos.z));
@@ -1007,7 +1030,7 @@ export class RestaurantGame {
         wq: this.wq.length, wTarget: this.wTarget ? [this.wTarget.x, this.wTarget.z] : null,
         writeT: this.writeT, wPos: [Math.round(this.waiter.g.position.x * 10) / 10, Math.round(this.waiter.g.position.z * 10) / 10],
         tables: this.tables.map(t => t.state + (t.queued ? '+q' : '')),
-        custStates: this.customers.map(c => c.state),
+        custStates: this.customers.map(c => c.state + (c.vip ? '+vip' : '') + (c.critic ? '+critic' : '')),
         kitchen: this.kitchen.debug(),
         anims: this.anims.map(a => a.k),
       },

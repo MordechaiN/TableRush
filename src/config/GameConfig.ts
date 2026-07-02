@@ -86,6 +86,12 @@ export const VIP_PATIENCE = 0.75;
 export const FINAL_RUSH_AT = 30;
 export const FINAL_RUSH_MUL = 2;
 
+// Food critic — rare visitor (at most one per shift, level 7+). Impress them
+// with a FAST or LIGHTNING delivery for a rave review worth ×3.
+export const CRITIC_UNLOCK_LEVEL = 7;
+export const CRITIC_CHANCE = 0.08;
+export const CRITIC_PAY = 3;
+
 // Tray capacity by player level (real, implemented unlocks)
 export function trayCapacity(level: number): number {
   return level >= 6 ? 3 : level >= 3 ? 2 : 1;

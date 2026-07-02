@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## v3.3.0 — The Critic (2026-07-02)
+
+- **Food Critic** (level 7+, at most once per shift): dark suit, gray hair,
+  notepad in hand. Deliver FAST or LIGHTNING for a **RAVE REVIEW ×3**;
+  anything slower earns a *"meh."* Fills the previously-empty level 7 unlock.
+- Unlock hints updated (still 100% honest).
+
 ## v3.2.0 — Install It (2026-07-02)
 
 - **PWA**: web app manifest, drawn app icons (steaming burger badge, incl.

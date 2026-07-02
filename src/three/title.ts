@@ -16,10 +16,14 @@ export function initTitle(handlers: { onPlay: () => void; onSettings: () => void
     <div class="tt-ui">
       <div class="tt-logo"><span class="t">TABLE</span><span class="r">RUSH</span></div>
       <div class="tt-tag">Seat · Serve · Sparkle ✨</div>
-      <div class="tt-best">🏆 BEST <span id="tt-best">0</span></div>
+      <div class="tt-chips">
+        <div class="tt-best">🏆 BEST <span id="tt-best">0</span></div>
+        <div class="tt-best">⭐ LV <span id="tt-level">1</span></div>
+        <div class="tt-best" id="tt-daily" style="display:none">🎯 <span id="tt-daily-v"></span></div>
+      </div>
       <button class="tt-play" id="tt-play"><span>▶</span> PLAY</button>
       <div class="tt-row"><button class="tt-ghost" id="tt-settings">⚙ Settings</button><button class="tt-ghost" id="tt-credits">♥ Credits</button></div>
-      <div class="tt-ver">v2.0 · Three.js Edition</div>
+      <div class="tt-ver">v3.0 · Three.js Edition</div>
     </div>`;
   document.body.appendChild(overlay); injectCss(); bestEl = overlay.querySelector('#tt-best');
 
@@ -58,12 +62,52 @@ function mkBurger() { const g = new THREE.Group(); const b = new THREE.Mesh(new 
 function mkCherry() { const g = new THREE.Group(); const b = new THREE.Mesh(new THREE.SphereGeometry(0.32, 20, 16), M(0xE3403F, { roughness: 0.35 })); b.castShadow = true; const s = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.4, 8), M(0x4E7A36)); s.position.y = 0.34; s.rotation.z = 0.3; g.add(b, s); return g; }
 function mkPizza() { const s = new THREE.Shape(); s.moveTo(0, 0); s.lineTo(0.85, 0.42); s.lineTo(0.85, -0.42); s.lineTo(0, 0); const m = new THREE.Mesh(new THREE.ExtrudeGeometry(s, { depth: 0.12, bevelEnabled: false }), M(0xF2B33B)); m.castShadow = true; return m; }
 
-function refresh() { try { if (bestEl) bestEl.textContent = fmtScore(ProgressionSystem.getData().highScore || 0); } catch { /* */ } }
+function refresh() {
+  try {
+    const data = ProgressionSystem.getData();
+    if (bestEl) bestEl.textContent = fmtScore(data.highScore || 0);
+    const lvEl = overlay.querySelector('#tt-level');
+    if (lvEl) lvEl.textContent = String(data.level || 1);
+    const daily = ProgressionSystem.getDailyGoal();
+    const dEl = overlay.querySelector('#tt-daily') as HTMLElement | null;
+    const dV = overlay.querySelector('#tt-daily-v');
+    if (dEl && dV && daily.target > 0) {
+      dEl.style.display = '';
+      dV.textContent = daily.done ? 'Daily ✓' : '$' + fmtScore(daily.target);
+    }
+  } catch { /* */ }
+}
 export function showTitle() { refresh(); overlay.style.display = 'block'; requestAnimationFrame(() => overlay.classList.remove('hide')); if (!visible) { visible = true; animate(); } }
 export function hideTitle() { overlay.classList.add('hide'); visible = false; cancelAnimationFrame(raf); setTimeout(() => { if (!visible) overlay.style.display = 'none'; }, 360); }
 
-function resize() { const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.position.z = h > w ? 7.4 : 6.2; camera.position.y = h > w ? 2 : 1.7; camera.lookAt(0, 0.3, 0); camera.updateProjectionMatrix(); }
-function animate() { raf = requestAnimationFrame(animate); const t = performance.now() / 1000; hero.rotation.y = t * 0.5; hero.position.y = Math.sin(t * 1.4) * 0.07; orbiters.forEach(o => { const a = t * o.sp + o.ph; o.m.position.set(Math.cos(a) * o.r, o.y + Math.sin(t * 1.6 + o.ph) * 0.18, Math.sin(a) * o.r * 0.55 - 0.3); o.m.rotation.set(t * 0.8 + o.ph, t * 1.1, 0); const d = (o.m.position.z + 2) / 4; o.m.scale.setScalar(0.6 + d * 0.5); }); renderer.render(scene, camera); }
+function resize() {
+  const w = innerWidth, h = innerHeight;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h;
+  // portrait: pull back + shrink the hero so the cloche never fills the screen
+  const portrait = h > w;
+  camera.position.z = portrait ? 11.5 : 6.6;
+  camera.position.y = portrait ? 2.6 : 1.7;
+  const s = portrait ? 0.78 : 1;
+  hero.scale.setScalar(s);
+  camera.lookAt(0, portrait ? -0.2 : 0.3, 0);
+  camera.updateProjectionMatrix();
+}
+function animate() {
+  raf = requestAnimationFrame(animate);
+  const t = performance.now() / 1000;
+  hero.rotation.y = t * 0.5;
+  hero.position.y = Math.sin(t * 1.4) * 0.07;
+  const ps = hero.scale.x; // orbiters shrink with the hero in portrait
+  orbiters.forEach(o => {
+    const a = t * o.sp + o.ph;
+    o.m.position.set(Math.cos(a) * o.r * ps, (o.y + Math.sin(t * 1.6 + o.ph) * 0.18) * ps, (Math.sin(a) * o.r * 0.55 - 0.3) * ps);
+    o.m.rotation.set(t * 0.8 + o.ph, t * 1.1, 0);
+    const d = (o.m.position.z + 2) / 4;
+    o.m.scale.setScalar((0.6 + d * 0.5) * ps);
+  });
+  renderer.render(scene, camera);
+}
 
 function injectCss() {
   const s = document.createElement('style'); s.textContent = `
@@ -78,7 +122,8 @@ function injectCss() {
   .tt-logo .t{font-size:clamp(56px,17vw,96px);color:#E8442C;-webkit-text-stroke:4px #fff;paint-order:stroke fill}
   .tt-logo .r{font-size:clamp(56px,17vw,96px);color:#FF9E1B;margin-top:-6px;-webkit-text-stroke:4px #8a4209;paint-order:stroke fill}
   .tt-tag{margin-top:14px;font-size:clamp(13px,3.6vw,17px);font-family:Arial;font-weight:bold;color:#9A551F}
-  .tt-best{margin-top:16px;font-size:15px;color:#7a4516;background:rgba(255,255,255,.6);border:2px solid rgba(255,255,255,.8);padding:7px 18px;border-radius:999px;backdrop-filter:blur(4px);box-shadow:0 4px 12px rgba(150,90,20,.18)}
+  .tt-chips{margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+  .tt-best{font-size:15px;color:#7a4516;background:rgba(255,255,255,.6);border:2px solid rgba(255,255,255,.8);padding:7px 16px;border-radius:999px;backdrop-filter:blur(4px);box-shadow:0 4px 12px rgba(150,90,20,.18)}
   .tt-best span{color:#E8442C}
   .tt-play{margin-top:auto;margin-bottom:16px;width:min(78vw,320px);height:64px;font-family:'Arial Black';font-size:26px;font-weight:900;color:#fff;letter-spacing:1px;border:none;border-radius:20px;cursor:pointer;background:linear-gradient(180deg,#FF8A3D,#F4671E);box-shadow:0 8px 0 #C24A12,0 14px 22px rgba(180,80,20,.4);transition:transform .08s,box-shadow .08s;animation:ttPulse 1.8s ease-in-out infinite}
   .tt-play span{font-size:20px}.tt-play:active{transform:translateY(6px);box-shadow:0 2px 0 #C24A12,0 6px 12px rgba(180,80,20,.4)}

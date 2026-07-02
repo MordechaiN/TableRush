@@ -142,6 +142,12 @@ function vibrate(pattern: number | number[]) {
   }
 }
 
+// Looping pan-sizzle bed. One noise source lives for the whole session;
+// only its gain moves, proportional to how many pans are cooking.
+let sizzleSrc: AudioBufferSourceNode | null = null;
+let sizzleGain: GainNode | null = null;
+let sizzleLevel = -1;
+
 export const SoundManager = {
   isEnabled(): boolean {
     try { return localStorage.getItem('tablerush_sfx') !== 'off'; } catch { return true; }
@@ -183,6 +189,34 @@ export const SoundManager = {
   stopMusic() {
     musicPlaying = false;
     if (musicLoopTimer) { clearTimeout(musicLoopTimer); musicLoopTimer = null; }
+  },
+
+  /** Kitchen sizzle bed: level = number of pans actively cooking (0 silences it). */
+  setSizzle(level: number) {
+    if (!this.isEnabled()) level = 0;
+    if (level === sizzleLevel) return;
+    sizzleLevel = level;
+    const ac = getCtx(); if (!ac || ac.state === 'suspended') return;
+    if (level > 0 && !sizzleSrc) {
+      const dur = 1.5;
+      const buf = ac.createBuffer(1, ac.sampleRate * dur, ac.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+      const src = ac.createBufferSource();
+      src.buffer = buf; src.loop = true;
+      const bp = ac.createBiquadFilter();
+      bp.type = 'bandpass'; bp.frequency.value = 5200; bp.Q.value = 0.7;
+      sizzleGain = ac.createGain(); sizzleGain.gain.value = 0;
+      src.connect(bp); bp.connect(sizzleGain); sizzleGain.connect(ac.destination);
+      src.start();
+      sizzleSrc = src;
+    }
+    if (sizzleGain) {
+      const target = Math.min(0.055, level * 0.02);
+      sizzleGain.gain.cancelScheduledValues(ac.currentTime);
+      sizzleGain.gain.setValueAtTime(sizzleGain.gain.value, ac.currentTime);
+      sizzleGain.gain.linearRampToValueAtTime(target, ac.currentTime + 0.3);
+    }
   },
 
   uiClick() {

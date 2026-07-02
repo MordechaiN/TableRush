@@ -6,7 +6,8 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "playtest": "node qa/playtest.mjs"
   },
   "dependencies": {
     "@types/three": "^0.184.1",

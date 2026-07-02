@@ -1,26 +1,28 @@
 const XP_THRESHOLDS = [0, 300, 700, 1300, 2200, 3500, 5500, 8000, 11000, 15000];
 const MAX_LEVEL = XP_THRESHOLDS.length - 1;
 
+// Every hint below describes a real, implemented unlock (see GameConfig +
+// RestaurantGame): menu items gate on unlockLevel, tray capacity on
+// trayCapacity(level), VIP spawns on VIP_UNLOCK_LEVEL.
 const UNLOCK_HINTS = [
-  'Complete rounds to earn XP and reach Level 2!',
-  'Level 2 — building momentum. Chain 3 serves to ignite your combo meter!',
-  'Level 3 — TRAY UPGRADE: carry 3 items at once.',
-  'Level 4 — BIRTHDAY PARTIES: a party table triggers 3 double-score payments.',
-  'Level 5 — FOOD CRITIC: serve them perfectly for a RAVE REVIEW and +50% score.',
-  'Level 6 — EVENT NIGHTS: sessions can become VIP Night or Birthday Night.',
-  'Level 7 — RUSH BONUS: rush hour earns +40% on every serve.',
-  'Level 8 — MASTER TIMING: near-miss saves now award a +300 bonus.',
-  'Level 9 — every second with a full tray and active combo is peak efficiency.',
+  'Reach Level 2 to add Sushi 🍣 to the menu!',
+  'Reach Level 2 to add Sushi 🍣 to the menu!',
+  'Reach Level 3 for a bigger tray — carry 2 plates at once.',
+  'Reach Level 4 to add Cake 🍰 to the menu!',
+  'Reach Level 5 to unlock VIP guests 👑 (tips ×2.5).',
+  'Reach Level 6 for the full tray — carry 3 plates at once.',
+  'Master rank ahead — chase your best score!',
+  'Master rank ahead — chase your best score!',
+  'Master rank ahead — chase your best score!',
   'Level 10 — TABLE MASTER. The restaurant is yours.',
 ];
 
 const ABILITY_AT_LEVEL: Record<number, string> = {
-  3: 'TRAY UPGRADE — carry 3 items',
-  4: 'BIRTHDAY PARTIES — 3 double-score payment chain',
-  5: 'FOOD CRITIC — impress them for a RAVE REVIEW',
-  6: 'EVENT NIGHTS — VIP Night or Birthday Night shifts',
-  7: 'RUSH BONUS — rush hour earns +40%',
-  8: 'MASTER TIMING — near-miss saves +300 bonus',
+  2: 'NEW DISH — Sushi 🍣 joins the menu',
+  3: 'BIGGER TRAY — carry 2 plates at once',
+  4: 'NEW DISH — Cake 🍰 joins the menu',
+  5: 'VIP GUESTS — gold crowns tip ×2.5',
+  6: 'FULL TRAY — carry 3 plates at once',
 };
 
 interface ProgressData {

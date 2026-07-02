@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## v3.2.0 — Install It (2026-07-02)
+
+- **PWA**: web app manifest, drawn app icons (steaming burger badge, incl.
+  maskable), and a service worker — Table Rush installs to the home screen
+  and plays fully offline after the first visit (network-first HTML shell,
+  cache-first fingerprinted assets).
+- `scripts/gen-icons.mjs` regenerates the icon set from canvas code.
+
 ## v3.1.0 — The Economy Update (2026-07-02)
 
 - **Wallet**: every shift's takings bank into a persistent wallet, shown on

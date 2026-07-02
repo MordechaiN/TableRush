@@ -1,0 +1,16 @@
+{
+  "name": "Table Rush",
+  "short_name": "Table Rush",
+  "description": "Run the floor of a bustling 3D restaurant. Take orders, watch the kitchen cook, serve, collect and clear tables before the shift ends.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#C4813A",
+  "background_color": "#F5E6C8",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

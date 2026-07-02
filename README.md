@@ -101,6 +101,7 @@ in the pause menu and settings.
 | Audio | Web Audio API synthesis (zero audio files) |
 | Art | 100% procedural: cached low-poly geometry + canvas textures |
 | Persistence | localStorage |
+| Install | PWA — manifest, home-screen icons, offline via service worker |
 | QA | Playwright harness driving a real browser (`npm run playtest`) |
 | Deploy | GitHub Pages via GitHub Actions |
 
@@ -142,8 +143,9 @@ npm install
 npm run dev          # http://localhost:3000
 npm run type-check   # strict TS, no emit
 npm run build        # type-check + production bundle → dist/
-npm run playtest     # Playwright: tutorial → full shift → pause → replay,
+npm run playtest     # Playwright: tutorial → full shift → pause → replay → shop,
                      # fails on any console error (needs `npm run dev` running)
+node scripts/gen-icons.mjs   # regenerate the PWA icons (drawn in canvas)
 ```
 
 The game exposes QA hooks on `window.__game`: `autoStep()` (plays the best
@@ -178,7 +180,6 @@ Everything lives in `src/config/GameConfig.ts`:
 
 - [ ] Special events: birthday parties, food critic visits
 - [ ] Skeletal characters to replace the primitive chibis
-- [ ] PWA install + haptics
 - [ ] Localized UI
 
 ## Credits

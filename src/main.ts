@@ -54,6 +54,13 @@ addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && game && !game.paused) pauseGame();
 });
 
+// installable + offline after first visit (production builds only)
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => { /* not fatal */ });
+  });
+}
+
 initTitle({
   onPlay: startGame,
   onShop: () => showShop(() => showTitle()),

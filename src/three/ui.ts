@@ -20,7 +20,7 @@ function css() {
   #h-timer{top:14px;right:66px;font-size:22px}
   #h-timer.rush{border-color:#FFD700;color:#FFE27A;animation:rushPulse 1s ease-in-out infinite}
   @keyframes rushPulse{0%,100%{box-shadow:0 6px 14px rgba(120,60,10,.35)}50%{box-shadow:0 6px 22px rgba(255,200,60,.75)}}
-  #h-combo{top:14px;left:50%;transform:translateX(-50%);font-size:18px;color:#FFB14A;transition:transform .12s,background .2s,border-color .2s}
+  #h-combo{top:64px;left:50%;transform:translateX(-50%);font-size:18px;color:#FFB14A;transition:transform .12s,background .2s,border-color .2s}
   #h-pause{top:14px;right:14px;width:42px;height:42px;padding:0;justify-content:center;font-size:17px;cursor:pointer}
   #h-vignette{position:fixed;inset:0;z-index:4;pointer-events:none;opacity:0;transition:opacity .4s;
     box-shadow:inset 0 0 90px 30px rgba(232,68,44,.55)}

@@ -1,6 +1,6 @@
 import { initTitle, showTitle, hideTitle } from './three/title';
 import { RestaurantGame, GameResult } from './three/RestaurantGame';
-import { createHud, showGameOver, showPause, showSettings, showCredits, Hud } from './three/ui';
+import { createHud, showGameOver, showPause, showShop, showSettings, showCredits, Hud } from './three/ui';
 import { ProgressionSystem } from './systems/ProgressionSystem';
 import { SoundManager } from './systems/SoundManager';
 
@@ -22,7 +22,7 @@ function startGame() {
     onAnnounce: (text, kind) => hud?.announce(text, kind),
     onFlash: (kind) => hud?.flash(kind),
     onCoinFly: (x, y, n) => hud?.coinFly(x, y, n),
-  }, level);
+  }, level, ProgressionSystem.getBoosts());
   game.start(wasTutorial);
   (window as unknown as { __game: RestaurantGame }).__game = game;
 }
@@ -56,6 +56,7 @@ addEventListener('keydown', (e) => {
 
 initTitle({
   onPlay: startGame,
+  onShop: () => showShop(() => showTitle()),
   onSettings: () => showSettings(() => { /* title stays */ }),
   onCredits: () => showCredits(() => { /* title stays */ }),
 });

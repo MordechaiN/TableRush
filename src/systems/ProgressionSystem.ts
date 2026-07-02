@@ -1,3 +1,5 @@
+import { UPGRADE_TRACKS, UpgradeId } from '../config/GameConfig';
+
 const XP_THRESHOLDS = [0, 300, 700, 1300, 2200, 3500, 5500, 8000, 11000, 15000];
 const MAX_LEVEL = XP_THRESHOLDS.length - 1;
 
@@ -25,6 +27,8 @@ const ABILITY_AT_LEVEL: Record<number, string> = {
   6: 'FULL TRAY — carry 3 plates at once',
 };
 
+export type Upgrades = { shoes: number; stove: number; decor: number };
+
 interface ProgressData {
   xp: number;
   level: number;
@@ -35,6 +39,8 @@ interface ProgressData {
   bestCombo: number;
   dailyDate: string;
   dailyGoalDone: boolean;
+  coins: number;
+  upgrades: Upgrades;
 }
 
 const STORAGE_KEY = 'tablerush_progress';
@@ -54,10 +60,15 @@ function load(): ProgressData {
         bestCombo: p.bestCombo ?? 0,
         dailyDate: p.dailyDate ?? '',
         dailyGoalDone: p.dailyGoalDone ?? false,
+        coins: p.coins ?? 0,
+        upgrades: { shoes: p.upgrades?.shoes ?? 0, stove: p.upgrades?.stove ?? 0, decor: p.upgrades?.decor ?? 0 },
       };
     }
   } catch { /* ignore */ }
-  return { xp: 0, level: 1, highScore: 0, bestStars: 0, totalRounds: 0, lastScore: 0, bestCombo: 0, dailyDate: '', dailyGoalDone: false };
+  return {
+    xp: 0, level: 1, highScore: 0, bestStars: 0, totalRounds: 0, lastScore: 0, bestCombo: 0,
+    dailyDate: '', dailyGoalDone: false, coins: 0, upgrades: { shoes: 0, stove: 0, decor: 0 },
+  };
 }
 
 function save(data: ProgressData): void {
@@ -84,6 +95,8 @@ export interface RoundSummary {
   unlockedAbility?: string;
   xpToNextLevel: number;
   thresholdForLevel: (level: number) => number;
+  coinsEarned: number;
+  coinsAfter: number;
 }
 
 export class ProgressionSystem {
@@ -95,6 +108,7 @@ export class ProgressionSystem {
 
     data.xp += xpEarned;
     data.totalRounds += 1;
+    data.coins += result.score; // the shift's takings bank into the wallet
 
     while (data.level < MAX_LEVEL && data.xp >= XP_THRESHOLDS[data.level]) {
       data.level += 1;
@@ -127,7 +141,38 @@ export class ProgressionSystem {
       unlockedAbility,
       xpToNextLevel,
       thresholdForLevel: (lvl: number) => XP_THRESHOLDS[lvl] ?? XP_THRESHOLDS[MAX_LEVEL],
+      coinsEarned: result.score,
+      coinsAfter: data.coins,
     };
+  }
+
+  static getUpgrades(): Upgrades {
+    return load().upgrades;
+  }
+
+  /** Gameplay multipliers from purchased upgrades. */
+  static getBoosts(): { speed: number; cook: number; patience: number } {
+    const u = load().upgrades;
+    const per = (id: UpgradeId) => UPGRADE_TRACKS.find(t => t.id === id)!.effectPerTier;
+    return {
+      speed: 1 + u.shoes * per('shoes'),
+      cook: Math.max(0.5, 1 - u.stove * per('stove')),
+      patience: 1 + u.decor * per('decor'),
+    };
+  }
+
+  /** Attempt to buy the next tier of a track. Returns the new state on success. */
+  static buyUpgrade(id: UpgradeId): { ok: boolean; tier: number; coins: number } {
+    const data = load();
+    const track = UPGRADE_TRACKS.find(t => t.id === id)!;
+    const tier = data.upgrades[id];
+    if (tier >= track.costs.length) return { ok: false, tier, coins: data.coins };
+    const cost = track.costs[tier];
+    if (data.coins < cost) return { ok: false, tier, coins: data.coins };
+    data.coins -= cost;
+    data.upgrades[id] = tier + 1;
+    save(data);
+    return { ok: true, tier: tier + 1, coins: data.coins };
   }
 
   static recordSession(score: number, combo: number): void {

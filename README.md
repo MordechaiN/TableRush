@@ -75,6 +75,16 @@ taps ahead — queued tables dim their ring while the waiter works.
 XP = score ÷ 10. A daily goal (60% of your best) gives every session a target.
 First launch runs a guided 6-step tutorial with a frozen clock.
 
+**The wallet**: every shift's takings bank into a persistent wallet, spent in
+the 🛒 Upgrades shop on three tracks (5 tiers each) that really change the
+simulation:
+
+| Track | Effect per tier |
+|-------|-----------------|
+| 👟 Swift Shoes | +8% waiter speed |
+| 🔥 Pro Stove | −8% cooking time |
+| 🪴 Cozy Décor | +8% guest patience |
+
 ## Controls
 
 Tap (or click) a table — that's the game. ⏸ / ESC pauses. Sound toggles live
@@ -159,10 +169,13 @@ Everything lives in `src/config/GameConfig.ts`:
   speed, patience). New accessories go in `builders.chibi()`.
 - **New unlock**: gate it on `ProgressionSystem` level, then describe it in
   `UNLOCK_HINTS` / `ABILITY_AT_LEVEL` — hints must stay honest.
+- **New upgrade track**: add to `UPGRADE_TRACKS`, extend `Upgrades` +
+  `getBoosts()` in `ProgressionSystem`, and apply the multiplier where it
+  belongs in `RestaurantGame`/`kitchen`. The shop UI renders tracks
+  automatically.
 
 ## Roadmap
 
-- [ ] Restaurant upgrades to spend coins on (décor, faster stove, espresso bar)
 - [ ] Special events: birthday parties, food critic visits
 - [ ] Skeletal characters to replace the primitive chibis
 - [ ] PWA install + haptics

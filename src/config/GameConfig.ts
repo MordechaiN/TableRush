@@ -91,6 +91,20 @@ export function trayCapacity(level: number): number {
   return level >= 6 ? 3 : level >= 3 ? 2 : 1;
 }
 
+// Upgrade shop — every shift's score banks into a persistent wallet, spent on
+// three tracks that really change the simulation (see ProgressionSystem.getBoosts).
+export type UpgradeId = 'shoes' | 'stove' | 'decor';
+export interface UpgradeTrack {
+  id: UpgradeId; name: string; emoji: string; desc: string;
+  effectPerTier: number; // multiplier step per tier
+  costs: number[];       // cost of tier 1..N
+}
+export const UPGRADE_TRACKS: UpgradeTrack[] = [
+  { id: 'shoes', name: 'Swift Shoes', emoji: '👟', desc: '+8% waiter speed per tier',   effectPerTier: 0.08, costs: [800, 2000, 4500, 8500, 14000] },
+  { id: 'stove', name: 'Pro Stove',   emoji: '🔥', desc: '−8% cooking time per tier',   effectPerTier: 0.08, costs: [1000, 2400, 5000, 9000, 15000] },
+  { id: 'decor', name: 'Cozy Décor',  emoji: '🪴', desc: '+8% guest patience per tier', effectPerTier: 0.08, costs: [900, 2200, 4800, 8800, 14500] },
+];
+
 // Star thresholds for the end-of-shift rating.
 // Calibrated against a perfect-play bot (~$9,900): 3★ demands sustained combos,
 // 2★ rewards a clean but unhurried shift.

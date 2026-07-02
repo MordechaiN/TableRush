@@ -28,6 +28,8 @@ export interface GameCallbacks {
   onFlash: (kind: 'gold' | 'combo' | 'red') => void;
   onCoinFly: (x: number, y: number, n: number) => void;
 }
+/** Multipliers from purchased upgrades (ProgressionSystem.getBoosts). */
+export interface Boosts { speed: number; cook: number; patience: number; }
 
 type TableState = 'empty' | 'seated' | 'waiting' | 'ready' | 'eating' | 'paying' | 'dirty';
 type CustState = 'entering' | 'ordering' | 'waiting' | 'eating' | 'paying' | 'leaving';
@@ -123,7 +125,7 @@ export class RestaurantGame {
   private arrow!: THREE.Group;
   private arrowMat!: THREE.MeshBasicMaterial;
 
-  constructor(private container: HTMLElement, private cbs: GameCallbacks, private level: number) {
+  constructor(private container: HTMLElement, private cbs: GameCallbacks, private level: number, private boosts: Boosts = { speed: 1, cook: 1, patience: 1 }) {
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
     this.renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
     this.renderer.shadowMap.enabled = true;
@@ -141,7 +143,7 @@ export class RestaurantGame {
     this.buildRoom();
     this.buildTables();
     this.buildArrow();
-    this.kitchen = new Kitchen(this.scene, this.fx);
+    this.kitchen = new Kitchen(this.scene, this.fx, this.boosts.cook);
     this.kitchen.onReady = (t) => this.foodReady(t);
     this.kitchen.onWasted = (t) => this.foodWasted(t);
 
@@ -365,7 +367,7 @@ export class RestaurantGame {
     const variant = CUSTOMER_VARIANTS[vi];
     const tier = this.tierNow();
     const vip = !this.tutorial && this.level >= VIP_UNLOCK_LEVEL && Math.random() < VIP_CHANCE;
-    let pat = tier.orderPatience * variant.patienceMul * (0.92 + Math.random() * 0.16);
+    let pat = tier.orderPatience * variant.patienceMul * this.boosts.patience * (0.92 + Math.random() * 0.16);
     if (vip) pat *= VIP_PATIENCE;
     if (this.tutorial && this.tutStep < 7) pat = 999; // no walkouts during the tutorial
 
@@ -546,7 +548,7 @@ export class RestaurantGame {
     this.writeT = 0.55; // notepad scribble beat
     c.state = 'waiting';
     t.state = 'waiting';
-    c.maxPat = this.tierNow().orderPatience * WAIT_PATIENCE_MUL * c.variant.patienceMul;
+    c.maxPat = this.tierNow().orderPatience * WAIT_PATIENCE_MUL * c.variant.patienceMul * this.boosts.patience;
     c.patience = c.maxPat;
     this.setRing(t);
     // the order chit flies to the kitchen
@@ -830,7 +832,7 @@ export class RestaurantGame {
         this.nextStep();
       } else {
         this.tmp.normalize();
-        w.g.position.addScaledVector(this.tmp, Math.min(8.0 * dt, d));
+        w.g.position.addScaledVector(this.tmp, Math.min(8.0 * this.boosts.speed * dt, d));
         let dr = Math.atan2(this.tmp.x, this.tmp.z) - w.g.rotation.y;
         dr = Math.atan2(Math.sin(dr), Math.cos(dr));
         w.g.rotation.y += dr * Math.min(1, dt * 16);

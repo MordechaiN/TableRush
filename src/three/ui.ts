@@ -1,4 +1,4 @@
-import { fmtScore } from '../config/GameConfig';
+import { fmtScore, UPGRADE_TRACKS } from '../config/GameConfig';
 import { ProgressionSystem, RoundResult, RoundSummary } from '../systems/ProgressionSystem';
 import { SoundManager } from '../systems/SoundManager';
 import type { HudState, GameResult } from './RestaurantGame';
@@ -59,6 +59,22 @@ function css() {
   .btn-s{background:linear-gradient(180deg,#5BBF4A,#3E9E33);box-shadow:0 6px 0 #2C7A24}
   .btn:active{transform:translateY(4px);box-shadow:none}
   .credits-list{font-family:Arial;color:#7a4516;font-size:15px;line-height:2;margin:14px 0}
+  .stars span{display:inline-block;transform:scale(0)}
+  .stars span.pop{animation:starPop .4s cubic-bezier(.3,1.6,.6,1) forwards}
+  @keyframes starPop{0%{transform:scale(0) rotate(-40deg)}100%{transform:scale(1) rotate(0)}}
+  .wallet{display:inline-flex;align-items:center;gap:6px;background:rgba(255,210,122,.4);border:2px solid rgba(244,160,60,.5);
+    border-radius:999px;padding:6px 16px;color:#7a4516;font-size:16px;margin-bottom:8px}
+  .shoprow{display:flex;align-items:center;gap:10px;background:rgba(255,210,122,.28);border-radius:16px;padding:12px 14px;margin:10px 0;text-align:left}
+  .shoprow .ic2{font-size:28px}
+  .shoprow .info{flex:1;min-width:0}
+  .shoprow .nm{color:#5A3A1E;font-size:15px}
+  .shoprow .ds{font-family:Arial;color:#9A551F;font-size:11.5px;font-weight:bold;margin-top:2px}
+  .shoprow .pips{font-size:11px;letter-spacing:2px;color:#F08A1E;margin-top:3px}
+  .buybtn{border:none;border-radius:12px;padding:10px 12px;min-width:78px;cursor:pointer;font-family:'Arial Black';font-size:13px;color:#fff;
+    background:linear-gradient(180deg,#FF8A3D,#F4671E);box-shadow:0 4px 0 #C24A12}
+  .buybtn:active{transform:translateY(3px);box-shadow:0 1px 0 #C24A12}
+  .buybtn:disabled{background:#C9B49A;box-shadow:0 4px 0 #A8937A;cursor:default;color:#F5EDE0}
+  .buybtn.max{background:linear-gradient(180deg,#5BBF4A,#3E9E33);box-shadow:0 4px 0 #2C7A24}
   .toggle{display:flex;align-items:center;justify-content:space-between;background:rgba(255,210,122,.3);border-radius:14px;padding:14px 18px;margin:10px 0;color:#5A3A1E;font-size:16px}
   .sw{width:54px;height:30px;border-radius:16px;background:#C9A36A;position:relative;cursor:pointer;transition:background .2s}
   .sw.on{background:#5BBF4A}.sw i{position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:left .2s}.sw.on i{left:27px}
@@ -198,15 +214,16 @@ export function showGameOver(result: GameResult, cbs: { onReplay: () => void; on
   } as RoundResult);
   ProgressionSystem.recordSession(result.score, result.comboRecord);
   const daily = ProgressionSystem.getDailyGoal();
-  const stars = '★★★'.slice(0, result.stars) + '☆☆☆'.slice(0, 3 - result.stars);
+  const starsHtml = [0, 1, 2].map(i => `<span data-star="${i}">${i < result.stars ? '★' : '☆'}</span>`).join('');
   const thBase = summary.thresholdForLevel(summary.levelAfter);
   const thNext = summary.thresholdForLevel(summary.levelAfter + 1);
   const frac = Math.max(0, Math.min(1, (summary.xpAfter - thBase) / Math.max(1, thNext - thBase)));
   const d = overlay(`<div class="card">
     <h1>${result.stars >= 3 ? 'PERFECT SHIFT!' : result.stars >= 2 ? 'GREAT SHIFT!' : "SHIFT'S OVER"}</h1>
-    <div class="stars">${stars}</div>
+    <div class="stars">${starsHtml}</div>
     <div class="big">$${fmtScore(result.score)}</div>
     ${summary.isNewHighScore ? '<div class="sub" style="color:#E8442C">★ NEW BEST SCORE!</div>' : ''}
+    <div class="sub">💰 +$${fmtScore(summary.coinsEarned)} banked · wallet $${fmtScore(summary.coinsAfter)}</div>
     <div class="row2">
       <div class="stat"><b>${result.happy}</b>served</div>
       <div class="stat"><b>×${result.comboRecord}</b>best streak</div>
@@ -221,10 +238,51 @@ export function showGameOver(result: GameResult, cbs: { onReplay: () => void; on
     <button class="btn btn-p" id="go-replay">▶ PLAY AGAIN</button>
     <button class="btn btn-s" id="go-menu">MENU</button>
   </div>`);
+  // stars pop in one by one
+  d.querySelectorAll('.stars span').forEach((el, i) => {
+    setTimeout(() => {
+      el.classList.add('pop');
+      if (i < result.stars) { try { SoundManager.starReveal(i + 1); } catch { /* */ } }
+    }, 250 + i * 320);
+  });
   if (summary.unlockedAbility) { try { SoundManager.unlockEarned(); } catch { /* */ } }
   requestAnimationFrame(() => { (d.querySelector('#xpf') as HTMLElement).style.width = (frac * 100) + '%'; });
   (d.querySelector('#go-replay') as HTMLButtonElement).onclick = () => { try { SoundManager.uiClick(); } catch { /* */ } close(d); cbs.onReplay(); };
   (d.querySelector('#go-menu') as HTMLButtonElement).onclick = () => { try { SoundManager.uiClick(); } catch { /* */ } close(d); cbs.onMenu(); };
+}
+
+export function showShop(onBack: () => void) {
+  const d = overlay(`<div class="card">
+    <h1>UPGRADES</h1>
+    <div class="wallet">💰 <b id="shop-coins">$${fmtScore(ProgressionSystem.getData().coins)}</b></div>
+    <div id="shop-rows"></div>
+    <button class="btn btn-p" id="shop-back">← BACK</button>
+  </div>`);
+  const rows = d.querySelector('#shop-rows') as HTMLElement;
+  const coinsEl = d.querySelector('#shop-coins') as HTMLElement;
+  const render = () => {
+    const data = ProgressionSystem.getData();
+    coinsEl.textContent = '$' + fmtScore(data.coins);
+    rows.innerHTML = UPGRADE_TRACKS.map(t => {
+      const tier = data.upgrades[t.id];
+      const maxed = tier >= t.costs.length;
+      const pips = '●'.repeat(tier) + '○'.repeat(t.costs.length - tier);
+      const btn = maxed
+        ? '<button class="buybtn max" disabled>MAX</button>'
+        : `<button class="buybtn" data-buy="${t.id}" ${data.coins < t.costs[tier] ? 'disabled' : ''}>$${fmtScore(t.costs[tier])}</button>`;
+      return `<div class="shoprow"><div class="ic2">${t.emoji}</div>
+        <div class="info"><div class="nm">${t.name}</div><div class="ds">${t.desc}</div><div class="pips">${pips}</div></div>
+        ${btn}</div>`;
+    }).join('');
+    rows.querySelectorAll('[data-buy]').forEach(b => {
+      (b as HTMLButtonElement).onclick = () => {
+        const res = ProgressionSystem.buyUpgrade((b as HTMLElement).dataset.buy as 'shoes' | 'stove' | 'decor');
+        if (res.ok) { try { SoundManager.unlockEarned(); } catch { /* */ } render(); }
+      };
+    });
+  };
+  render();
+  (d.querySelector('#shop-back') as HTMLButtonElement).onclick = () => { try { SoundManager.uiClick(); } catch { /* */ } close(d); onBack(); };
 }
 
 export function showSettings(onBack: () => void) {

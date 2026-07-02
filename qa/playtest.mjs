@@ -71,6 +71,23 @@ await run('portrait', { width: 390, height: 844 }, async (page) => {
   await page.evaluate(() => window.__game?.fastForward(300));
   await page.waitForTimeout(1500);
   await page.click('#go-menu'); await page.waitForTimeout(800);
+
+  // upgrade shop: coins were banked by the two shifts — buy the first tier
+  await page.click('#tt-shop'); await page.waitForTimeout(500);
+  await page.screenshot({ path: `${SHOTS}/06_shop.png` });
+  const before = await page.evaluate(() => JSON.parse(localStorage.getItem('tablerush_progress')));
+  const buyBtn = await page.$('[data-buy]:not([disabled])');
+  if (before.coins >= 800 && !buyBtn) errors.push('shop: no affordable buy button despite coins');
+  if (buyBtn) {
+    await buyBtn.click(); await page.waitForTimeout(400);
+    const after = await page.evaluate(() => JSON.parse(localStorage.getItem('tablerush_progress')));
+    const bought = Object.keys(after.upgrades).filter(k => after.upgrades[k] > before.upgrades[k]);
+    if (bought.length !== 1) errors.push('shop: purchase did not increment a tier');
+    if (after.coins >= before.coins) errors.push('shop: purchase did not deduct coins');
+    console.log('shop: bought', bought[0], `(${before.coins} → ${after.coins} coins)`);
+    await page.screenshot({ path: `${SHOTS}/07_shop_after_buy.png` });
+  }
+  await page.click('#shop-back'); await page.waitForTimeout(400);
 });
 
 // ── landscape sanity ──────────────────────────────────────────────────────────

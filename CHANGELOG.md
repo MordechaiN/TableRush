@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## v3.1.0 — The Economy Update (2026-07-02)
+
+- **Wallet**: every shift's takings bank into a persistent wallet, shown on
+  the title screen and the game-over card ("+$X banked").
+- **🛒 Upgrades shop** (title screen): three 5-tier tracks that really change
+  the simulation — 👟 Swift Shoes (+8% waiter speed/tier), 🔥 Pro Stove
+  (−8% cook time/tier), 🪴 Cozy Décor (+8% guest patience/tier).
+- Game-over stars now pop in one by one with reveal chimes.
+- QA harness covers the shop: earn → buy → verify tier + deduction persist.
+
 ## v3.0.0 — The Living Restaurant (2026-07-02)
 
 A ground-up rebuild of the gameplay scene around one idea: **the whole

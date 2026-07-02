@@ -9,7 +9,7 @@ let renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.Perspective
 let hero: THREE.Group, orbiters: { m: THREE.Object3D; r: number; sp: number; ph: number; y: number }[] = [];
 let raf = 0, overlay: HTMLDivElement, bestEl: HTMLElement | null = null, visible = false;
 
-export function initTitle(handlers: { onPlay: () => void; onSettings: () => void; onCredits: () => void }) {
+export function initTitle(handlers: { onPlay: () => void; onShop: () => void; onSettings: () => void; onCredits: () => void }) {
   overlay = document.createElement('div'); overlay.id = 'tr-title';
   overlay.innerHTML = `
     <canvas id="tr-title-c"></canvas>
@@ -19,10 +19,11 @@ export function initTitle(handlers: { onPlay: () => void; onSettings: () => void
       <div class="tt-chips">
         <div class="tt-best">🏆 BEST <span id="tt-best">0</span></div>
         <div class="tt-best">⭐ LV <span id="tt-level">1</span></div>
+        <div class="tt-best">💰 <span id="tt-coins">$0</span></div>
         <div class="tt-best" id="tt-daily" style="display:none">🎯 <span id="tt-daily-v"></span></div>
       </div>
       <button class="tt-play" id="tt-play"><span>▶</span> PLAY</button>
-      <div class="tt-row"><button class="tt-ghost" id="tt-settings">⚙ Settings</button><button class="tt-ghost" id="tt-credits">♥ Credits</button></div>
+      <div class="tt-row"><button class="tt-ghost" id="tt-shop">🛒 Upgrades</button><button class="tt-ghost" id="tt-settings">⚙ Settings</button><button class="tt-ghost" id="tt-credits">♥ Credits</button></div>
       <div class="tt-ver">v3.0 · Three.js Edition</div>
     </div>`;
   document.body.appendChild(overlay); injectCss(); bestEl = overlay.querySelector('#tt-best');
@@ -53,6 +54,7 @@ export function initTitle(handlers: { onPlay: () => void; onSettings: () => void
 
   resize(); addEventListener('resize', resize);
   (overlay.querySelector('#tt-play') as HTMLButtonElement).onclick = () => { try { SoundManager.uiClick(); } catch { /* */ } handlers.onPlay(); };
+  (overlay.querySelector('#tt-shop') as HTMLButtonElement).onclick = () => { try { SoundManager.uiClick(); } catch { /* */ } handlers.onShop(); };
   (overlay.querySelector('#tt-settings') as HTMLButtonElement).onclick = () => { try { SoundManager.uiClick(); } catch { /* */ } handlers.onSettings(); };
   (overlay.querySelector('#tt-credits') as HTMLButtonElement).onclick = () => { try { SoundManager.uiClick(); } catch { /* */ } handlers.onCredits(); };
   showTitle(); animate();
@@ -68,6 +70,8 @@ function refresh() {
     if (bestEl) bestEl.textContent = fmtScore(data.highScore || 0);
     const lvEl = overlay.querySelector('#tt-level');
     if (lvEl) lvEl.textContent = String(data.level || 1);
+    const coinEl = overlay.querySelector('#tt-coins');
+    if (coinEl) coinEl.textContent = '$' + fmtScore(data.coins || 0);
     const daily = ProgressionSystem.getDailyGoal();
     const dEl = overlay.querySelector('#tt-daily') as HTMLElement | null;
     const dV = overlay.querySelector('#tt-daily-v');

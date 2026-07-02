@@ -47,7 +47,7 @@ export class Kitchen {
   onReady: ((ticket: Ticket) => void) | null = null;
   onWasted: ((ticket: Ticket) => void) | null = null;
 
-  constructor(private scene: THREE.Scene, private fx: Effects) {
+  constructor(private scene: THREE.Scene, private fx: Effects, private cookMul = 1) {
     this.buildSet();
     const burnerXs = [-2.5, -1.1, 0.3].slice(0, BURNERS);
     for (const bx of burnerXs) {
@@ -145,7 +145,7 @@ export class Kitchen {
 
   private startCooking(b: Burner, ticket: Ticket) {
     b.ticket = ticket; b.t = 0; b.done = false; b.steamAcc = 0;
-    b.dur = MENU_ITEMS[ticket.dish].cookTime;
+    b.dur = MENU_ITEMS[ticket.dish].cookTime * this.cookMul;
     b.content = buildDish(ticket.dish);
     b.content.scale.setScalar(0.55);
     b.content.position.set(b.pos.x, b.pos.y + 0.06, b.pos.z);

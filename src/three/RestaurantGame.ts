@@ -85,7 +85,6 @@ export class RestaurantGame {
   private fx: Effects;
   private kitchen: Kitchen;
   private tables: TableData[] = [];
-  private hit: THREE.Mesh[] = [];
   private customers: Customer[] = [];
   private anims: Anim[] = [];
 
@@ -121,9 +120,8 @@ export class RestaurantGame {
   private tutorial = false;
   private tutStep = -1;
 
-  private ray = new THREE.Raycaster();
-  private ptr = new THREE.Vector2();
   private tmp = new THREE.Vector3();
+  private tmp2 = new THREE.Vector3();
   private arrow!: THREE.Group;
   private arrowMat!: THREE.MeshBasicMaterial;
 
@@ -267,8 +265,6 @@ export class RestaurantGame {
       const bloom = new THREE.Mesh(G('bloom', () => new THREE.SphereGeometry(0.09, 8, 6)), M(0xE86A8A)); bloom.position.set(0.42, 1.3, -0.3); g.add(bloom);
       this.scene.add(shadows(g));
 
-      const hit = new THREE.Mesh(G('hitBox', () => new THREE.BoxGeometry(3.0, 3.6, 3.6)), new THREE.MeshBasicMaterial({ visible: false }));
-      hit.position.set(pos.x, 1.6, pos.z - 0.35); hit.userData.table = i; this.scene.add(hit); this.hit.push(hit);
       const ring = new THREE.Mesh(G('ring', () => new THREE.RingGeometry(1.1, 1.4, 40)), new THREE.MeshBasicMaterial({ color: 0xFFD24A, transparent: true, opacity: 0, side: THREE.DoubleSide }));
       ring.rotation.x = -Math.PI / 2; ring.position.set(pos.x, 0.04, pos.z); this.scene.add(ring);
 
@@ -488,25 +484,41 @@ export class RestaurantGame {
   }
 
   // ── input & waiter actions ──────────────────────────────────────────────────
+  // Screen-space picking: the nearest actionable table to the tap wins.
+  // (Raycasting against big invisible hitboxes broke at steep camera angles —
+  // a front table's box swallowed taps aimed at the guest behind it.)
+  private tapAnchor(t: TableData): { x: number; y: number } {
+    return this.toScreen(this.tmp2.set(t.pos.x, 1.1, t.pos.z - 0.55));
+  }
   private onPointer(e: PointerEvent) {
     if (!this.running) return;
-    this.ptr.x = (e.clientX / innerWidth) * 2 - 1;
-    this.ptr.y = -(e.clientY / innerHeight) * 2 + 1;
-    this.ray.setFromCamera(this.ptr, this.camera);
-    const h = this.ray.intersectObjects(this.hit, false)[0];
-    if (!h) return;
-    this.tap(this.tables[(h.object as THREE.Mesh).userData.table as number]);
+    const px = e.clientX, py = e.clientY;
+    let bestAct: TableData | null = null, bestActD = Infinity;
+    let bestAny: TableData | null = null, bestAnyD = Infinity;
+    for (const t of this.tables) {
+      const p = this.tapAnchor(t);
+      const d = Math.hypot(p.x - px, p.y - py);
+      if (d < bestAnyD) { bestAnyD = d; bestAny = t; }
+      if (this.actionFor(t) && d < bestActD) { bestActD = d; bestAct = t; }
+    }
+    const lim = Math.min(innerWidth, innerHeight) * 0.42;
+    if (bestAct && bestActD <= lim) this.tap(bestAct);
+    else if (bestAny && bestAnyD <= lim * 0.7) this.tap(bestAny); // feedback bump
+  }
+
+  private actionFor(t: TableData): ActionKind | null {
+    if (t.queued || t.beingServed) return null;
+    if (t.state === 'seated' && t.customer?.state === 'ordering') return 'order';
+    if (t.state === 'ready') return 'serve';
+    if (t.state === 'paying') return 'collect';
+    if (t.state === 'dirty') return 'clean';
+    return null;
   }
 
   private tap(t: TableData) {
-    if (t.queued) { this.bump(); return; }
-    let kind: ActionKind | null = null;
-    if (t.state === 'seated' && t.customer?.state === 'ordering') kind = 'order';
-    else if (t.state === 'ready') kind = 'serve';
-    else if (t.state === 'paying') kind = 'collect';
-    else if (t.state === 'dirty') kind = 'clean';
+    const kind = this.actionFor(t);
     if (!kind) { this.bump(); return; }
-    if (this.actions.length >= 3) { this.bump(); return; }
+    if (this.actions.length >= 4) { this.bump(); return; }
     this.actions.push({ kind, table: t });
     t.queued = true;
     this.setRing(t);
@@ -1045,6 +1057,14 @@ export class RestaurantGame {
   }
   tapTable(i: number) { this.tap(this.tables[i]); }
   fastForward(seconds: number) { this.timeLeft = Math.max(0.5, this.timeLeft - seconds); }
+  /** Screen-space centre of a table's tap target — lets QA aim real clicks. */
+  tableScreenXY(i: number): { x: number; y: number } {
+    return this.tapAnchor(this.tables[i]);
+  }
+  /** What a real player's tap on this table would do right now ('' = nothing). */
+  tableAction(i: number): string {
+    return this.actionFor(this.tables[i]) ?? '';
+  }
 }
 
 function backOut(x: number) { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); }

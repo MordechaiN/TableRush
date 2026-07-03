@@ -147,8 +147,10 @@ npm install
 npm run dev          # http://localhost:3000
 npm run type-check   # strict TS, no emit
 npm run build        # type-check + production bundle → dist/
-npm run playtest     # Playwright: tutorial → full shift → pause → replay → shop,
-                     # fails on any console error (needs `npm run dev` running)
+npm run playtest        # Playwright bot: tutorial → shift → pause → replay → shop,
+                        # fails on any console error (needs `npm run dev` running)
+npm run playtest:human  # plays with REAL mouse + touch input only — the test
+                        # that catches input bugs the bot can't
 node scripts/gen-icons.mjs   # regenerate the PWA icons (drawn in canvas)
 ```
 

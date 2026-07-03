@@ -1,5 +1,24 @@
 # CHANGELOG
 
+## v3.3.1 — CRITICAL: real taps now work everywhere (2026-07-03)
+
+Real-input hotfix. Raycasting against large invisible hitboxes silently
+swallowed taps at steep camera angles: the empty front table's box occluded
+the guest behind it, so **most tables were unclickable on phones** (portrait
+= steepest camera). Bot-driven QA called `tap()` directly and never saw it.
+
+- Input rewritten as **screen-space picking**: the nearest actionable table
+  to the tap wins, with a generous forgiveness radius — works at any camera
+  angle, any aspect ratio, mouse or touch.
+- Action queue raised 3 → 4 so rapid taps aren't dropped.
+- iOS input hardening: `touch-action` (kills double-tap zoom — Safari
+  ignores `user-scalable=no`), no tap highlight, no text selection.
+- New QA gate: `npm run playtest:human` plays the entire game with **real
+  mouse and touch events only** (no direct game calls) and fails if fewer
+  than 70% of presses have an effect. Verified on dev, the production build,
+  and a GitHub-Pages subpath simulation: 74–93% effective presses,
+  $6,200–$7,500 scores, zero console errors.
+
 ## v3.3.0 — The Critic (2026-07-02)
 
 - **Food Critic** (level 7+, at most once per shift): dark suit, gray hair,

@@ -15,16 +15,21 @@
   <title>Table Rush</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
+    html, body {
       background: #F5E6C8;
-      display: flex;
-      justify-content: center;
-      align-items: center;
       width: 100vw;
       height: 100vh;
       overflow: hidden;
+      /* mobile input hardening: no double-tap zoom, no tap flash, no text selection */
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
     }
-    canvas { display: block; }
+    body { display: flex; justify-content: center; align-items: center; }
+    canvas { display: block; touch-action: none; }
+    button { touch-action: manipulation; }
   </style>
 </head>
 <body>

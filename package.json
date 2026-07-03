@@ -7,7 +7,8 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "type-check": "tsc --noEmit",
-    "playtest": "node qa/playtest.mjs"
+    "playtest": "node qa/playtest.mjs",
+    "playtest:human": "node qa/human-playtest.mjs && node qa/human-playtest.mjs --touch"
   },
   "dependencies": {
     "@types/three": "^0.184.1",

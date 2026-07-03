@@ -1,65 +1,84 @@
 import * as THREE from 'three';
 import {
-  MENU_ITEMS, DIFFICULTY_TIERS, COMBO_MILESTONES, SPEED_MULTIPLIERS,
-  GAME_DURATION, CUSTOMER_VARIANTS, Archetype, Tier,
-  WAIT_PATIENCE_MUL, COLD_DECAY, SERVING_DECAY, PAY_PATIENCE,
-  VIP_UNLOCK_LEVEL, VIP_CHANCE, VIP_PAY, VIP_PATIENCE,
-  FINAL_RUSH_AT, FINAL_RUSH_MUL, trayCapacity, STAR_2, STAR_3,
-  CRITIC_UNLOCK_LEVEL, CRITIC_CHANCE, CRITIC_PAY,
+  MENU_ITEMS, CUSTOMER_VARIANTS, Archetype, LevelDef,
+  QUEUE_SLOTS, HANDS_CAPACITY,
+  DECAY_QUEUE, DECAY_HANDUP, DECAY_COOKING, DECAY_COLD, DECAY_CHECK, DECIDE_SECONDS,
+  POINTS, DOUBLE_HANDS_BONUS, CHAIN_BONUS, MIN_TIP_FRAC,
+  VIP_CHANCE, VIP_PAY, VIP_PATIENCE, CRITIC_CHANCE, CRITIC_PAY, CRITIC_RAVE_HEARTS,
 } from '../config/GameConfig';
 import {
   M, G, shadows, DISH_EMOJI, chibi, Chibi,
-  poseSit, poseStand, poseCarry, makeBubble, Bubble, woodFloorTexture, signTexture,
+  poseSit, poseStand, poseCarry, makeBubble, Bubble, numberSprite,
+  woodFloorTexture, signTexture,
 } from './builders';
 import { Effects } from './effects';
 import { Kitchen, Ticket } from './kitchen';
 import { SoundManager } from '../systems/SoundManager';
 
 // ── Types shared with the UI layer ────────────────────────────────────────────
-export type AnnounceKind = 'combo' | 'speed' | 'tut' | 'rush' | 'vip';
+export type AnnounceKind = 'chain' | 'tut' | 'vip' | 'level';
 export interface HudState {
-  score: number; timeLeft: number; combo: number; multiplier: number;
-  urgent: boolean; rush: boolean;
+  score: number; level: number; goal: number; expert: number;
+  guestsLeft: number;       // guests still to be fully served (or lost)
+  chain: number; chainKind: string;
+  urgent: boolean;
 }
-export interface GameResult { score: number; stars: number; happy: number; angry: number; comboRecord: number; }
+export interface LevelResult {
+  levelId: number; score: number; stars: number; won: boolean;
+  served: number; walkouts: number; goal: number; expert: number;
+}
 export interface GameCallbacks {
   onHud: (h: HudState) => void;
-  onOver: (r: GameResult) => void;
+  onOver: (r: LevelResult) => void;
   onAnnounce: (text: string, kind: AnnounceKind) => void;
-  onFlash: (kind: 'gold' | 'combo' | 'red') => void;
+  onFlash: (kind: 'gold' | 'chain' | 'red') => void;
   onCoinFly: (x: number, y: number, n: number) => void;
 }
 /** Multipliers from purchased upgrades (ProgressionSystem.getBoosts). */
 export interface Boosts { speed: number; cook: number; patience: number; }
 
-type TableState = 'empty' | 'seated' | 'waiting' | 'ready' | 'eating' | 'paying' | 'dirty';
-type CustState = 'entering' | 'ordering' | 'waiting' | 'eating' | 'paying' | 'leaving';
+// ── Simulation types ──────────────────────────────────────────────────────────
+type Phase =
+  | 'entering'   // walking to a queue slot
+  | 'queued'     // waiting in line (hearts drain)
+  | 'following'  // escorted by the waiter to a table
+  | 'sitting'    // walking the last step to the chair
+  | 'deciding'   // reading the menu (hearts frozen)
+  | 'handup'     // hand raised: take my order! (drain)
+  | 'waiting'    // order in the kitchen (slow drain; fast once plate is ready)
+  | 'eating'     // (frozen)
+  | 'check'      // waiting to pay (drain)
+  | 'leaving';
 
-interface Customer {
-  c: Chibi; table: TableData; dish: number; state: CustState;
-  variant: Archetype; vip: boolean; critic: boolean;
-  patience: number; maxPat: number; payPat: number; eat: number; eatTotal: number;
-  speedMul: number; speedLabel: string; happy: boolean;
-  path: THREE.Vector3[]; t: number; bob: number;
+interface Guest {
+  c: Chibi; variant: Archetype; vip: boolean; critic: boolean;
+  phase: Phase; hearts: number; // 0..5
+  queueIdx: number; table: TableD | null; dish: number;
+  path: THREE.Vector3[]; t: number; happy: boolean;
+  decideT: number; eatT: number;
   bubble: Bubble | null; bAcc: number; lastBucket: number;
 }
-interface TableData {
+type TableState = 'clean' | 'taken' | 'dirty';
+interface TableD {
   i: number; pos: THREE.Vector3; chair: THREE.Vector3; approach: THREE.Vector3;
-  state: TableState; customer: Customer | null;
+  state: TableState; guest: Guest | null;
   food: THREE.Group | null; dirty: THREE.Group | null;
-  ring: THREE.Mesh; queued: boolean; beingServed: boolean;
+  ring: THREE.Mesh;
 }
-type ActionKind = 'order' | 'serve' | 'collect' | 'clean';
-interface Action { kind: ActionKind; table: TableData; }
+type TaskKind = 'seat' | 'order' | 'pickup' | 'deliver' | 'collect' | 'clean';
+interface Task { kind: TaskKind; table: TableD; guest?: Guest; }
 interface Anim { k: 'pop' | 'hop' | 'bump' | 'punch' | 'fly'; t: number; o?: THREE.Object3D; s?: number; from?: THREE.Vector3; to?: THREE.Vector3; dur?: number; }
+export interface Hotspot { kind: 'guest' | 'plate' | 'table'; idx: number; x: number; y: number; action: string; }
 
 // ── Layout (portrait-first) ───────────────────────────────────────────────────
 const TABLE_XZ: [number, number][] = [[-2.05, -2.55], [2.05, -2.55], [-2.05, 0.7], [2.05, 0.7], [-2.05, 3.95]];
 const DOOR = new THREE.Vector3(0.4, 0, 11.5);
 const MAT = new THREE.Vector3(0.4, 0, 6.9);
-const WAITER_HOME = new THREE.Vector3(2.3, 0, 4.9);
+const QUEUE_X = [-1.35, -0.2, 0.95, 2.1];
+const QUEUE_Z = 6.55;
+const WAITER_HOME = new THREE.Vector3(2.4, 0, 4.6);
 const BIN = new THREE.Vector3(-3.4, 0, -4.7);
-const LOOK = new THREE.Vector3(0, 0.8, -0.5);
+const LOOK = new THREE.Vector3(0, 0.8, 0.2);
 // Gameplay-critical points the camera must keep on screen at any aspect ratio
 const FIT_POINTS: [number, number, number][] = [
   [-2.9, 3.5, -2.55], [2.9, 3.5, -2.55],
@@ -67,7 +86,7 @@ const FIT_POINTS: [number, number, number][] = [
   [-2.9, 3.5, 3.95],
   [-3.9, 2.9, -5.85], [4.4, 1.3, -5.85],
   [-2.5, 3.1, -8.05], [0.3, 3.1, -8.05],
-  [0.4, 0, 7.6],
+  [-2.3, 3.1, 6.55], [3.1, 3.1, 6.55],   // the waiting line + its bubbles
 ];
 
 const SKINS = [0xFAD2B0, 0xE9B891, 0xF3C19E, 0xEFCBA8, 0xF5C9A0, 0xF3C19E, 0xFAD2B0];
@@ -77,55 +96,63 @@ export class RestaurantGame {
   private scene = new THREE.Scene();
   private camera: THREE.PerspectiveCamera;
   private fitCam: THREE.PerspectiveCamera;
-  private camBase = new THREE.Vector3();
   private camDir = new THREE.Vector3();
   private camDist = 20;
   private introT = 0;
 
   private fx: Effects;
   private kitchen: Kitchen;
-  private tables: TableData[] = [];
-  private customers: Customer[] = [];
+  private tables: TableD[] = [];
+  private guests: Guest[] = [];
   private anims: Anim[] = [];
 
   private waiter: Chibi;
-  private tray: THREE.Group;
-  private carried: { table: TableData; plate: THREE.Group }[] = [];
+  private handL: THREE.Group; // plates ride in the waiter's hands
+  private handR: THREE.Group;
+  private carried: { table: TableD; plate: THREE.Group }[] = [];
+  private carriedDirty: THREE.Group | null = null;
+  private escorting: Guest | null = null;
+
+  private tasks: Task[] = [];
+  private current: Task | null = null;
   private wq: { v: THREE.Vector3; cb?: () => void }[] = [];
   private wTarget: THREE.Vector3 | null = null;
   private wCb: (() => void) | null = null;
-  private wBusy = false;
-  private actions: Action[] = [];
   private writeT = 0;
 
+  private selected: Guest | null = null;
+  private selRing: THREE.Mesh;
+
   private score = 0;
-  private combo = 0;
-  private comboMul = 1;
-  private comboRecord = 0;
-  private happy = 0;
-  private angry = 0;
-  private timeLeft = GAME_DURATION;
-  private elapsed = 0;
-  private nextSpawn = 1.4;
+  private served = 0;
+  private walkouts = 0;
+  private spawned = 0;
+  private nextSpawn = 1.5;
   private nextVariant = 0;
+  private chainKind: TaskKind | '' = '';
+  private chainN = 0;
+  private criticPlanned = false;
+  private criticArrived = false;
+
   private running = false;
   private over = false;
   private raf = 0;
   private last = 0;
-  private rushOn = false;
-  private warned15 = false;
-  private warned5 = false;
-  private criticSeen = false;
 
   private tutorial = false;
-  private tutStep = -1;
+  private tutSeen = new Set<string>();
 
   private tmp = new THREE.Vector3();
   private tmp2 = new THREE.Vector3();
   private arrow!: THREE.Group;
   private arrowMat!: THREE.MeshBasicMaterial;
 
-  constructor(private container: HTMLElement, private cbs: GameCallbacks, private level: number, private boosts: Boosts = { speed: 1, cook: 1, patience: 1 }) {
+  constructor(
+    private container: HTMLElement,
+    private cbs: GameCallbacks,
+    private level: LevelDef,
+    private boosts: Boosts = { speed: 1, cook: 1, patience: 1 },
+  ) {
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
     this.renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
     this.renderer.shadowMap.enabled = true;
@@ -144,18 +171,24 @@ export class RestaurantGame {
     this.buildTables();
     this.buildArrow();
     this.kitchen = new Kitchen(this.scene, this.fx, this.boosts.cook);
-    this.kitchen.onReady = (t) => this.foodReady(t);
-    this.kitchen.onWasted = (t) => this.foodWasted(t);
+    this.kitchen.onReady = (t) => this.plateReady(t);
+    this.kitchen.onWasted = () => this.fx.float('WASTED', 2.4, -5.4, '#B9C0CC', 2.4);
 
     this.waiter = chibi({ skin: 0xFBD2AF, outfit: 0x28368A, hair: 0x4A2F1C, waiter: true });
     this.waiter.g.position.copy(WAITER_HOME);
     this.waiter.g.scale.setScalar(1.08);
     this.scene.add(this.waiter.g);
-    this.tray = new THREE.Group();
-    this.tray.position.set(0, 1.02, 0.44);
-    this.tray.add(new THREE.Mesh(G('tray', () => new THREE.CylinderGeometry(0.45, 0.4, 0.06, 20)), M(0xC0884A)));
-    this.tray.visible = false;
-    this.waiter.g.add(this.tray);
+    this.handL = new THREE.Group(); this.handL.position.set(-0.42, 1.02, 0.34); this.waiter.g.add(this.handL);
+    this.handR = new THREE.Group(); this.handR.position.set(0.42, 1.02, 0.34); this.waiter.g.add(this.handR);
+
+    this.selRing = new THREE.Mesh(
+      G('selRing', () => new THREE.RingGeometry(0.5, 0.68, 28)),
+      new THREE.MeshBasicMaterial({ color: 0xFFC21E, transparent: true, opacity: 0.9, side: THREE.DoubleSide, depthTest: false }),
+    );
+    this.selRing.rotation.x = -Math.PI / 2; this.selRing.renderOrder = 997; this.selRing.visible = false;
+    this.scene.add(this.selRing);
+
+    this.criticPlanned = level.critic && Math.random() < CRITIC_CHANCE;
 
     this.resize = this.resize.bind(this);
     this.onPointer = this.onPointer.bind(this);
@@ -177,21 +210,17 @@ export class RestaurantGame {
     const dine = new THREE.PointLight(0xFFD27A, 0.5, 26); dine.position.set(0, 7.5, 1); this.scene.add(dine);
     const pass = new THREE.PointLight(0xFFB347, 0.5, 16); pass.position.set(0, 4.5, -6.5); this.scene.add(pass);
 
-    // wood floor — one textured plane instead of 30+ plank meshes
     const floor = new THREE.Mesh(G('floor', () => new THREE.PlaneGeometry(46, 46)), new THREE.MeshStandardMaterial({ map: woodFloorTexture(), roughness: 0.85 }));
     floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; this.scene.add(floor);
-    // dining rug
     const rug = new THREE.Mesh(G('rug', () => new THREE.CircleGeometry(6.4, 40)), M(0xD98A54, { roughness: 0.95 }));
     rug.rotation.x = -Math.PI / 2; rug.position.set(0, 0.012, 0.6); rug.receiveShadow = true; this.scene.add(rug);
     const rugRim = new THREE.Mesh(G('rugRim', () => new THREE.RingGeometry(5.9, 6.4, 40)), M(0xB86A38, { roughness: 0.95 }));
     rugRim.rotation.x = -Math.PI / 2; rugRim.position.set(0, 0.013, 0.6); this.scene.add(rugRim);
 
-    // back wall (kitchen wall) + wainscot
     const wall = new THREE.Mesh(G('wallB', () => new THREE.PlaneGeometry(46, 20)), M(0xF3DBBA, { roughness: 1 }));
     wall.position.set(0, 10, -9); wall.receiveShadow = true; this.scene.add(wall);
     const wains = new THREE.Mesh(G('wains', () => new THREE.BoxGeometry(46, 2.6, 0.25)), M(0xC98B4E));
     wains.position.set(0, 1.3, -8.9); this.scene.add(wains);
-    // side walls with windows
     for (const sx of [-1, 1]) {
       const sw = new THREE.Mesh(G('wallS', () => new THREE.PlaneGeometry(40, 20)), M(0xEFD0A6, { roughness: 1 }));
       sw.position.set(sx * 11, 10, 3); sw.rotation.y = -sx * Math.PI / 2; this.scene.add(sw);
@@ -203,11 +232,9 @@ export class RestaurantGame {
       }
     }
 
-    // header beam above the pass (anchors the hanging sign)
     const beam = new THREE.Mesh(G('beam', () => new THREE.BoxGeometry(22, 0.55, 0.8)), M(0x8A5A2A));
     beam.position.set(0, 6.2, -5.85); this.scene.add(beam);
 
-    // string lights over the dining room — one instanced draw call
     const bulbGeo = G('bulb', () => new THREE.SphereGeometry(0.09, 8, 6));
     const bulbMat = new THREE.MeshStandardMaterial({ color: 0xFFE9A8, emissive: 0xFFC96B, emissiveIntensity: 1.2, roughness: 0.4 });
     const strands: [number, number][] = [[-1.2, 5.4], [2.6, 5.6]];
@@ -215,33 +242,31 @@ export class RestaurantGame {
     let bi = 0; const im = new THREE.Matrix4();
     for (const [sz, sy] of strands) {
       for (let k = 0; k < 15; k++) {
-        const fx2 = k / 14;
-        const x = -9 + fx2 * 18;
-        const sag = Math.sin(fx2 * Math.PI) * -1.1;
-        im.setPosition(x, sy + 1.1 + sag, sz);
+        const f = k / 14;
+        im.setPosition(-9 + f * 18, sy + 1.1 - Math.sin(f * Math.PI) * 1.1, sz);
         bulbs.setMatrixAt(bi++, im);
       }
     }
     this.scene.add(bulbs);
 
-    // entry: doormat + velvet ropes + WELCOME sign
-    const mat = new THREE.Mesh(G('mat', () => new THREE.BoxGeometry(2.6, 0.05, 1.7)), M(0xB33A22, { roughness: 0.95 }));
+    // entrance: doormat, velvet-rope waiting line
+    const mat = new THREE.Mesh(G('mat', () => new THREE.BoxGeometry(4.6, 0.05, 1.9)), M(0xB33A22, { roughness: 0.95 }));
     mat.position.set(MAT.x, 0.025, MAT.z); this.scene.add(mat);
-    for (const rx of [-1.9, 1.9]) {
+    for (const rx of [-2.6, 3.4]) {
       const post = new THREE.Mesh(G('post', () => new THREE.CylinderGeometry(0.06, 0.09, 1.1, 10)), M(0xC9A227, { metalness: 0.6, roughness: 0.3 }));
-      post.position.set(MAT.x + rx, 0.55, MAT.z); this.scene.add(shadows(post));
+      post.position.set(MAT.x + rx, 0.55, QUEUE_Z + 0.9); this.scene.add(shadows(post));
       const knob = new THREE.Mesh(G('knob', () => new THREE.SphereGeometry(0.11, 10, 8)), M(0xC9A227, { metalness: 0.6, roughness: 0.3 }));
-      knob.position.set(MAT.x + rx, 1.15, MAT.z); this.scene.add(knob);
+      knob.position.set(MAT.x + rx, 1.15, QUEUE_Z + 0.9); this.scene.add(knob);
     }
+    const wait = new THREE.Mesh(G('waitSign', () => new THREE.PlaneGeometry(2.2, 0.8)), new THREE.MeshBasicMaterial({ map: signTexture('WELCOME', { bg: '#5A3318' }), transparent: true }));
+    wait.position.set(MAT.x + 0.4, 2.4, QUEUE_Z + 1.2); this.scene.add(wait);
 
-    // potted plants in the corners
     for (const [px, pz] of [[-8.5, -7.5], [8.5, -7.5], [-8.5, 6], [8.5, 6]]) {
       const pot = new THREE.Mesh(G('pot', () => new THREE.CylinderGeometry(0.62, 0.5, 1, 16)), M(0xCC6B3A)); pot.position.set(px, 0.5, pz);
       const fol = new THREE.Mesh(G('fol', () => new THREE.IcosahedronGeometry(1.05, 1)), M(0x4FA63A)); fol.position.set(px, 1.7, pz);
       this.scene.add(shadows(pot), shadows(fol));
     }
 
-    // bus bin at the left end of the pass (dirty dishes go here)
     const tub = new THREE.Mesh(G('tub', () => new THREE.BoxGeometry(1.2, 0.5, 0.9)), M(0x76808E, { roughness: 0.6 }));
     tub.position.set(BIN.x, 0.9, -5.4); this.scene.add(shadows(tub));
     const tubSign = new THREE.Mesh(G('tubSign', () => new THREE.PlaneGeometry(1.5, 0.55)), new THREE.MeshBasicMaterial({ map: signTexture('DISHES', { bg: '#4A5560' }), transparent: true }));
@@ -257,13 +282,17 @@ export class RestaurantGame {
       const cloth = new THREE.Mesh(G('tCloth', () => new THREE.CylinderGeometry(0.92, 0.86, 0.06, 32)), M(0xF7F0E2, { roughness: 0.8 })); cloth.position.y = 1.02; g.add(cloth);
       const post = new THREE.Mesh(G('tPost', () => new THREE.CylinderGeometry(0.12, 0.14, 0.85, 12)), M(0x6E3F1E)); post.position.y = 0.48; g.add(post);
       const base = new THREE.Mesh(G('tBase', () => new THREE.CylinderGeometry(0.5, 0.56, 0.1, 20)), M(0x5A3318)); base.position.y = 0.06; g.add(base);
-      // one chair behind the table so the guest faces the camera
       const seat = new THREE.Mesh(G('tSeat', () => new THREE.CylinderGeometry(0.36, 0.36, 0.12, 18)), M(0xC9762F)); seat.position.set(0, 0.56, -1.35); g.add(seat);
       const back = new THREE.Mesh(G('tBack', () => new THREE.BoxGeometry(0.62, 0.62, 0.12)), M(0xB5651C)); back.position.set(0, 0.92, -1.68); g.add(back);
-      // little centerpiece
       const vase = new THREE.Mesh(G('vase', () => new THREE.CylinderGeometry(0.06, 0.08, 0.18, 10)), M(0xE8E2D4)); vase.position.set(0.42, 1.14, -0.3); g.add(vase);
       const bloom = new THREE.Mesh(G('bloom', () => new THREE.SphereGeometry(0.09, 8, 6)), M(0xE86A8A)); bloom.position.set(0.42, 1.3, -0.3); g.add(bloom);
       this.scene.add(shadows(g));
+
+      // table number badge — matches the flag on ready plates
+      const num = numberSprite(i + 1, '#8A5A2A');
+      num.scale.set(0.42, 0.42, 1);
+      num.position.set(pos.x + 0.75, 1.45, pos.z + 0.55);
+      this.scene.add(num);
 
       const ring = new THREE.Mesh(G('ring', () => new THREE.RingGeometry(1.1, 1.4, 40)), new THREE.MeshBasicMaterial({ color: 0xFFD24A, transparent: true, opacity: 0, side: THREE.DoubleSide }));
       ring.rotation.x = -Math.PI / 2; ring.position.set(pos.x, 0.04, pos.z); this.scene.add(ring);
@@ -272,8 +301,7 @@ export class RestaurantGame {
         i, pos,
         chair: new THREE.Vector3(tx, 0, tz - 1.35),
         approach: new THREE.Vector3(tx, 0, tz + 1.6),
-        state: 'empty', customer: null, food: null, dirty: null,
-        ring, queued: false, beingServed: false,
+        state: 'clean', guest: null, food: null, dirty: null, ring,
       });
     }
   }
@@ -293,18 +321,15 @@ export class RestaurantGame {
     const aspect = w / h;
     this.camera.aspect = aspect; this.camera.updateProjectionMatrix();
     this.fitCam.aspect = aspect; this.fitCam.fov = this.camera.fov; this.fitCam.updateProjectionMatrix();
-    // portrait looks down more steeply than landscape
     const t = THREE.MathUtils.clamp((aspect - 0.65) / (1.35 - 0.65), 0, 1);
     const elev = THREE.MathUtils.lerp(0.85, 0.60, t);
     this.camDir.set(0, Math.sin(elev), Math.cos(elev));
-    let lo = 8, hi = 44;
+    let lo = 8, hi = 46;
     for (let i = 0; i < 22; i++) {
       const mid = (lo + hi) / 2;
       if (this.fitsAt(mid)) hi = mid; else lo = mid;
     }
     this.camDist = hi;
-    this.camBase.copy(LOOK).addScaledVector(this.camDir, this.camDist);
-    // keep the kitchen out of the fog at any camera distance
     const fog = this.scene.fog as THREE.Fog;
     fog.near = this.camDist + 8;
     fog.far = this.camDist + 34;
@@ -323,54 +348,37 @@ export class RestaurantGame {
 
   // ── lifecycle ──────────────────────────────────────────────────────────────
   start(tutorial: boolean) {
-    this.tutorial = tutorial;
-    this.tutStep = tutorial ? 0 : 99;
-    this.timeLeft = GAME_DURATION;
-    this.elapsed = 0;
-    this.nextSpawn = tutorial ? 0.8 : 1.4;
+    this.tutorial = tutorial && this.level.id === 1;
     this.running = true; this.over = false;
     this.introT = 0;
     this.last = performance.now();
     this.emitHud();
+    this.cbs.onAnnounce(`LEVEL ${this.level.id} — GOAL $${this.level.goal}`, 'level');
     cancelAnimationFrame(this.raf);
     this.loop(this.last);
     try { SoundManager.startMusic(); } catch { /* audio optional */ }
   }
 
-  pause() {
-    if (!this.running || this.over) return;
-    this.running = false;
-    cancelAnimationFrame(this.raf);
-  }
-  resume() {
-    if (this.running || this.over) return;
-    this.running = true;
-    this.last = performance.now();
-    this.loop(this.last);
-  }
+  pause() { if (!this.running || this.over) return; this.running = false; cancelAnimationFrame(this.raf); }
+  resume() { if (this.running || this.over) return; this.running = true; this.last = performance.now(); this.loop(this.last); }
   get paused() { return !this.running && !this.over; }
 
-  private tierNow(): Tier {
-    for (const t of DIFFICULTY_TIERS) if (this.elapsed <= t.until) return t;
-    return DIFFICULTY_TIERS[DIFFICULTY_TIERS.length - 1];
+  // ── guests ──────────────────────────────────────────────────────────────────
+  private freeQueueSlot(): number {
+    for (let i = 0; i < QUEUE_SLOTS; i++) {
+      if (!this.guests.some(g => g.queueIdx === i && (g.phase === 'queued' || g.phase === 'entering'))) return i;
+    }
+    return -1;
   }
 
-  // ── guests ──────────────────────────────────────────────────────────────────
   private spawn() {
-    const free = this.tables.filter(t => t.state === 'empty');
-    if (!free.length) return;
-    if (this.tutorial && this.tutStep < 7 && this.customers.length >= 1) return;
-    const table = free[(Math.random() * free.length) | 0];
+    const slot = this.freeQueueSlot();
+    if (slot < 0) return;
     const vi = this.nextVariant++ % CUSTOMER_VARIANTS.length;
     const variant = CUSTOMER_VARIANTS[vi];
-    const tier = this.tierNow();
-    const vip = !this.tutorial && this.level >= VIP_UNLOCK_LEVEL && Math.random() < VIP_CHANCE;
-    const critic = !this.tutorial && !vip && !this.criticSeen
-      && this.level >= CRITIC_UNLOCK_LEVEL && Math.random() < CRITIC_CHANCE;
-    if (critic) this.criticSeen = true;
-    let pat = tier.orderPatience * variant.patienceMul * this.boosts.patience * (0.92 + Math.random() * 0.16);
-    if (vip) pat *= VIP_PATIENCE;
-    if (this.tutorial && this.tutStep < 7) pat = 999; // no walkouts during the tutorial
+    const vip = this.level.vip && Math.random() < VIP_CHANCE;
+    const critic = this.criticPlanned && !this.criticArrived && this.spawned >= Math.floor(this.level.customers / 2);
+    if (critic) this.criticArrived = true;
 
     const ch = critic
       ? chibi({ skin: SKINS[vi], outfit: 0x2A2A33, hair: 0xB8B8B8, accessory: 'sunglasses' })
@@ -379,94 +387,86 @@ export class RestaurantGame {
       const crown = new THREE.Mesh(G('crown', () => new THREE.CylinderGeometry(0.22, 0.26, 0.16, 5)), M(0xFFC21E, { metalness: 0.6, roughness: 0.3 }));
       crown.position.y = 0.48; ch.head.add(crown);
     }
-    if (critic) { // notepad in the left hand
+    if (critic) {
       const pad = new THREE.Mesh(G('notepad', () => new THREE.BoxGeometry(0.2, 0.26, 0.04)), M(0xFDFDF5, { roughness: 0.9 }));
       pad.position.set(0, -0.34, 0.14); pad.rotation.x = -0.5; ch.armL.add(pad);
     }
     ch.g.position.copy(DOOR);
     this.scene.add(ch.g);
 
-    const menu = MENU_ITEMS.filter(mi => mi.unlockLevel <= this.level);
-    const dish = this.tutorial && this.tutStep < 7 ? 0 : menu[(Math.random() * menu.length) | 0].id;
-    // two-leg route: down the centre aisle, then across to the chair
-    const path = [
-      new THREE.Vector3(0.4, 0, table.chair.z),
-      new THREE.Vector3(table.chair.x, 0, table.chair.z),
-    ];
-
-    const cust: Customer = {
-      c: ch, table, dish, state: 'entering', variant, vip, critic,
-      patience: pat, maxPat: pat, payPat: PAY_PATIENCE, eat: 0, eatTotal: tier.eatTime,
-      speedMul: 1, speedLabel: '', happy: false,
-      path, t: Math.random() * 6, bob: Math.random() * 6,
+    const dishes = this.level.dishes;
+    const guest: Guest = {
+      c: ch, variant, vip, critic,
+      phase: 'entering', hearts: 5,
+      queueIdx: slot, table: null,
+      dish: dishes[(Math.random() * dishes.length) | 0],
+      path: [new THREE.Vector3(QUEUE_X[slot], 0, QUEUE_Z)],
+      t: Math.random() * 6, happy: false,
+      decideT: 0, eatT: 0,
       bubble: null, bAcc: 0, lastBucket: -1,
     };
-    table.state = 'seated'; // reserved
-    table.customer = cust;
-    this.customers.push(cust);
-    if (vip) { this.cbs.onAnnounce('VIP GUEST!', 'vip'); this.fx.float('👑 VIP', table.pos.x, table.pos.z, '#FFE27A', 2.6); }
-    if (critic) { this.cbs.onAnnounce('FOOD CRITIC! Serve them fast 🖋', 'vip'); this.fx.float('🖋 CRITIC', table.pos.x, table.pos.z, '#D8E4F0', 2.6); }
+    this.guests.push(guest);
+    this.spawned++;
+    if (vip) { this.cbs.onAnnounce('VIP GUEST!', 'vip'); }
+    if (critic) { this.cbs.onAnnounce('FOOD CRITIC! Keep them happy 🖋', 'vip'); }
+    if (this.spawned === this.level.customers) this.cbs.onAnnounce('LAST GUESTS!', 'level');
   }
 
-  private seat(c: Customer) {
-    const t = c.table;
-    c.c.g.position.set(t.chair.x, 0.42, t.chair.z);
-    c.c.g.rotation.y = 0; // face the camera
-    poseSit(c.c);
-    c.state = 'ordering';
+  private joinQueue(g: Guest) {
+    g.phase = 'queued';
+    g.c.g.rotation.y = 0; // face the player, asking to be seated
     const b = makeBubble();
-    b.spr.position.set(0, 1.85, 0);
-    c.c.g.add(b.spr);
-    c.bubble = b;
-    b.draw(DISH_EMOJI[c.dish], 1, 1);
-    this.setRing(t);
-    try { SoundManager.seatCustomer(); } catch { /* */ }
-    if (this.tutorial && this.tutStep === 0) { this.tutStep = 1; this.cbs.onAnnounce('Tap the table to take their order ✍️', 'tut'); }
+    b.spr.position.set(0, 2.15, 0);
+    g.c.g.add(b.spr);
+    g.bubble = b;
+    b.drawHearts('🪑', g.hearts / 5);
+    try { SoundManager.customerArrival(); } catch { /* */ }
+    this.tut('seat', 'Tap the guest, then tap a table to seat them 🪑');
   }
 
-  private angryLeave(c: Customer) {
-    const t = c.table;
-    const ate = c.state === 'paying';
-    this.kitchen.cancel(t.i);
-    if (c.bubble) { c.bubble.draw('💢', 1, 0); }
-    c.state = 'leaving'; c.happy = false;
-    poseStand(c.c);
-    c.c.g.position.set(t.chair.x, 0, t.chair.z);
-    c.path = [new THREE.Vector3(0.4, 0, t.chair.z), DOOR.clone()];
-    this.actions = this.actions.filter(a => a.table !== t || a.kind === 'clean');
-    t.queued = this.actions.some(a => a.table === t);
-    t.customer = null;
-    if (ate) { this.makeDirty(t); } else {
-      t.state = 'empty';
-      if (t.food) { this.scene.remove(t.food); t.food = null; }
+  private heartsRate(g: Guest, phaseMul: number): number {
+    const vipMul = g.vip ? 1 / VIP_PATIENCE : 1;
+    return (5 / (this.level.heartsSeconds * g.variant.patienceMul * this.boosts.patience)) * phaseMul * vipMul;
+  }
+
+  private walkoutGuest(g: Guest) {
+    this.walkouts++;
+    if (this.selected === g) this.select(null);
+    const t = g.table;
+    // drop tasks that no longer make sense; KEEP deliver tasks — they dispose
+    // of the now-orphaned plate in the waiter's hands
+    this.tasks = this.tasks.filter(tk => {
+      if (tk.guest === g) return false;
+      if (t && tk.table === t && (tk.kind === 'order' || tk.kind === 'collect')) return false;
+      return true;
+    });
+    if (t) {
+      this.kitchen.cancel(t.i);
+      const ate = g.phase === 'check';
+      t.guest = null;
+      if (ate) this.makeDirty(t);
+      else { t.state = 'clean'; if (t.food) { this.scene.remove(t.food); t.food = null; } }
+      this.setRing(t);
     }
-    this.setRing(t);
-    this.angry++;
-    if (this.comboMul > 1) this.fx.float('COMBO LOST', t.pos.x, t.pos.z, '#FF6A5A');
-    this.combo = 0; this.comboMul = 1;
-    this.fx.sparkle(new THREE.Vector3(t.chair.x, 1.8, t.chair.z), 0xE8442C, 8);
-    try { SoundManager.customerAngry(); SoundManager.comboLost(); } catch { /* */ }
+    if (g.bubble) g.bubble.draw('💢', 1, 0);
+    g.phase = 'leaving'; g.happy = false;
+    poseStand(g.c);
+    g.c.g.position.y = 0;
+    g.path = g.table ? [new THREE.Vector3(0.4, 0, g.table.chair.z), DOOR.clone()] : [DOOR.clone()];
+    g.table = null;
+    this.fx.sparkle(g.c.g.position.clone().setY(1.8), 0xE8442C, 8);
+    try { SoundManager.customerAngry(); } catch { /* */ }
     this.cbs.onFlash('red');
     this.emitHud();
   }
 
-  private happyLeave(c: Customer) {
-    const t = c.table;
-    c.state = 'leaving'; c.happy = true;
-    poseStand(c.c);
-    c.c.g.position.set(t.chair.x, 0, t.chair.z);
-    c.path = [new THREE.Vector3(0.4, 0, t.chair.z), DOOR.clone()];
-    t.customer = null;
-    this.makeDirty(t);
+  private despawn(g: Guest) {
+    if (g.bubble) { g.c.g.remove(g.bubble.spr); g.bubble.dispose(); g.bubble = null; }
+    this.scene.remove(g.c.g);
+    this.guests = this.guests.filter(x => x !== g);
   }
 
-  private despawn(c: Customer) {
-    if (c.bubble) { c.c.g.remove(c.bubble.spr); c.bubble.dispose(); c.bubble = null; }
-    this.scene.remove(c.c.g);
-    this.customers = this.customers.filter(x => x !== c);
-  }
-
-  private makeDirty(t: TableData) {
+  private makeDirty(t: TableD) {
     if (t.food) { this.scene.remove(t.food); t.food = null; }
     const stack = new THREE.Group();
     for (let i = 0; i < 2; i++) {
@@ -480,305 +480,432 @@ export class RestaurantGame {
     t.dirty = stack;
     t.state = 'dirty';
     this.setRing(t);
-    if (this.tutorial && (this.tutStep === 4 || this.tutStep === 5)) { this.tutStep = 6; this.cbs.onAnnounce('They left dirty dishes — tap to clean ✨', 'tut'); }
+    this.tut('clean', 'Dirty table! Tap it to bus the dishes ✨');
   }
 
-  // ── input & waiter actions ──────────────────────────────────────────────────
-  // Screen-space picking: the nearest actionable table to the tap wins.
-  // (Raycasting against big invisible hitboxes broke at steep camera angles —
-  // a front table's box swallowed taps aimed at the guest behind it.)
-  private tapAnchor(t: TableData): { x: number; y: number } {
-    return this.toScreen(this.tmp2.set(t.pos.x, 1.1, t.pos.z - 0.55));
+  // ── input: every tap is an explicit command ─────────────────────────────────
+  private toScreen(v: THREE.Vector3): { x: number; y: number } {
+    const p = this.tmp.copy(v).project(this.camera);
+    return { x: (p.x * 0.5 + 0.5) * innerWidth, y: (-p.y * 0.5 + 0.5) * innerHeight };
   }
+
+  private tasked(table: TableD, kind?: TaskKind): boolean {
+    const match = (tk: Task | null) => !!tk && tk.table === table && (!kind || tk.kind === kind);
+    return match(this.current) || this.tasks.some(tk => match(tk));
+  }
+  private guestTasked(g: Guest): boolean {
+    const match = (tk: Task | null) => !!tk && tk.guest === g;
+    return match(this.current) || this.tasks.some(tk => match(tk));
+  }
+  private handsPlanned(): number {
+    let n = this.carried.length;
+    if (this.current?.kind === 'pickup') n++;
+    n += this.tasks.filter(tk => tk.kind === 'pickup').length;
+    return n;
+  }
+  private dirtyPlanned(): boolean {
+    return !!this.carriedDirty || this.current?.kind === 'clean' || this.tasks.some(tk => tk.kind === 'clean');
+  }
+  private holdsOrWillHoldPlate(t: TableD): boolean {
+    return this.carried.some(cr => cr.table === t)
+      || (this.current?.kind === 'pickup' && this.current.table === t)
+      || this.tasks.some(tk => tk.kind === 'pickup' && tk.table === t);
+  }
+
+  /** Everything the player could tap right now, with screen coordinates. */
+  hotspots(): Hotspot[] {
+    const out: Hotspot[] = [];
+    for (const g of this.guests) {
+      if (g.phase !== 'queued' || this.guestTasked(g)) continue;
+      const p = this.toScreen(this.tmp2.copy(g.c.g.position).setY(1.2));
+      out.push({ kind: 'guest', idx: this.guests.indexOf(g), x: p.x, y: p.y, action: this.selected === g ? 'deselect' : 'select' });
+    }
+    if (!this.dirtyPlanned() && this.handsPlanned() < HANDS_CAPACITY) {
+      for (const rp of this.kitchen.readyPlates()) {
+        const t = this.tables[rp.tableIndex];
+        if (this.holdsOrWillHoldPlate(t)) continue;
+        if (!t.guest || t.guest.phase !== 'waiting') continue;
+        const p = this.toScreen(this.tmp2.copy(rp.pos).setY(rp.pos.y + 0.4));
+        out.push({ kind: 'plate', idx: rp.tableIndex, x: p.x, y: p.y, action: 'pickup' });
+      }
+    }
+    for (const t of this.tables) {
+      const action = this.tableAction(t);
+      if (!action) continue;
+      const p = this.toScreen(this.tmp2.set(t.pos.x, 1.1, t.pos.z - 0.55));
+      out.push({ kind: 'table', idx: t.i, x: p.x, y: p.y, action });
+    }
+    return out;
+  }
+
+  private tableAction(t: TableD): string {
+    if (this.selected && t.state === 'clean' && !this.tasked(t)) return 'seat';
+    if (this.selected) return '';
+    const g = t.guest;
+    if (g?.phase === 'handup' && !this.tasked(t, 'order')) return 'order';
+    if (g?.phase === 'waiting' && this.holdsOrWillHoldPlate(t) && !this.tasked(t, 'deliver')) return 'deliver';
+    if (g?.phase === 'check' && !this.tasked(t, 'collect')) return 'collect';
+    if (t.state === 'dirty' && !this.tasked(t, 'clean') && this.carried.length === 0 && this.handsPlanned() === 0 && !this.carriedDirty) return 'clean';
+    return '';
+  }
+
   private onPointer(e: PointerEvent) {
     if (!this.running) return;
-    const px = e.clientX, py = e.clientY;
-    let bestAct: TableData | null = null, bestActD = Infinity;
-    let bestAny: TableData | null = null, bestAnyD = Infinity;
-    for (const t of this.tables) {
-      const p = this.tapAnchor(t);
-      const d = Math.hypot(p.x - px, p.y - py);
-      if (d < bestAnyD) { bestAnyD = d; bestAny = t; }
-      if (this.actionFor(t) && d < bestActD) { bestActD = d; bestAct = t; }
+    this.pointerTap(e.clientX, e.clientY);
+  }
+
+  pointerTap(px: number, py: number) {
+    if (!this.running) return;
+    const spots = this.hotspots();
+    let best: Hotspot | null = null, bestD = Infinity;
+    for (const s of spots) {
+      const d = Math.hypot(s.x - px, s.y - py);
+      if (d < bestD) { bestD = d; best = s; }
     }
-    const lim = Math.min(innerWidth, innerHeight) * 0.42;
-    if (bestAct && bestActD <= lim) this.tap(bestAct);
-    else if (bestAny && bestAnyD <= lim * 0.7) this.tap(bestAny); // feedback bump
+    const lim = Math.min(innerWidth, innerHeight) * 0.34;
+    if (!best || bestD > lim) {
+      if (this.selected) this.select(null); // tap elsewhere = cancel selection
+      else this.bump();
+      return;
+    }
+    this.execute(best);
   }
 
-  private actionFor(t: TableData): ActionKind | null {
-    if (t.queued || t.beingServed) return null;
-    if (t.state === 'seated' && t.customer?.state === 'ordering') return 'order';
-    if (t.state === 'ready') return 'serve';
-    if (t.state === 'paying') return 'collect';
-    if (t.state === 'dirty') return 'clean';
-    return null;
+  private execute(s: Hotspot) {
+    if (s.kind === 'guest') {
+      const g = this.guests[s.idx];
+      this.select(this.selected === g ? null : g);
+      try { SoundManager.uiClick(); } catch { /* */ }
+      return;
+    }
+    if (this.tasks.length >= 5) { this.bump(); return; }
+    if (s.kind === 'plate') {
+      this.push({ kind: 'pickup', table: this.tables[s.idx] });
+      return;
+    }
+    const t = this.tables[s.idx];
+    const action = this.tableAction(t) as TaskKind | '';
+    if (!action) { this.bump(); return; }
+    if (action === 'seat') {
+      const g = this.selected!;
+      this.select(null);
+      this.push({ kind: 'seat', table: t, guest: g });
+      t.state = 'taken'; t.guest = g; g.table = t; // reserve immediately
+      this.setRing(t);
+      return;
+    }
+    this.push({ kind: action, table: t });
   }
 
-  private tap(t: TableData) {
-    const kind = this.actionFor(t);
-    if (!kind) { this.bump(); return; }
-    if (this.actions.length >= 4) { this.bump(); return; }
-    this.actions.push({ kind, table: t });
-    t.queued = true;
-    this.setRing(t);
+  private select(g: Guest | null) {
+    this.selected = g;
+    this.selRing.visible = !!g;
+    if (g) this.tut('table', 'Now tap a clean table 🪑✨');
+  }
+
+  private push(task: Task) {
+    this.tasks.push(task);
+    this.setRing(task.table);
     try { SoundManager.uiClick(); } catch { /* */ }
-    if (!this.wBusy) this.nextAction();
+    if (!this.current) this.nextTask();
   }
 
-  private nextAction() {
-    const a = this.actions.shift();
-    if (!a) { this.wBusy = false; if (this.carried.length === 0) this.tray.visible = false; return; }
-    this.wBusy = true;
-    const t = a.table;
-    t.queued = this.actions.some(x => x.table === t);
-    if (a.kind === 'order') {
-      this.go(t.approach, () => this.doTakeOrder(t));
-    } else if (a.kind === 'serve') {
-      // merge queued ready pickups up to tray capacity (the level-3/6 unlock)
-      const group: TableData[] = [t];
-      const cap = trayCapacity(this.level);
-      const extras = this.actions.filter(n => n.kind === 'serve' && this.kitchen.hasReady(n.table.i)).slice(0, cap - 1);
-      for (const n of extras) {
-        group.push(n.table);
-        this.actions = this.actions.filter(x => x !== n);
-        n.table.queued = this.actions.some(x => x.table === n.table);
+  // ── waiter task engine ──────────────────────────────────────────────────────
+  private nextTask() {
+    this.current = this.tasks.shift() ?? null;
+    if (!this.current) return;
+    const tk = this.current;
+    const t = tk.table;
+    switch (tk.kind) {
+      case 'seat': {
+        const g = tk.guest!;
+        this.go(new THREE.Vector3(g.c.g.position.x, 0, QUEUE_Z - 1.1), () => {
+          if (g.phase !== 'queued') return; // stormed off meanwhile
+          g.phase = 'following';
+          this.escorting = g;
+          if (g.bubble) { g.c.g.remove(g.bubble.spr); g.bubble.dispose(); g.bubble = null; }
+        });
+        this.go(t.approach, () => this.doSeat(tk));
+        break;
       }
-      this.go(this.kitchen.pickupPoint(t.i), () => this.doPickup(group));
-      for (const gT of group) {
-        gT.beingServed = true;
-        this.go(gT.approach, () => this.doDeliver(gT));
-      }
-    } else if (a.kind === 'collect') {
-      this.go(t.approach, () => this.doCollect(t));
-    } else {
-      this.go(t.approach, () => this.doGrabDirty(t));
-      this.go(BIN, () => this.doDump());
+      case 'order':
+        this.go(t.approach, () => this.doOrder(t));
+        break;
+      case 'pickup':
+        this.go(this.kitchen.pickupPoint(t.i), () => this.doPickup(t));
+        break;
+      case 'deliver':
+        this.go(t.approach, () => this.doDeliver(t));
+        break;
+      case 'collect':
+        this.go(t.approach, () => this.doCollect(t));
+        break;
+      case 'clean':
+        this.go(t.approach, () => this.doGrabDirty(t));
+        this.go(BIN, () => this.doDump());
+        break;
     }
-    this.setRing(t);
     this.nextStep();
   }
 
   private go(v: THREE.Vector3, cb?: () => void) { this.wq.push({ v: v.clone(), cb }); }
   private nextStep() {
     const s = this.wq.shift();
-    if (!s) { this.wTarget = null; this.nextAction(); return; }
+    if (!s) { this.wTarget = null; this.nextTask(); return; }
     this.wTarget = s.v; this.wCb = s.cb ?? null;
   }
 
-  private doTakeOrder(t: TableData) {
-    const c = t.customer;
-    if (!c || c.state !== 'ordering') return; // guest already stormed out
-    this.writeT = 0.55; // notepad scribble beat
-    c.state = 'waiting';
-    t.state = 'waiting';
-    c.maxPat = this.tierNow().orderPatience * WAIT_PATIENCE_MUL * c.variant.patienceMul * this.boosts.patience;
-    c.patience = c.maxPat;
+  private chain(kind: TaskKind, atX: number, atZ: number) {
+    if (this.chainKind === kind) this.chainN++;
+    else { this.chainKind = kind; this.chainN = 1; }
+    if (this.chainN >= 2) {
+      const bonus = CHAIN_BONUS * (this.chainN - 1);
+      this.score += bonus;
+      this.fx.float(`CHAIN ×${this.chainN} +${bonus}`, atX, atZ, '#8AE07A', 2.7);
+      if (this.chainN === 3 || this.chainN === 5 || this.chainN === 8) {
+        this.cbs.onAnnounce(`CHAIN ×${this.chainN}!`, 'chain');
+        this.cbs.onFlash('chain');
+        try { SoundManager.comboUp(Math.min(4, this.chainN - 1)); } catch { /* */ }
+      }
+    }
+    this.emitHud();
+  }
+
+  private doSeat(tk: Task) {
+    const g = tk.guest!;
+    const t = tk.table;
+    if (g.phase !== 'following') { // guest left mid-escort
+      if (t.guest === g) { t.guest = null; t.state = 'clean'; this.setRing(t); }
+      this.escorting = null;
+      return;
+    }
+    this.escorting = null;
+    g.phase = 'sitting';
+    g.path = [t.chair.clone()];
+    this.score += POINTS.seat;
+    this.fx.float('+' + POINTS.seat, t.pos.x, t.pos.z);
+    this.chain('seat', t.pos.x, t.pos.z);
     this.setRing(t);
-    // the order chit flies to the kitchen
+    try { SoundManager.seatCustomer(); } catch { /* */ }
+  }
+
+  private sitDown(g: Guest) {
+    const t = g.table!;
+    g.c.g.position.set(t.chair.x, 0.42, t.chair.z);
+    g.c.g.rotation.y = 0;
+    poseSit(g.c);
+    g.phase = 'deciding';
+    g.decideT = DECIDE_SECONDS * (0.8 + Math.random() * 0.5);
+  }
+
+  private raiseHand(g: Guest) {
+    g.phase = 'handup';
+    const b = makeBubble();
+    b.spr.position.set(0, 1.85, 0);
+    g.c.g.add(b.spr);
+    g.bubble = b;
+    b.drawHearts(DISH_EMOJI[g.dish], g.hearts / 5);
+    g.c.armR.rotation.set(-2.6, 0, 0.3); // hand up!
+    this.setRing(g.table!);
+    try { SoundManager.customerArrival(); } catch { /* */ }
+    this.tut('order', 'Hand up! Tap the table to take the order ✍️');
+  }
+
+  private doOrder(t: TableD) {
+    const g = t.guest;
+    if (!g || g.phase !== 'handup') return;
+    this.writeT = 0.5;
+    g.phase = 'waiting';
+    g.c.armR.rotation.set(-0.9, 0, 0.2);
+    if (g.bubble) g.bubble.drawHearts('🍳', g.hearts / 5);
     const from = new THREE.Vector3(t.pos.x, 1.9, t.pos.z);
     const to = new THREE.Vector3(-1.1, 2.4, -6.5);
-    const spr = makeBubble(); spr.draw(DISH_EMOJI[c.dish], 1, 1); spr.spr.scale.set(0.9, 0.9, 1);
+    const spr = makeBubble(); spr.draw(DISH_EMOJI[g.dish], 1, 1); spr.spr.scale.set(0.9, 0.9, 1);
     spr.spr.position.copy(from); this.scene.add(spr.spr);
-    this.anims.push({ k: 'fly', t: 0, dur: 0.65, o: spr.spr, from, to });
-    const ticket: Ticket = { tableIndex: t.i, dish: c.dish, dead: false };
+    const ticket: Ticket = { tableIndex: t.i, dish: g.dish, dead: false };
     (spr.spr.userData as { ticket?: Ticket; bubble?: Bubble }).ticket = ticket;
     (spr.spr.userData as { ticket?: Ticket; bubble?: Bubble }).bubble = spr;
-    if (c.bubble) c.bubble.draw('🍳', 1, 1);
-    try { SoundManager.orderTaken(); } catch { /* */ }
-    if (this.tutorial && this.tutStep === 1) { this.tutStep = 2; this.cbs.onAnnounce('The chef is on it! Watch the pan 🍳', 'tut'); }
-  }
-
-  private foodReady(ticket: Ticket) {
-    const t = this.tables[ticket.tableIndex];
-    const c = t.customer;
-    if (!c || c.state !== 'waiting') return;
-    t.state = 'ready';
+    this.anims.push({ k: 'fly', t: 0, dur: 0.65, o: spr.spr, from, to });
+    this.score += POINTS.order;
+    this.fx.float('+' + POINTS.order, t.pos.x, t.pos.z);
+    this.chain('order', t.pos.x, t.pos.z);
     this.setRing(t);
-    if (c.bubble) c.bubble.draw('🛎️', 1, c.patience / c.maxPat);
+    try { SoundManager.orderTaken(); } catch { /* */ }
+    this.tut('cook', 'The chef is cooking — watch the pan 🍳');
+  }
+
+  private plateReady(ticket: Ticket) {
+    const t = this.tables[ticket.tableIndex];
+    if (!t.guest || t.guest.phase !== 'waiting') return;
     try { SoundManager.foodReady(); } catch { /* */ }
-    if (this.tutorial && this.tutStep === 2) { this.tutStep = 3; this.cbs.onAnnounce('Order up! Tap the table to serve 🛎️', 'tut'); }
+    this.tut('pickup', `Order up! Tap the plate on the counter, then table ${t.i + 1} 🛎️`);
   }
 
-  private foodWasted(_ticket: Ticket) {
-    this.fx.float('WASTED', 2.4, -5.4, '#B9C0CC', 2.4);
+  private doPickup(t: TableD) {
+    const out = this.kitchen.takeReady(t.i);
+    if (!out) return; // plate got binned meanwhile
+    const hand = this.handL.children.length === 0 ? this.handL : this.handR;
+    out.plate.position.set(0, 0, 0);
+    out.plate.rotation.set(0, 0, 0);
+    out.plate.scale.setScalar(0.85);
+    hand.add(out.plate);
+    this.carried.push({ table: t, plate: out.plate });
+    poseCarry(this.waiter);
+    this.pop(hand, 1);
+    this.chain('pickup', BIN.x + 4, -4.2);
+    try { SoundManager.uiClick(); } catch { /* */ }
   }
 
-  private doPickup(group: TableData[]) {
-    let picked = 0;
-    for (const t of group) {
-      const out = this.kitchen.takeReady(t.i);
-      if (!out) { t.beingServed = false; continue; }
-      out.plate.position.set(0, 0.08 + picked * 0.16, 0);
-      out.plate.rotation.set(0, 0, 0);
-      this.tray.add(out.plate);
-      this.carried.push({ table: t, plate: out.plate });
-      picked++;
-    }
-    if (picked > 0) {
-      this.tray.visible = true;
-      poseCarry(this.waiter);
-      this.pop(this.tray, 1);
-      try { SoundManager.uiClick(); } catch { /* */ }
-    }
-  }
-
-  private doDeliver(t: TableData) {
-    t.beingServed = false;
+  private doDeliver(t: TableD) {
     const idx = this.carried.findIndex(cr => cr.table === t);
     if (idx < 0) return;
     const { plate: pl } = this.carried[idx];
     this.carried.splice(idx, 1);
-    if (this.carried.length === 0) { this.tray.visible = false; poseStand(this.waiter); }
-    const c = t.customer;
-    this.tray.remove(pl);
-    if (!c || c.state !== 'waiting') {
-      // guest left while we walked — bin the food
+    (pl.parent as THREE.Object3D)?.remove(pl);
+    if (this.carried.length === 0) poseStand(this.waiter);
+    const g = t.guest;
+    if (!g || g.phase !== 'waiting') {
       this.fx.steam(new THREE.Vector3(t.pos.x, 1.5, t.pos.z), true);
       this.fx.float('WASTED', t.pos.x, t.pos.z, '#B9C0CC');
       return;
     }
+    pl.scale.setScalar(1);
     pl.position.set(t.pos.x - 0.1, 1.06, t.pos.z + 0.15);
     this.scene.add(pl);
     this.pop(pl, 1);
     t.food = pl;
-    const frac = c.patience / c.maxPat;
-    for (const s of SPEED_MULTIPLIERS) if (frac >= s.minPct) { c.speedMul = s.multiplier; c.speedLabel = s.label; break; }
-    c.state = 'eating'; t.state = 'eating';
-    c.eat = c.eatTotal;
-    if (c.bubble) c.bubble.draw('😋', 1, 1);
-    this.hop(c.c.g);
+    g.phase = 'eating';
+    g.eatT = this.level.eatTime;
+    if (g.bubble) g.bubble.draw('😋', 1, 1);
+    this.hop(g.c.g);
     this.fx.sparkle(new THREE.Vector3(t.pos.x, 1.5, t.pos.z), 0xFFF0B0, 8);
     this.fx.steam(new THREE.Vector3(t.pos.x, 1.4, t.pos.z));
-    this.fx.steam(new THREE.Vector3(t.pos.x + 0.15, 1.45, t.pos.z));
+    let pts = POINTS.deliver;
+    if (this.carried.length >= 1) pts += DOUBLE_HANDS_BONUS; // both hands were full
+    this.score += pts;
+    this.fx.float('+' + pts, t.pos.x, t.pos.z);
+    this.chain('deliver', t.pos.x, t.pos.z);
     this.setRing(t);
     try { SoundManager.deliverFood(); } catch { /* */ }
-    if (c.speedLabel) this.cbs.onAnnounce(c.speedLabel + '!', 'speed');
-    if (this.tutorial && this.tutStep === 3) { this.tutStep = 4; this.cbs.onAnnounce('Yum! Wait for the bill 💰', 'tut'); }
+    this.tut('eat', 'Bon appétit! Collect the bill when they finish 💵');
   }
 
-  private doCollect(t: TableData) {
-    const c = t.customer;
-    if (!c || c.state !== 'paying') return;
-    const item = MENU_ITEMS[c.dish];
-    this.combo++;
-    if (this.combo > this.comboRecord) this.comboRecord = this.combo;
-    let mil = COMBO_MILESTONES[0];
-    for (const m of COMBO_MILESTONES) if (this.combo >= m.min) mil = m;
-    const prevMul = this.comboMul;
-    this.comboMul = mil.multiplier;
-    const vipMul = c.vip ? VIP_PAY : 1;
-    const rushMul = this.rushOn ? FINAL_RUSH_MUL : 1;
-    const rave = c.critic && c.speedMul >= 1.5;
-    const criticMul = rave ? CRITIC_PAY : 1;
-    const val = Math.round(item.price * 5 * c.speedMul * this.comboMul * vipMul * rushMul * criticMul);
-    this.score += val;
-    this.happy++;
-    if (c.critic) {
+  private doCollect(t: TableD) {
+    const g = t.guest;
+    if (!g || g.phase !== 'check') return;
+    const heartsFrac = g.hearts / 5;
+    const rave = g.critic && heartsFrac >= CRITIC_RAVE_HEARTS;
+    const tip = Math.round(
+      MENU_ITEMS[g.dish].price * 5
+      * Math.max(MIN_TIP_FRAC, heartsFrac)
+      * (g.vip ? VIP_PAY : 1)
+      * (rave ? CRITIC_PAY : 1),
+    );
+    this.score += tip;
+    this.served++;
+    this.fx.coinBurst(new THREE.Vector3(t.pos.x, 1.4, t.pos.z), 8);
+    const scr = this.toScreen(this.tmp2.set(t.pos.x, 1.5, t.pos.z));
+    this.cbs.onCoinFly(scr.x, scr.y, Math.min(12, 4 + Math.round(tip / 60)));
+    this.fx.float('+$' + tip, t.pos.x, t.pos.z);
+    if (g.vip) this.fx.float('VIP ×' + VIP_PAY, t.pos.x, t.pos.z + 0.5, '#FFE27A', 2.7);
+    if (g.critic) {
       if (rave) {
-        this.cbs.onAnnounce('RAVE REVIEW! ×' + CRITIC_PAY, 'combo');
+        this.cbs.onAnnounce('RAVE REVIEW! ×' + CRITIC_PAY, 'chain');
         this.fx.sparkle(new THREE.Vector3(t.pos.x, 1.8, t.pos.z), 0xD8E4F0, 14);
         try { SoundManager.unlockEarned(); } catch { /* */ }
-      } else {
-        this.fx.float('"meh."', t.pos.x, t.pos.z + 0.5, '#B9C0CC', 2.7);
-      }
+      } else this.fx.float('"meh."', t.pos.x, t.pos.z + 0.5, '#B9C0CC', 2.7);
     }
-    // coins: 3D burst + DOM flight into the score pill
-    this.fx.coinBurst(new THREE.Vector3(t.pos.x, 1.4, t.pos.z), 8);
-    const scr = this.toScreen(new THREE.Vector3(t.pos.x, 1.5, t.pos.z));
-    this.cbs.onCoinFly(scr.x, scr.y, Math.min(12, 4 + Math.round(val / 60)));
-    this.fx.float('+$' + val, t.pos.x, t.pos.z);
-    if (c.vip) this.fx.float('VIP ×' + VIP_PAY, t.pos.x, t.pos.z + 0.5, '#FFE27A', 2.7);
-    this.hop(c.c.g); this.hop(this.waiter.g);
-    const milestone = !!(mil.label && this.comboMul > prevMul);
-    this.cbs.onFlash(milestone ? 'combo' : 'gold');
-    if (milestone) {
-      this.cbs.onAnnounce(mil.label + '  ×' + this.comboMul, 'combo');
-      this.camPunch();
-      this.fx.sparkle(new THREE.Vector3(t.pos.x, 1.7, t.pos.z), 0xFFB347, 14);
-      try { SoundManager.comboUp(Math.min(4, this.comboMul)); } catch { /* */ }
-    }
+    this.hop(g.c.g); this.hop(this.waiter.g);
+    this.cbs.onFlash('gold');
+    this.chain('collect', t.pos.x, t.pos.z);
     try { SoundManager.paymentCollected(); } catch { /* */ }
-    if (c.bubble) { c.c.g.remove(c.bubble.spr); c.bubble.dispose(); c.bubble = null; }
-    if (this.tutorial && this.tutStep === 4) this.tutStep = 5; // dirty-table hint fires in makeDirty
-    this.happyLeave(c);
+    if (g.bubble) { g.c.g.remove(g.bubble.spr); g.bubble.dispose(); g.bubble = null; }
+    g.phase = 'leaving'; g.happy = true;
+    poseStand(g.c);
+    g.c.g.position.set(t.chair.x, 0, t.chair.z);
+    g.path = [new THREE.Vector3(0.4, 0, t.chair.z), DOOR.clone()];
+    g.table = null;
+    t.guest = null;
+    this.makeDirty(t);
     this.emitHud();
   }
 
-  private doGrabDirty(t: TableData) {
+  private doGrabDirty(t: TableD) {
     if (!t.dirty) return;
     this.scene.remove(t.dirty);
     t.dirty.position.set(0, 0.1, 0);
-    this.tray.add(t.dirty);
-    this.tray.visible = true;
-    poseCarry(this.waiter);
+    t.dirty.scale.setScalar(0.9);
+    this.handL.add(t.dirty);
     this.carriedDirty = t.dirty;
     t.dirty = null;
-    t.state = 'empty';
+    t.state = 'clean';
+    poseCarry(this.waiter);
     this.setRing(t);
     this.fx.sparkle(new THREE.Vector3(t.pos.x, 1.4, t.pos.z), 0xA8E4F0, 10);
+    this.score += POINTS.clean;
+    this.fx.float('+' + POINTS.clean, t.pos.x, t.pos.z);
+    this.chain('clean', t.pos.x, t.pos.z);
     try { SoundManager.uiClick(); } catch { /* */ }
-    if (this.tutorial && this.tutStep === 6) {
-      this.tutStep = 7;
-      this.tutorial = false;
-      this.cbs.onAnnounce("You're a natural! Here comes the rush 🔥", 'tut');
-    }
   }
-  private carriedDirty: THREE.Group | null = null;
 
   private doDump() {
     if (this.carriedDirty) {
-      this.tray.remove(this.carriedDirty);
+      this.handL.remove(this.carriedDirty);
       this.carriedDirty = null;
       this.fx.steam(new THREE.Vector3(BIN.x, 1.4, -5.3), true);
       try { SoundManager.dishwasher(); } catch { /* */ }
     }
-    if (this.carried.length === 0) { this.tray.visible = false; poseStand(this.waiter); }
+    if (this.carried.length === 0) poseStand(this.waiter);
   }
 
   // ── fx helpers ──────────────────────────────────────────────────────────────
-  private setRing(t: TableData) {
+  private setRing(t: TableD) {
     const mat = t.ring.material as THREE.MeshBasicMaterial;
     let color = 0xFFD24A, op = 0;
-    if (t.state === 'seated') { color = 0xFF8A3D; op = 0.7; }
-    else if (t.state === 'ready') { color = 0xFF8A3D; op = 0.95; }
-    else if (t.state === 'paying') { color = 0xFFC21E; op = 0.9; }
+    const g = t.guest;
+    if (this.selected && t.state === 'clean' && !this.tasked(t)) { color = 0x8AE07A; op = 0.9; } // seat here!
+    else if (g?.phase === 'handup') { color = 0xFF8A3D; op = 0.8; }
+    else if (g?.phase === 'waiting' && this.holdsOrWillHoldPlate(t)) { color = 0xFF8A3D; op = 0.9; }
+    else if (g?.phase === 'check') { color = 0xFFC21E; op = 0.9; }
     else if (t.state === 'dirty') { color = 0x5FB8D8; op = 0.6; }
-    if (t.queued || t.beingServed) op = Math.min(op, 0.22);
+    if (this.tasked(t)) op = Math.min(op, 0.25);
     mat.color.setHex(color);
     (t.ring.userData as { target?: number }).target = op;
   }
+  private refreshRings() { for (const t of this.tables) this.setRing(t); }
   private pop(o: THREE.Object3D, s = 1) { o.scale.setScalar(0.01); this.anims.push({ k: 'pop', o, t: 0, s }); }
   private hop(o: THREE.Object3D) { this.anims.push({ k: 'hop', o, t: 0, s: o.scale.x }); }
   private bump() { this.anims.push({ k: 'bump', t: 0 }); }
-  private camPunch() { this.anims.push({ k: 'punch', t: 0 }); }
-  private toScreen(v: THREE.Vector3): { x: number; y: number } {
-    const p = this.tmp.copy(v).project(this.camera);
-    return { x: (p.x * 0.5 + 0.5) * innerWidth, y: (-p.y * 0.5 + 0.5) * innerHeight };
-  }
-  // throttled bubble redraw — avoids a CanvasTexture upload per customer per frame
-  private tickBubble(c: Customer, emoji: string, frac: number, dt: number) {
-    if (!c.bubble) return;
-    c.bAcc += dt;
-    const bucket = Math.round(frac * 24);
-    if (c.bAcc >= 0.12 || bucket !== c.lastBucket) {
-      c.bubble.draw(emoji, Math.max(0, frac), frac);
-      c.lastBucket = bucket; c.bAcc = 0;
+  // throttled bubble redraw — avoids a CanvasTexture upload per guest per frame
+  private tickBubble(g: Guest, emoji: string, dt: number) {
+    if (!g.bubble) return;
+    g.bAcc += dt;
+    const bucket = Math.round((g.hearts / 5) * 24);
+    if (g.bAcc >= 0.15 || bucket !== g.lastBucket) {
+      g.bubble.drawHearts(emoji, g.hearts / 5);
+      g.lastBucket = bucket; g.bAcc = 0;
     }
   }
 
   private emitHud() {
     let urgent = false;
-    for (const c of this.customers) {
-      if ((c.state === 'ordering' || c.state === 'waiting') && c.patience / c.maxPat < 0.22) urgent = true;
-      if (c.state === 'paying' && c.payPat / PAY_PATIENCE < 0.22) urgent = true;
+    for (const g of this.guests) {
+      if ((g.phase === 'queued' || g.phase === 'handup' || g.phase === 'waiting' || g.phase === 'check') && g.hearts < 1.2) urgent = true;
     }
-    this.cbs.onHud({ score: this.score, timeLeft: this.timeLeft, combo: this.combo, multiplier: this.comboMul, urgent, rush: this.rushOn });
+    const guestsLeft = (this.level.customers - this.spawned) + this.guests.filter(g => g.phase !== 'leaving').length;
+    this.cbs.onHud({
+      score: this.score, level: this.level.id, goal: this.level.goal, expert: this.level.expert,
+      guestsLeft, chain: this.chainN, chainKind: this.chainKind, urgent,
+    });
+  }
+
+  private tut(key: string, text: string) {
+    if (!this.tutorial || this.tutSeen.has(key)) return;
+    this.tutSeen.add(key);
+    this.cbs.onAnnounce(text, 'tut');
   }
 
   // ── main loop ───────────────────────────────────────────────────────────────
-  // The simulation runs in fixed-size substeps so game time tracks real time
-  // even when the device renders below 60fps.
   private loop(now: number) {
     if (!this.running) return;
     this.raf = requestAnimationFrame(t => this.loop(t));
@@ -791,7 +918,6 @@ export class RestaurantGame {
     }
     if (!this.running) return;
 
-    // camera: intro sweep + sway + punch
     const ease = 1 - Math.pow(1 - this.introT, 3);
     const punch = this.anims.find(a => a.k === 'punch');
     const pk = punch ? Math.sin(punch.t * 60) * 0.12 * Math.max(0, 1 - punch.t * 5) : 0;
@@ -805,57 +931,54 @@ export class RestaurantGame {
   }
 
   private step(dt: number, now: number) {
-    const tutorialActive = this.tutorial && this.tutStep < 7;
-
-    if (!tutorialActive && this.timeLeft > 0) {
-      this.timeLeft -= dt;
-      this.elapsed += dt;
-      if (this.timeLeft <= FINAL_RUSH_AT && !this.rushOn) {
-        this.rushOn = true;
-        this.cbs.onAnnounce('FINAL RUSH — TIPS ×2', 'rush');
-        this.cbs.onFlash('gold');
-        try { SoundManager.rushHour(); } catch { /* */ }
-      }
-      if (this.timeLeft <= 15 && !this.warned15) { this.warned15 = true; try { SoundManager.timerWarning(); } catch { /* */ } }
-      if (this.timeLeft <= 5 && !this.warned5) { this.warned5 = true; try { SoundManager.timerWarning(); } catch { /* */ } }
-      if (this.timeLeft <= 0) { this.timeLeft = 0; this.end(); return; }
-    }
     this.emitHud();
 
-    // spawning
-    this.nextSpawn -= dt;
-    if (this.nextSpawn <= 0 && this.timeLeft > 6) {
-      this.spawn();
-      const tier = this.tierNow();
-      this.nextSpawn = tier.spawnMin + Math.random() * (tier.spawnMax - tier.spawnMin);
+    // spawning into the waiting line
+    if (this.spawned < this.level.customers) {
+      this.nextSpawn -= dt;
+      if (this.nextSpawn <= 0) {
+        this.spawn();
+        this.nextSpawn = this.level.spawnMin + Math.random() * (this.level.spawnMax - this.level.spawnMin);
+      }
     }
 
     this.updateWaiter(dt, now);
-    this.updateCustomers(dt, now);
+    this.updateGuests(dt, now);
     this.kitchen.update(dt, now);
     try { SoundManager.setSizzle(this.kitchen.activeBurners()); } catch { /* */ }
     this.updateArrow(now);
 
-    // rings
+    // selection marker follows its guest
+    if (this.selected) {
+      this.selRing.position.copy(this.selected.c.g.position).setY(0.05);
+      this.selRing.scale.setScalar(1 + Math.sin(now / 200) * 0.08);
+      this.refreshRings(); // clean tables glow green while choosing
+    }
+
     for (const t of this.tables) {
       const tgt = (t.ring.userData as { target?: number }).target ?? 0;
       const mat = t.ring.material as THREE.MeshBasicMaterial;
       mat.opacity += (tgt - mat.opacity) * Math.min(1, dt * 8);
-      if (tgt > 0) t.ring.scale.setScalar(1 + Math.sin(now / (t.state === 'ready' ? 160 : 250)) * 0.05);
+      if (tgt > 0) t.ring.scale.setScalar(1 + Math.sin(now / 250) * 0.05);
     }
 
-    this.updateAnims(dt, now);
+    this.updateAnims(dt);
     this.fx.update(dt);
     this.introT = Math.min(1, this.introT + dt / 1.4);
+
+    // level end: every guest of the level has been resolved
+    if (this.spawned >= this.level.customers && this.guests.length === 0 && !this.current && this.tasks.length === 0) {
+      this.end();
+    }
   }
 
   private updateWaiter(dt: number, now: number) {
     const w = this.waiter;
-    if (this.writeT > 0) { // scribbling the order
+    if (this.writeT > 0) {
       this.writeT -= dt;
       w.armR.rotation.x = -1.1 + Math.sin(now / 60) * 0.25;
       if (this.writeT <= 0) { w.armR.rotation.x = 0; if (this.carried.length || this.carriedDirty) poseCarry(w); else poseStand(w); }
-      return; // waiter pauses while writing
+      return;
     }
     if (this.wTarget) {
       this.tmp.copy(this.wTarget).sub(w.g.position); this.tmp.y = 0;
@@ -873,7 +996,7 @@ export class RestaurantGame {
         w.g.rotation.y += dr * Math.min(1, dt * 16);
         w.g.position.y = Math.abs(Math.sin(now / 75)) * 0.14;
         w.g.rotation.z = Math.sin(now / 75) * 0.05;
-        if (!this.carried.length && !this.carriedDirty) { // arm swing while unencumbered
+        if (!this.carried.length && !this.carriedDirty) {
           w.armL.rotation.x = Math.sin(now / 75) * 0.5;
           w.armR.rotation.x = -Math.sin(now / 75) * 0.5;
         }
@@ -882,75 +1005,124 @@ export class RestaurantGame {
       w.g.position.y = Math.sin(now / 600) * 0.04;
       w.g.rotation.z *= 0.85;
       w.armL.rotation.x *= 0.85; w.armR.rotation.x *= 0.85;
-      // drift back to the home spot when idle
-      if (!this.wBusy) {
-        this.tmp.copy(WAITER_HOME).sub(w.g.position); this.tmp.y = 0;
-        if (this.tmp.length() > 2.6) { this.go(WAITER_HOME); this.nextStep(); this.wBusy = false; }
+    }
+    // escorted guest trails the waiter
+    if (this.escorting) {
+      const g = this.escorting;
+      this.tmp2.copy(w.g.position).addScaledVector(this.tmp.set(Math.sin(w.g.rotation.y), 0, Math.cos(w.g.rotation.y)).normalize(), -0.95);
+      this.tmp2.y = 0;
+      const d = this.tmp2.distanceTo(g.c.g.position);
+      if (d > 0.05) {
+        const dir = this.tmp2.clone().sub(g.c.g.position).normalize();
+        g.c.g.position.addScaledVector(dir, Math.min(d, 8.5 * dt));
+        g.c.g.rotation.y = Math.atan2(dir.x, dir.z);
+        g.c.g.position.y = Math.abs(Math.sin(g.t * 9)) * 0.09;
+        g.t += dt;
       }
     }
   }
 
-  private updateCustomers(dt: number, now: number) {
-    for (let i = this.customers.length - 1; i >= 0; i--) {
-      const c = this.customers[i];
-      c.t += dt;
-      const o = c.c.g;
-      if (c.state === 'entering' || c.state === 'leaving') {
-        const target = c.path[0];
-        if (!target) {
-          if (c.state === 'entering') this.seat(c);
-          else this.despawn(c);
-          continue;
-        }
+  private updateGuests(dt: number, now: number) {
+    void now;
+    // queue compaction: guests step forward into freed slots
+    const queued = this.guests.filter(g => g.phase === 'queued' || g.phase === 'entering');
+    queued.sort((a, b) => a.queueIdx - b.queueIdx);
+    queued.forEach((g, i) => {
+      if (g.queueIdx !== i && g.phase === 'queued') {
+        g.queueIdx = i;
+        g.path = [new THREE.Vector3(QUEUE_X[i], 0, QUEUE_Z)];
+      }
+    });
+
+    for (let i = this.guests.length - 1; i >= 0; i--) {
+      const g = this.guests[i];
+      g.t += dt;
+      const o = g.c.g;
+      const walk = (speedMul = 1): boolean => {
+        const target = g.path[0];
+        if (!target) return true;
         this.tmp.copy(target).sub(o.position); this.tmp.y = 0;
         const d = this.tmp.length();
-        const sp = 3.6 * c.variant.speed * (c.state === 'leaving' && !c.happy ? 1.5 : 1);
-        if (d < 0.1) { c.path.shift(); continue; }
+        if (d < 0.09) { g.path.shift(); return g.path.length === 0; }
         this.tmp.normalize();
-        o.position.addScaledVector(this.tmp, Math.min(sp * dt, d));
+        o.position.addScaledVector(this.tmp, Math.min(3.6 * g.variant.speed * speedMul * dt, d));
         o.rotation.y = Math.atan2(this.tmp.x, this.tmp.z);
-        const stride = c.variant.speed > 1.15 ? 7 : c.variant.speed < 0.8 ? 4 : 5.5;
-        o.position.y = Math.abs(Math.sin(c.t * stride * 1.6)) * (c.happy && c.state === 'leaving' ? 0.16 : 0.09);
-        c.c.armL.rotation.x = Math.sin(c.t * stride * 1.6) * 0.45;
-        c.c.armR.rotation.x = -Math.sin(c.t * stride * 1.6) * 0.45;
-      } else if (c.state === 'ordering') {
-        c.patience -= dt * (c.table.queued ? SERVING_DECAY : 1);
-        o.position.y = 0.42 + Math.sin(c.t * 2 + c.bob) * 0.02;
-        this.tickBubble(c, DISH_EMOJI[c.dish], c.patience / c.maxPat, dt);
-        if (c.patience <= 0) this.angryLeave(c);
-      } else if (c.state === 'waiting') {
-        const cold = c.table.state === 'ready';
-        c.patience -= dt * (c.table.beingServed ? SERVING_DECAY : cold ? COLD_DECAY : 1);
-        o.position.y = 0.42 + Math.sin(c.t * 2 + c.bob) * 0.02;
-        this.tickBubble(c, c.table.state === 'ready' ? '🛎️' : '🍳', c.patience / c.maxPat, dt);
-        if (c.patience <= 0) this.angryLeave(c);
-      } else if (c.state === 'eating') {
-        c.eat -= dt;
-        o.position.y = 0.42 + Math.abs(Math.sin(c.t * 6)) * 0.04;
-        c.c.head.rotation.x = Math.abs(Math.sin(c.t * 6)) * 0.18;
-        c.c.armR.rotation.x = -1.4 + Math.sin(c.t * 6) * 0.3; // fork to mouth
-        if (c.table.food) {
-          const f = Math.max(0.25, c.eat / c.eatTotal);
-          c.table.food.scale.setScalar(f);
+        const stride = g.variant.speed > 1.15 ? 11 : g.variant.speed < 0.8 ? 6.5 : 9;
+        o.position.y = Math.abs(Math.sin(g.t * stride)) * (g.happy && g.phase === 'leaving' ? 0.16 : 0.09);
+        g.c.armL.rotation.x = Math.sin(g.t * stride) * 0.45;
+        g.c.armR.rotation.x = -Math.sin(g.t * stride) * 0.45;
+        return false;
+      };
+
+      switch (g.phase) {
+        case 'entering':
+          if (walk()) this.joinQueue(g);
+          break;
+        case 'queued':
+          walk(); // stepping forward in the line
+          g.hearts -= this.heartsRate(g, DECAY_QUEUE) * dt;
+          o.position.y = Math.sin(g.t * 2) * 0.02;
+          this.tickBubble(g, '🪑', dt);
+          if (g.hearts <= 0) this.walkoutGuest(g);
+          break;
+        case 'following':
+          break; // driven by updateWaiter
+        case 'sitting':
+          if (walk()) this.sitDown(g);
+          break;
+        case 'deciding':
+          g.decideT -= dt;
+          o.position.y = 0.42 + Math.sin(g.t * 2) * 0.02;
+          if (g.decideT <= 0) this.raiseHand(g);
+          break;
+        case 'handup':
+          g.hearts -= this.heartsRate(g, DECAY_HANDUP) * dt;
+          o.position.y = 0.42 + Math.sin(g.t * 5) * 0.03;
+          g.c.armR.rotation.x = -2.6 + Math.sin(g.t * 5) * 0.15;
+          this.tickBubble(g, DISH_EMOJI[g.dish], dt);
+          if (g.hearts <= 0) this.walkoutGuest(g);
+          break;
+        case 'waiting': {
+          const cold = this.kitchen.hasReady(g.table!.i);
+          g.hearts -= this.heartsRate(g, cold ? DECAY_COLD : DECAY_COOKING) * dt;
+          o.position.y = 0.42 + Math.sin(g.t * 2) * 0.02;
+          this.tickBubble(g, cold ? '🛎️' : '🍳', dt);
+          if (g.hearts <= 0) this.walkoutGuest(g);
+          break;
         }
-        if (c.eat <= 0) {
-          c.state = 'paying'; c.table.state = 'paying';
-          c.c.head.rotation.x = 0;
-          poseSit(c.c);
-          if (c.bubble) c.bubble.draw('💰', 1, 1);
-          this.setRing(c.table);
-          if (this.tutorial && this.tutStep === 4) this.cbs.onAnnounce('Tap the table to collect 💰', 'tut');
-        }
-      } else if (c.state === 'paying') {
-        c.payPat -= dt * (c.table.queued ? SERVING_DECAY : 1);
-        o.position.y = 0.42 + Math.abs(Math.sin(c.t * 4.5)) * 0.04;
-        this.tickBubble(c, '💰', c.payPat / PAY_PATIENCE, dt);
-        if (c.payPat <= 0) this.angryLeave(c);
+        case 'eating':
+          g.eatT -= dt;
+          o.position.y = 0.42 + Math.abs(Math.sin(g.t * 6)) * 0.04;
+          g.c.head.rotation.x = Math.abs(Math.sin(g.t * 6)) * 0.18;
+          g.c.armR.rotation.x = -1.4 + Math.sin(g.t * 6) * 0.3;
+          if (g.table?.food) g.table.food.scale.setScalar(Math.max(0.25, g.eatT / this.level.eatTime));
+          if (g.eatT <= 0) {
+            g.phase = 'check';
+            g.c.head.rotation.x = 0;
+            poseSit(g.c);
+            if (g.bubble) g.bubble.drawHearts('💵', g.hearts / 5);
+            else {
+              const b = makeBubble(); b.spr.position.set(0, 1.85, 0); g.c.g.add(b.spr); g.bubble = b;
+              b.drawHearts('💵', g.hearts / 5);
+            }
+            this.setRing(g.table!);
+            this.tut('collect', 'Tap the table to collect 💵');
+          }
+          break;
+        case 'check':
+          g.hearts -= this.heartsRate(g, DECAY_CHECK) * dt;
+          o.position.y = 0.42 + Math.abs(Math.sin(g.t * 4.5)) * 0.04;
+          this.tickBubble(g, '💵', dt);
+          if (g.hearts <= 0) this.walkoutGuest(g);
+          break;
+        case 'leaving':
+          if (walk(g.happy ? 1 : 1.5)) this.despawn(g);
+          break;
       }
     }
   }
 
-  private updateAnims(dt: number, now: number) {
+  private updateAnims(dt: number) {
     for (let i = this.anims.length - 1; i >= 0; i--) {
       const a = this.anims[i];
       a.t += dt;
@@ -981,36 +1153,38 @@ export class RestaurantGame {
         if (a.t > 0.18) this.anims.splice(i, 1);
       }
     }
-    void now;
   }
 
-  // priority arrow over the single most urgent actionable table
+  // priority arrow over the single most urgent guest
   private updateArrow(now: number) {
-    let best: TableData | null = null, bestFrac = 2;
-    let color = 0xFF8A3D;
-    for (const t of this.tables) {
-      if (t.queued || t.beingServed) continue;
-      const c = t.customer;
-      let f = 2, col = 0xFF8A3D;
-      if (t.state === 'seated' && c && c.state === 'ordering') { f = c.patience / c.maxPat; col = 0xFF8A3D; }
-      else if (t.state === 'ready' && c) { f = c.patience / c.maxPat * 0.9; col = 0xFF8A3D; }
-      else if (t.state === 'paying' && c) { f = c.payPat / PAY_PATIENCE; col = 0xFFC21E; }
-      if (f < bestFrac) { bestFrac = f; best = t; color = col; }
+    let best: Guest | null = null, bestH = 9;
+    for (const g of this.guests) {
+      if (g.phase === 'queued' || g.phase === 'handup' || g.phase === 'check'
+        || (g.phase === 'waiting' && g.table && this.kitchen.hasReady(g.table.i))) {
+        if (g.hearts < bestH) { bestH = g.hearts; best = g; }
+      }
     }
-    if (best) {
+    if (best && bestH < 3.5) {
       this.arrow.visible = true;
-      this.arrow.position.set(best.chair.x, 3.2 + Math.sin(now / 220) * 0.13, best.chair.z);
-      this.arrowMat.color.setHex(color);
-      this.arrow.scale.setScalar(bestFrac < 0.3 ? 1 + Math.sin(now / 90) * 0.18 : 1);
+      const p = best.c.g.position;
+      this.arrow.position.set(p.x, (best.phase === 'queued' ? 2.9 : 3.2) + Math.sin(now / 220) * 0.13, p.z);
+      this.arrowMat.color.setHex(best.phase === 'check' ? 0xFFC21E : 0xFF8A3D);
+      this.arrow.scale.setScalar(bestH < 1.2 ? 1 + Math.sin(now / 90) * 0.18 : 1);
     } else this.arrow.visible = false;
   }
 
   private end() {
     this.running = false; this.over = true;
     cancelAnimationFrame(this.raf);
-    try { SoundManager.setSizzle(0); SoundManager.roundEnd(); } catch { /* */ }
-    const stars = this.score >= STAR_3 ? 3 : this.score >= STAR_2 ? 2 : 1;
-    this.cbs.onOver({ score: this.score, stars, happy: this.happy, angry: this.angry, comboRecord: this.comboRecord });
+    try { SoundManager.setSizzle(0); } catch { /* */ }
+    const mid = Math.round((this.level.goal + this.level.expert) / 2);
+    const stars = this.score >= this.level.expert ? 3 : this.score >= mid ? 2 : this.score >= this.level.goal ? 1 : 0;
+    try { if (stars >= 1) SoundManager.roundEnd(); else SoundManager.comboLost(); } catch { /* */ }
+    this.cbs.onOver({
+      levelId: this.level.id, score: this.score, stars, won: stars >= 1,
+      served: this.served, walkouts: this.walkouts,
+      goal: this.level.goal, expert: this.level.expert,
+    });
   }
 
   stop() { this.running = false; this.over = true; cancelAnimationFrame(this.raf); }
@@ -1035,35 +1209,35 @@ export class RestaurantGame {
       calls: this.renderer.info.render.calls,
       tris: this.renderer.info.render.triangles,
       geom: this.renderer.info.memory.geometries,
-      score: this.score, combo: this.combo,
-      customers: this.customers.length,
+      score: this.score, served: this.served, walkouts: this.walkouts,
+      spawned: this.spawned, guests: this.guests.length,
       debug: {
-        wBusy: this.wBusy, actions: this.actions.map(a => a.kind + ':' + a.table.i),
-        wq: this.wq.length, wTarget: this.wTarget ? [this.wTarget.x, this.wTarget.z] : null,
-        writeT: this.writeT, wPos: [Math.round(this.waiter.g.position.x * 10) / 10, Math.round(this.waiter.g.position.z * 10) / 10],
-        tables: this.tables.map(t => t.state + (t.queued ? '+q' : '')),
-        custStates: this.customers.map(c => c.state + (c.vip ? '+vip' : '') + (c.critic ? '+critic' : '')),
+        tasks: (this.current ? [this.current] : []).concat(this.tasks).map(tk => tk.kind + ':' + tk.table.i),
+        hands: this.carried.length, dirtyCarried: !!this.carriedDirty,
+        phases: this.guests.map(g => g.phase + '@' + (g.table ? 't' + g.table.i : 'q' + g.queueIdx)),
+        tables: this.tables.map(t => t.state),
+        selected: this.selected ? this.guests.indexOf(this.selected) : -1,
         kitchen: this.kitchen.debug(),
-        anims: this.anims.map(a => a.k),
+        chain: this.chainKind + 'x' + this.chainN,
       },
     };
   }
-  /** Headless driver: perform the most valuable tap, like a decent player would. */
-  autoStep() {
-    if (this.actions.length >= 2) return;
-    const pick = (st: TableState) => this.tables.find(t => t.state === st && !t.queued && !t.beingServed);
-    const t = pick('paying') ?? pick('ready') ?? pick('seated') ?? pick('dirty');
-    if (t) this.tap(t);
+  /** Headless driver: performs the tap a decent player would make, via the
+   * real pointer pipeline. Returns what it did. */
+  autoStep(): string {
+    const spots = this.hotspots();
+    const pri = ['collect', 'deliver', 'pickup', 'order', 'seat', 'clean', 'deselect', 'select'];
+    let best: Hotspot | null = null, bestP = 99;
+    for (const s of spots) {
+      const p = pri.indexOf(s.action);
+      if (p >= 0 && p < bestP) { bestP = p; best = s; }
+    }
+    if (!best) return '';
+    this.pointerTap(best.x, best.y);
+    return best.action + ':' + best.kind + best.idx;
   }
-  tapTable(i: number) { this.tap(this.tables[i]); }
-  fastForward(seconds: number) { this.timeLeft = Math.max(0.5, this.timeLeft - seconds); }
-  /** Screen-space centre of a table's tap target — lets QA aim real clicks. */
-  tableScreenXY(i: number): { x: number; y: number } {
-    return this.tapAnchor(this.tables[i]);
-  }
-  /** What a real player's tap on this table would do right now ('' = nothing). */
-  tableAction(i: number): string {
-    return this.actionFor(this.tables[i]) ?? '';
+  levelState() {
+    return { spawned: this.spawned, customers: this.level.customers, guests: this.guests.length, score: this.score, over: this.over };
   }
 }
 

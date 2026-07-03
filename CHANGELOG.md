@@ -1,5 +1,36 @@
 # CHANGELOG
 
+## V1.0 — The Diner-Dash rebuild (2026-07-03)
+
+Complete gameplay redesign: **every tap is an explicit command** — the waiter
+never decides anything on their own. (The previous smart-routing design felt
+idle; this is the classic time-management loop done properly.)
+
+- **Waiting line at the door**: guests queue up with 🪑 + hearts bubbles.
+  **You seat them**: tap the guest (gold selection ring, clean tables glow
+  green), then tap a table — the waiter escorts them over.
+- **Hand raised → take the order** (tap the table); the chit flies to the
+  visible kitchen; the chef cooks and carries the plate to the pass **with a
+  table-number flag**.
+- **Tap the plate to pick it up** — the waiter carries up to **two plates,
+  one per hand** (double-hand deliveries pay a bonus) — then tap the matching
+  numbered table to deliver.
+- Eat → **collect the bill** (tip = dish price × remaining hearts; VIP ×2.5;
+  critic rave ×3 at ≥85% hearts) → **bus the dirty table** to the dish tub.
+- **Hearts patience** everywhere (queue, hand-up, kitchen wait, bill), with
+  per-archetype drain rates. Walkouts at zero hearts.
+- **Chain bonuses** for consecutive identical actions (seat-seat-seat…),
+  with escalating fanfares.
+- **Level structure replaces the timer**: 5 levels, each a fixed guest list
+  with ⭐ goal / ⭐⭐⭐ expert scores shown on a progress bar; win to unlock
+  the next; stars and coins persist. Level 1 doubles as the tutorial.
+- Wallet + upgrade shop, PWA install/offline, and the visible kitchen all
+  carry over.
+- Verified end-to-end with real mouse AND touch input on dev, the production
+  build, and a GitHub-Pages subpath simulation: 56–58 presses per level,
+  **100% of presses effective**, win and lose paths both exercised, zero
+  console errors.
+
 ## v3.3.1 — CRITICAL: real taps now work everywhere (2026-07-03)
 
 Real-input hotfix. Raycasting against large invisible hitboxes silently

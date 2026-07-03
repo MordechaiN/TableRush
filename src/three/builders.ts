@@ -255,10 +255,25 @@ export function poseCarry(c: Chibi) {
 }
 
 // ── Bubbles & floating text ───────────────────────────────────────────────────
-export interface Bubble { spr: THREE.Sprite; draw: (emoji: string, frac: number, ring: number) => void; dispose: () => void; }
+export interface Bubble {
+  spr: THREE.Sprite;
+  draw: (emoji: string, frac: number, ring: number) => void;
+  drawHearts: (emoji: string, hearts01: number) => void;
+  dispose: () => void;
+}
 function rrect(c: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
   c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r);
   c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath();
+}
+function heart(c: CanvasRenderingContext2D, x: number, y: number, s: number, fill: string) {
+  c.fillStyle = fill;
+  c.beginPath();
+  c.moveTo(x, y + s * 0.35);
+  c.bezierCurveTo(x, y, x - s * 0.5, y - s * 0.15, x - s * 0.5, y + s * 0.18);
+  c.bezierCurveTo(x - s * 0.5, y + s * 0.5, x - s * 0.12, y + s * 0.72, x, y + s * 0.95);
+  c.bezierCurveTo(x + s * 0.12, y + s * 0.72, x + s * 0.5, y + s * 0.5, x + s * 0.5, y + s * 0.18);
+  c.bezierCurveTo(x + s * 0.5, y - s * 0.15, x, y, x, y + s * 0.35);
+  c.closePath(); c.fill();
 }
 export function makeBubble(): Bubble {
   const cv = document.createElement('canvas'); cv.width = cv.height = 160;
@@ -267,19 +282,51 @@ export function makeBubble(): Bubble {
   const mat = new THREE.SpriteMaterial({ map: tex, depthTest: false, transparent: true });
   const spr = new THREE.Sprite(mat);
   spr.scale.set(1.5, 1.5, 1); spr.renderOrder = 999;
-  function draw(emoji: string, frac: number, ring: number) {
+  function shell(borderCol: string) {
     ctx.clearRect(0, 0, 160, 160);
     ctx.fillStyle = 'rgba(0,0,0,0.16)'; rrect(ctx, 24, 22, 112, 96, 26); ctx.fill();
     ctx.fillStyle = '#FFF8EE'; rrect(ctx, 20, 18, 112, 96, 26); ctx.fill();
+    ctx.lineWidth = 6; ctx.strokeStyle = borderCol; ctx.stroke();
+    ctx.fillStyle = '#FFF8EE'; ctx.beginPath(); ctx.moveTo(60, 110); ctx.lineTo(92, 110); ctx.lineTo(76, 138); ctx.closePath(); ctx.fill();
+  }
+  function draw(emoji: string, frac: number, ring: number) {
     const col = ring < 0.3 ? '#E8442C' : ring < 0.6 ? '#FF9E1B' : '#5BBF4A';
-    ctx.lineWidth = 6; ctx.strokeStyle = col; ctx.stroke();
+    shell(col);
     ctx.beginPath(); ctx.lineWidth = 9; ctx.strokeStyle = col;
     ctx.arc(76, 66, 56, -Math.PI / 2, -Math.PI / 2 + Math.max(0.001, frac) * Math.PI * 2); ctx.stroke();
-    ctx.fillStyle = '#FFF8EE'; ctx.beginPath(); ctx.moveTo(60, 110); ctx.lineTo(92, 110); ctx.lineTo(76, 138); ctx.closePath(); ctx.fill();
     ctx.font = '54px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(emoji, 76, 64);
     tex.needsUpdate = true;
   }
-  return { spr, draw, dispose: () => { mat.dispose(); tex.dispose(); } };
+  // Diner-Dash patience: a row of five hearts under the request
+  function drawHearts(emoji: string, hearts01: number) {
+    const col = hearts01 < 0.3 ? '#E8442C' : hearts01 < 0.6 ? '#FF9E1B' : '#5BBF4A';
+    shell(col);
+    ctx.font = '44px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(emoji, 76, 52);
+    const hearts = hearts01 * 5;
+    for (let i = 0; i < 5; i++) {
+      const fillFrac = Math.max(0, Math.min(1, hearts - i));
+      const x = 40 + i * 19, y = 82;
+      heart(ctx, x, y, 15, '#E4D7C4');
+      if (fillFrac > 0.05) heart(ctx, x, y, 15 * (0.55 + 0.45 * fillFrac), fillFrac >= 1 ? '#E8442C' : '#F08A6A');
+    }
+    tex.needsUpdate = true;
+  }
+  return { spr, draw, drawHearts, dispose: () => { mat.dispose(); tex.dispose(); } };
+}
+
+/** Small numbered badge (table numbers on tables and on ready plates). */
+export function numberSprite(n: number, bg = '#B33A22'): THREE.Sprite {
+  const cv = document.createElement('canvas'); cv.width = cv.height = 96;
+  const c = cv.getContext('2d')!;
+  c.fillStyle = 'rgba(0,0,0,0.18)'; c.beginPath(); c.arc(50, 52, 40, 0, 7); c.fill();
+  c.fillStyle = bg; c.beginPath(); c.arc(48, 48, 40, 0, 7); c.fill();
+  c.lineWidth = 6; c.strokeStyle = '#FFF3D8'; c.stroke();
+  c.fillStyle = '#FFF3D8'; c.font = '900 46px Arial'; c.textAlign = 'center'; c.textBaseline = 'middle';
+  c.fillText(String(n), 48, 50);
+  const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace;
+  const spr = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest: false, transparent: true }));
+  spr.scale.set(0.55, 0.55, 1); spr.renderOrder = 998;
+  return spr;
 }
 
 export function floatSprite(txt: string, color = '#FFE27A', stroke = '#7a3a0a'): THREE.Sprite {

@@ -2,9 +2,10 @@
 
 # 🍽️ Table Rush
 
-**Run the floor. Feed the rush. Three minutes on the clock.**
+**Seat them. Serve them. Keep every heart full.**
 
-A premium casual restaurant game built with **Three.js** — warm, low-poly, mobile-first.
+A classic time-management restaurant game (think *Diner Dash*) in warm,
+low-poly 3D. Built with **Three.js**, mobile-first, installable, offline-ready.
 
 [![Play](https://img.shields.io/badge/%E2%96%B6%20Play-Live-brightgreen)](https://MordechaiN.github.io/TableRush/)
 ![Engine](https://img.shields.io/badge/engine-Three.js-blue)
@@ -16,72 +17,53 @@ A premium casual restaurant game built with **Three.js** — warm, low-poly, mob
 
 ---
 
-## What is Table Rush?
+## The game
 
-You're the waiter in a bustling little restaurant. Guests walk in, sit down and
-order; the kitchen actually cooks — pans steam on the stove, the chef carries
-finished plates to the **ORDER UP!** pass — and you run the floor: take orders,
-serve plates, collect payments, clear tables. Chain flawless service into combo
-multipliers and beat your best before the 3-minute shift ends.
-
-**The whole pipeline is visible. Nothing teleports.**
+You run the floor. Guests line up at the door; **every tap is an explicit
+command** to your waiter — nothing happens on its own:
 
 ```
-Guest enters → sits → orders (🍔 bubble, patience ring)
-  → TAP  take the order   → the chit flies to the kitchen
-  →      the pan cooks    → steam + progress bubble → chef carries plate to the pass 🛎️
-  → TAP  serve            → waiter picks it up onto the tray, delivers, guest eats
-  → TAP  collect          → coins fly into your score 💰
-  → TAP  clear the table  → dirty dishes go to the bus bin ✨ … next guest sits
+1. SEAT     tap a waiting guest 🪑 → clean tables glow green → tap one
+2. ORDER    their hand goes up → tap the table, the chit flies to the kitchen
+3. COOK     the chef cooks it in plain sight — steam, progress, the works
+4. PICK UP  the plate lands on the pass with a table-number flag → tap it
+            (two hands = two plates; double deliveries pay a bonus)
+5. DELIVER  tap the matching numbered table
+6. COLLECT  they finish eating → 💵 → tap to collect the tip
+7. BUS      tap the dirty table — dishes go to the tub, table's free again
 ```
 
-### One verb: tap the table
+### Hearts, tips & chains
 
-Every table shows exactly one next action, color-coded by ring and bubble:
+- Every guest has **5 hearts** that drain while they wait — in line, hand up,
+  waiting on the kitchen, waiting for the bill. Zero hearts = they storm out.
+- **The tip is the hearts**: dish price × 5 × hearts remaining (floor 30%).
+- **Chains**: consecutive *identical* actions (seat-seat-seat, collect-collect)
+  stack a rising bonus. Plan your route like a pro.
+- **VIPs** 👑 tip ×2.5 but fume fast. The **Food Critic** 🖋 (dark suit,
+  notepad) pays ×3 — if you keep them at ≥85% hearts to the bill.
+- Guest archetypes really differ: the Elder shuffles in but waits forever;
+  the Teen sprints and won't.
 
-| Ring | Bubble | Action |
-|------|--------|--------|
-| 🟠 orange | dish emoji + patience ring | take the order |
-| 🟠 orange (fast pulse) | 🛎️ | food is on the pass — serve it |
-| 🟡 gold | 💰 | collect the payment |
-| 🔵 blue | dirty plates | clear the table |
+### Levels
 
-A floating arrow always marks the **single most urgent** table. Queue up to 3
-taps ahead — queued tables dim their ring while the waiter works.
+No timer — like the classics, a level is a guest list and a score goal:
 
-### Pressure & reward
+| Level | Guests | ⭐ Goal | ⭐⭐⭐ Expert | New |
+|---|---|---|---|---|
+| 1 | 8 | $500 | $1,000 | tutorial · Salad, Burger |
+| 2 | 12 | $950 | $1,700 | Pasta |
+| 3 | 16 | $1,500 | $2,600 | Pizza · VIPs 👑 |
+| 4 | 20 | $2,200 | $3,600 | Sushi |
+| 5 | 24 | $3,000 | $4,800 | Cake · the Critic 🖋 |
 
-- **Patience** ticks on every waiting guest; ready food goes *cold* faster.
-  Walkouts reset your combo — and a guest who leaves without paying still
-  leaves you the dirty dishes.
-- **Combos**: consecutive payments climb ×2 HOT STREAK → ×5 TABLE MASTER.
-- **Speed bonus**: deliver while patience is high for FAST ×1.5 / LIGHTNING ×2.
-- **VIPs** (gold crown, level 5+) pay ×2.5 but have a short fuse.
-- **The Food Critic** (level 7+, at most once per shift): dark suit, notepad.
-  Land the food FAST or LIGHTNING and the rave review pays ×3 — anything
-  slower gets a *"meh."*
-- **Final Rush**: the last 30 seconds pay double.
-- **Personalities**: the Elder shuffles in but waits patiently; the Teen
-  sprints and won't. Seven archetypes with distinct outfits, accessories,
-  walk styles and patience.
+Clear the ⭐ goal to unlock the next level; stars persist. The goal bar lives
+at the bottom of the HUD, Diner-Dash style.
 
-### Progression (all real, all implemented)
+### The wallet
 
-| Level | Unlock |
-|-------|--------|
-| 2 | Sushi 🍣 joins the menu |
-| 3 | Bigger tray — carry 2 plates in one trip |
-| 4 | Cake 🍰 joins the menu |
-| 5 | VIP guests 👑 |
-| 6 | Full tray — 3 plates |
-| 7 | The Food Critic 🖋 |
-
-XP = score ÷ 10. A daily goal (60% of your best) gives every session a target.
-First launch runs a guided 6-step tutorial with a frozen clock.
-
-**The wallet**: every shift's takings bank into a persistent wallet, spent in
-the 🛒 Upgrades shop on three tracks (5 tiers each) that really change the
-simulation:
+Every level's score banks into a persistent wallet, spent in the 🛒 Upgrades
+shop (5 tiers each, all real):
 
 | Track | Effect per tier |
 |-------|-----------------|
@@ -91,99 +73,94 @@ simulation:
 
 ## Controls
 
-Tap (or click) a table — that's the game. ⏸ / ESC pauses. Sound toggles live
-in the pause menu and settings.
+Tap = command. Tap a guest to select, a table to seat/order/deliver/collect/
+clean, a plate to pick it up. Tap empty space to cancel a selection.
+⏸ / ESC pauses. That's everything.
 
 ## Tech stack
 
 | Part | Tech |
 |------|------|
-| Rendering | **Three.js** — real-time 3D, PCF soft shadows, sRGB |
+| Rendering | **Three.js** — real-time 3D, soft shadows, sRGB |
 | Language | TypeScript (strict) |
 | Build | Vite 5 |
 | UI / HUD / menus | DOM + CSS |
 | Audio | Web Audio API synthesis (zero audio files) |
 | Art | 100% procedural: cached low-poly geometry + canvas textures |
 | Persistence | localStorage |
-| Install | PWA — manifest, home-screen icons, offline via service worker |
-| QA | Playwright harness driving a real browser (`npm run playtest`) |
+| Install | PWA — manifest, icons, offline via service worker |
+| QA | two Playwright harnesses — bot AND real-input (mouse + touch) |
 | Deploy | GitHub Pages via GitHub Actions |
 
 ## Architecture
 
 ```
-index.html → src/main.ts                     orchestrator: title → game → game over
-   ├─ src/three/title.ts                     3D animated title + menu chips
-   ├─ src/three/RestaurantGame.ts            the gameplay scene & simulation
-   │    ├─ src/three/kitchen.ts              burners, chef AI, ORDER UP! pass, ticket queue
+index.html → src/main.ts                     orchestrator: title → level → level end
+   ├─ src/three/title.ts                     3D animated title + progress chips
+   ├─ src/three/RestaurantGame.ts            the level scene & simulation
+   │    ├─ src/three/kitchen.ts              burners, chef AI, pass slots + number flags
    │    ├─ src/three/effects.ts              pooled coins / sparks / steam / floating text
-   │    └─ src/three/builders.ts             shared art library (chibis, dishes, textures)
-   ├─ src/three/ui.ts                        HUD, coin flight, pause / game-over overlays
-   ├─ src/config/GameConfig.ts               every tunable number in the game
+   │    └─ src/three/builders.ts             art library (chibis, dishes, bubbles, textures)
+   ├─ src/three/ui.ts                        HUD, goal bar, coin flight, overlays
+   ├─ src/config/GameConfig.ts               levels, hearts, points, menu — every number
    └─ src/systems/
-        ├─ ProgressionSystem.ts              XP, levels, unlocks, daily goal (localStorage)
+        ├─ ProgressionSystem.ts              level unlocks, stars, wallet, upgrades
         └─ SoundManager.ts                   procedural SFX, music loop, sizzle bed
 ```
 
 Design decisions worth knowing:
 
-- **Aspect-adaptive camera** — `frameCamera()` binary-searches the camera
-  distance until a fixed set of gameplay-critical world points fits the
-  viewport at the current aspect ratio. Portrait phones get a steep, close
-  view; desktop gets the wide room. No layout forks.
-- **Fixed-substep simulation** — the loop advances game time in ≤50ms steps,
-  so cooking timers and patience run true even on a 20fps device.
-- **Zero mid-game allocation** — geometry and single-color materials live in
-  module-level caches; particles come from pre-allocated pools. ~220 draw
-  calls / ~35k triangles in a full rush.
-- **State machines everywhere** — guests (`entering → ordering → waiting →
-  eating → paying → leaving`), tables, the chef and the waiter action queue
-  are all explicit unions, no timers-driving-flags.
+- **Explicit command queue** — taps become tasks (`seat/order/pickup/deliver/
+  collect/clean`); the waiter executes them in order and *never* self-assigns
+  work. `hotspots()` exposes everything currently tappable with screen
+  coordinates — the same list drives input picking, the QA bots, and can drive
+  a future hint system.
+- **Screen-space input picking** — the nearest actionable hotspot to the tap
+  wins within a forgiving radius. No raycasting; works at any camera angle,
+  fat-finger-proof.
+- **Aspect-adaptive camera** — binary-search framing keeps queue, tables and
+  kitchen on screen at any aspect ratio (portrait phones get the steep view).
+- **Fixed-substep simulation** — game time tracks real time even at 20fps.
+- **Zero mid-game allocation** — cached geometry/materials, pooled particles.
 
 ## Local development
 
 ```bash
 npm install
-npm run dev          # http://localhost:3000
-npm run type-check   # strict TS, no emit
-npm run build        # type-check + production bundle → dist/
-npm run playtest        # Playwright bot: tutorial → shift → pause → replay → shop,
-                        # fails on any console error (needs `npm run dev` running)
-npm run playtest:human  # plays with REAL mouse + touch input only — the test
-                        # that catches input bugs the bot can't
-node scripts/gen-icons.mjs   # regenerate the PWA icons (drawn in canvas)
+npm run dev             # http://localhost:3000
+npm run type-check      # strict TS, no emit
+npm run build           # type-check + production bundle → dist/
+npm run playtest        # Playwright bot: clears level 1, checks shop/pause
+npm run playtest:human  # plays with REAL mouse + touch events only —
+                        # fails if any press has no effect
+node scripts/gen-icons.mjs   # regenerate the PWA icons
 ```
 
-The game exposes QA hooks on `window.__game`: `autoStep()` (plays the best
-available tap), `tapTable(i)`, `fastForward(s)`, and `metrics()` (draw calls,
-tris, score, full state dump).
+QA hooks on `window.__game`: `hotspots()` (all tappable things + coords),
+`autoStep()` (one smart tap through the real input pipeline), `levelState()`,
+`metrics()`.
 
 ## Balancing
 
-Everything lives in `src/config/GameConfig.ts`:
-
-- `DIFFICULTY_TIERS` — spawn cadence, patience and eating speed per game minute.
-- `MENU_ITEMS` — price, cook time, unlock level per dish.
-- `COMBO_MILESTONES`, `SPEED_MULTIPLIERS`, VIP and Final Rush constants.
-- `STAR_2` / `STAR_3` — calibrated against a perfect-play bot (~$9,900):
-  3★ at $5,200 demands sustained combos.
+Everything lives in `src/config/GameConfig.ts`: the `LEVELS` table (guests,
+spawn pace, hearts duration, goals, menu, VIP/critic flags), heart-decay
+multipliers per waiting phase, action points, chain bonus, tip floor. Goals
+were calibrated against full real-input playthroughs (~$750 on a clean level 1
+run; expert scores demand chains and double-hand deliveries).
 
 ## Extending the game
 
-- **New dish**: add to `MENU_ITEMS`, give it a 3D model in
-  `builders.buildDish()` and an emoji in `DISH_EMOJI`. Done — kitchen, bubbles
-  and scoring pick it up.
-- **New guest archetype**: add to `CUSTOMER_VARIANTS` (outfit, hair, accessory,
+- **New level**: add a row to `LEVELS`. Everything else follows.
+- **New dish**: add to `MENU_ITEMS`, model it in `builders.buildDish()`, add
+  its emoji to `DISH_EMOJI`, then put its id in a level's `dishes`.
+- **New guest archetype**: add to `CUSTOMER_VARIANTS` (outfit, accessory,
   speed, patience). New accessories go in `builders.chibi()`.
-- **New unlock**: gate it on `ProgressionSystem` level, then describe it in
-  `UNLOCK_HINTS` / `ABILITY_AT_LEVEL` — hints must stay honest.
-- **New upgrade track**: add to `UPGRADE_TRACKS`, extend `Upgrades` +
-  `getBoosts()` in `ProgressionSystem`, and apply the multiplier where it
-  belongs in `RestaurantGame`/`kitchen`. The shop UI renders tracks
-  automatically.
+- **New upgrade track**: add to `UPGRADE_TRACKS`, extend `getBoosts()`, apply
+  the multiplier in the simulation. The shop UI renders it automatically.
 
 ## Roadmap
 
+- [ ] More levels + restaurant themes (diner → bistro → fine dining)
 - [ ] More special events: birthday parties, health inspector
 - [ ] Skeletal characters to replace the primitive chibis
 - [ ] Localized UI

@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { ProgressionSystem } from '../systems/ProgressionSystem';
 import { SoundManager } from '../systems/SoundManager';
-import { fmtScore } from '../config/GameConfig';
+import { fmtScore, LEVELS } from '../config/GameConfig';
 import { M } from './builders';
 
 // 3D animated title / menu. Pure presentation; calls back to the orchestrator.
@@ -18,13 +18,13 @@ export function initTitle(handlers: { onPlay: () => void; onShop: () => void; on
       <div class="tt-tag">Seat · Serve · Sparkle ✨</div>
       <div class="tt-chips">
         <div class="tt-best">🏆 BEST <span id="tt-best">0</span></div>
-        <div class="tt-best">⭐ LV <span id="tt-level">1</span></div>
+        <div class="tt-best">⭐ <span id="tt-stars">0</span></div>
         <div class="tt-best">💰 <span id="tt-coins">$0</span></div>
         <div class="tt-best" id="tt-daily" style="display:none">🎯 <span id="tt-daily-v"></span></div>
       </div>
-      <button class="tt-play" id="tt-play"><span>▶</span> PLAY</button>
+      <button class="tt-play" id="tt-play"><span>▶</span> <span id="tt-play-lbl">PLAY</span></button>
       <div class="tt-row"><button class="tt-ghost" id="tt-shop">🛒 Upgrades</button><button class="tt-ghost" id="tt-settings">⚙ Settings</button><button class="tt-ghost" id="tt-credits">♥ Credits</button></div>
-      <div class="tt-ver">v3.0 · Three.js Edition</div>
+      <div class="tt-ver">V1.0</div>
     </div>`;
   document.body.appendChild(overlay); injectCss(); bestEl = overlay.querySelector('#tt-best');
 
@@ -68,10 +68,12 @@ function refresh() {
   try {
     const data = ProgressionSystem.getData();
     if (bestEl) bestEl.textContent = fmtScore(data.highScore || 0);
-    const lvEl = overlay.querySelector('#tt-level');
-    if (lvEl) lvEl.textContent = String(data.level || 1);
+    const starsEl = overlay.querySelector('#tt-stars');
+    if (starsEl) starsEl.textContent = `${ProgressionSystem.totalStars()}/${LEVELS.length * 3}`;
     const coinEl = overlay.querySelector('#tt-coins');
     if (coinEl) coinEl.textContent = '$' + fmtScore(data.coins || 0);
+    const playLbl = overlay.querySelector('#tt-play-lbl');
+    if (playLbl) playLbl.textContent = `LEVEL ${data.levelReached}`;
     const daily = ProgressionSystem.getDailyGoal();
     const dEl = overlay.querySelector('#tt-daily') as HTMLElement | null;
     const dV = overlay.querySelector('#tt-daily-v');

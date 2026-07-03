@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { MENU_ITEMS, BURNERS, SHELF_SLOTS } from '../config/GameConfig';
-import { M, G, chibi, Chibi, plate, buildDish, makeBubble, Bubble, shadows, poseCarry, poseStand, menuBoardTexture, signTexture, DISH_EMOJI } from './builders';
+import { M, G, chibi, Chibi, plate, buildDish, makeBubble, Bubble, shadows, poseCarry, poseStand, menuBoardTexture, signTexture, numberSprite, DISH_EMOJI } from './builders';
 import { Effects } from './effects';
 
 // ── The visible kitchen ───────────────────────────────────────────────────────
@@ -26,6 +26,7 @@ interface Slot {
   ticket: Ticket | null;
   glow: THREE.Mesh;
   staleT: number;
+  flag: THREE.Sprite | null; // table-number badge over a ready plate
 }
 
 type ChefState = 'idle' | 'toBurner' | 'stir' | 'toSlot' | 'toIdle';
@@ -72,7 +73,7 @@ export class Kitchen {
         new THREE.MeshBasicMaterial({ color: 0xFFC21E, transparent: true, opacity: 0, side: THREE.DoubleSide }),
       );
       glow.rotation.x = -Math.PI / 2; glow.position.set(pos.x, 1.21, pos.z); scene.add(glow);
-      this.slots.push({ pos, plate: null, ticket: null, glow, staleT: 0 });
+      this.slots.push({ pos, plate: null, ticket: null, glow, staleT: 0, flag: null });
     }
     this.chef = chibi({ skin: 0xF3C19E, outfit: 0xF5F2EA, hair: 0x6B3A1F, chef: true });
     this.chef.g.position.set(CHEF_IDLE_X, 0, AISLE_Z);
@@ -165,9 +166,17 @@ export class Kitchen {
     if (!slot || !slot.plate || !slot.ticket) return null;
     const out = { dish: slot.ticket.dish, plate: slot.plate };
     this.scene.remove(slot.plate);
+    if (slot.flag) { this.scene.remove(slot.flag); slot.flag = null; }
     slot.plate = null; slot.ticket = null; slot.staleT = 0;
     (slot.glow.material as THREE.MeshBasicMaterial).opacity = 0;
     return out;
+  }
+
+  /** Plates currently sitting ready on the pass (for input picking / QA). */
+  readyPlates(): { tableIndex: number; pos: THREE.Vector3 }[] {
+    return this.slots
+      .filter(sl => sl.plate && sl.ticket && !sl.ticket.dead)
+      .map(sl => ({ tableIndex: sl.ticket!.tableIndex, pos: sl.pos }));
   }
 
   /** Customer left — mark their ticket dead wherever it is in the pipeline. */
@@ -256,6 +265,7 @@ export class Kitchen {
 
   private wasteSlot(sl: Slot) {
     if (sl.plate) { this.scene.remove(sl.plate); sl.plate = null; }
+    if (sl.flag) { this.scene.remove(sl.flag); sl.flag = null; }
     this.fx.steam(new THREE.Vector3(sl.pos.x, sl.pos.y + 0.3, sl.pos.z), true);
     if (sl.ticket) this.onWasted?.(sl.ticket);
     sl.ticket = null; sl.staleT = 0;
@@ -350,8 +360,13 @@ export class Kitchen {
             this.chefCarry = null;
             poseStand(c);
             this.fx.sparkle(new THREE.Vector3(sl.pos.x, sl.pos.y + 0.5, sl.pos.z), 0xFFE27A, 6);
-            if (sl.ticket && !sl.ticket.dead) this.onReady?.(sl.ticket);
-            else sl.staleT = 0; // dead ticket — will be binned by update()
+            if (sl.ticket && !sl.ticket.dead) {
+              const flag = numberSprite(sl.ticket.tableIndex + 1);
+              flag.position.set(sl.pos.x, sl.pos.y + 0.85, sl.pos.z);
+              this.scene.add(flag);
+              sl.flag = flag;
+              this.onReady?.(sl.ticket);
+            } else sl.staleT = 0; // dead ticket — will be binned by update()
           }
           this.chefState = 'toIdle'; this.chefTargetX = CHEF_IDLE_X; this.chefTask = {};
         }

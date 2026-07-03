@@ -1,29 +1,28 @@
 import { initTitle, showTitle, hideTitle } from './three/title';
-import { RestaurantGame, GameResult } from './three/RestaurantGame';
-import { createHud, showGameOver, showPause, showShop, showSettings, showCredits, Hud } from './three/ui';
+import { RestaurantGame, LevelResult } from './three/RestaurantGame';
+import { createHud, showLevelEnd, showPause, showShop, showSettings, showCredits, Hud } from './three/ui';
 import { ProgressionSystem } from './systems/ProgressionSystem';
 import { SoundManager } from './systems/SoundManager';
+import { LEVELS } from './config/GameConfig';
 
-// ── Table Rush — orchestrator (title → game → game over) ─────────────────────
+// ── Table Rush — orchestrator (title → level → level end) ────────────────────
 const container = document.getElementById('game-container') as HTMLElement;
 let game: RestaurantGame | null = null;
 let hud: Hud | null = null;
-let wasTutorial = false;
 
-function startGame() {
+function startLevel(levelId: number) {
   hideTitle();
   try { SoundManager.unlock(); } catch { /* audio needs a user gesture */ }
-  wasTutorial = !ProgressionSystem.isTutorialDone();
+  const level = LEVELS[Math.min(levelId, LEVELS.length) - 1];
   hud = createHud(pauseGame);
-  const level = ProgressionSystem.getData().level;
   game = new RestaurantGame(container, {
     onHud: (h) => hud?.update(h),
-    onOver: (r) => endGame(r),
+    onOver: (r) => endLevel(r),
     onAnnounce: (text, kind) => hud?.announce(text, kind),
     onFlash: (kind) => hud?.flash(kind),
     onCoinFly: (x, y, n) => hud?.coinFly(x, y, n),
   }, level, ProgressionSystem.getBoosts());
-  game.start(wasTutorial);
+  game.start(!ProgressionSystem.isTutorialDone());
   (window as unknown as { __game: RestaurantGame }).__game = game;
 }
 
@@ -40,12 +39,13 @@ function pauseGame() {
   });
 }
 
-function endGame(result: GameResult) {
-  if (wasTutorial) ProgressionSystem.markTutorialDone();
+function endLevel(result: LevelResult) {
+  ProgressionSystem.markTutorialDone();
   hud?.destroy(); hud = null;
   const g = game; game = null;
-  showGameOver(result, {
-    onReplay: () => { g?.dispose(); startGame(); },
+  showLevelEnd(result, {
+    onNext: () => { g?.dispose(); startLevel(result.levelId + 1); },
+    onRetry: () => { g?.dispose(); startLevel(result.levelId); },
     onMenu: () => { g?.dispose(); showTitle(); },
   });
 }
@@ -62,7 +62,7 @@ if (import.meta.env.PROD && 'serviceWorker' in navigator) {
 }
 
 initTitle({
-  onPlay: startGame,
+  onPlay: () => startLevel(ProgressionSystem.getData().levelReached),
   onShop: () => showShop(() => showTitle()),
   onSettings: () => showSettings(() => { /* title stays */ }),
   onCredits: () => showCredits(() => { /* title stays */ }),

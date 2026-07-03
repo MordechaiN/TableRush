@@ -1,8 +1,9 @@
 // ── Table Rush · balance & content configuration ─────────────────────────────
 // Every tunable number in the game lives here.
 
-export const GAME_DURATION = 180; // seconds per shift
 export const MAX_TABLES = 5;
+export const QUEUE_SLOTS = 4;     // guests waiting at the door
+export const HANDS_CAPACITY = 2;  // plates the waiter can carry at once
 
 // Kitchen
 export const BURNERS = 3;      // simultaneous cooking slots
@@ -10,25 +11,24 @@ export const SHELF_SLOTS = 3;  // "ORDER UP" pass slots
 
 export interface MenuItem {
   id: number; name: string; emoji: string;
-  price: number;        // base coins (multiplied by 5 at payout)
+  price: number;        // base coins (tip = price × 5 × hearts fraction)
   cookTime: number;     // seconds on the stove
-  unlockLevel: number;  // player level required before it appears on the menu
 }
 // Order matters: buildDish(i) in builders.ts maps to these indices.
 export const MENU_ITEMS: MenuItem[] = [
-  { id: 0, name: 'Salad',  emoji: '🥗', price: 10, cookTime: 3.0, unlockLevel: 1 },
-  { id: 1, name: 'Burger', emoji: '🍔', price: 12, cookTime: 4.2, unlockLevel: 1 },
-  { id: 2, name: 'Pasta',  emoji: '🍝', price: 14, cookTime: 5.0, unlockLevel: 1 },
-  { id: 3, name: 'Sushi',  emoji: '🍣', price: 19, cookTime: 4.6, unlockLevel: 2 },
-  { id: 4, name: 'Pizza',  emoji: '🍕', price: 16, cookTime: 5.8, unlockLevel: 1 },
-  { id: 5, name: 'Cake',   emoji: '🍰', price: 24, cookTime: 6.4, unlockLevel: 4 },
+  { id: 0, name: 'Salad',  emoji: '🥗', price: 10, cookTime: 3.0 },
+  { id: 1, name: 'Burger', emoji: '🍔', price: 12, cookTime: 4.2 },
+  { id: 2, name: 'Pasta',  emoji: '🍝', price: 14, cookTime: 5.0 },
+  { id: 3, name: 'Sushi',  emoji: '🍣', price: 19, cookTime: 4.6 },
+  { id: 4, name: 'Pizza',  emoji: '🍕', price: 16, cookTime: 5.8 },
+  { id: 5, name: 'Cake',   emoji: '🍰', price: 24, cookTime: 6.4 },
 ];
 
 export type Accessory = 'none' | 'glasses' | 'sunglasses' | 'cap' | 'flower' | 'bow';
 export interface Archetype {
   name: string; outfit: number; hair: number; accessory: Accessory;
   speed: number;        // walk-speed multiplier
-  patienceMul: number;  // patience multiplier (Elder waits longer, Teen doesn't)
+  patienceMul: number;  // hearts drain slower (>1) or faster (<1)
 }
 export const CUSTOMER_VARIANTS: Archetype[] = [
   { name: 'Elegant',  outfit: 0xCC2244, hair: 0x2C1810, accessory: 'flower',     speed: 0.95, patienceMul: 1.10 },
@@ -40,64 +40,52 @@ export const CUSTOMER_VARIANTS: Archetype[] = [
   { name: 'Teen',     outfit: 0xC8B400, hair: 0xCC3322, accessory: 'cap',        speed: 1.30, patienceMul: 0.78 },
 ];
 
-// Time-based difficulty tiers over the 3-minute shift.
-export interface Tier {
-  until: number;        // elapsed seconds this tier lasts to
-  spawnMin: number;     // seconds between guests (random in range)
-  spawnMax: number;
-  orderPatience: number; // seconds a guest waits for you to take the order
-  eatTime: number;       // seconds spent eating
+// ── Levels — Diner-Dash structure: a level is a fixed guest list and a score
+// goal, not a timer. Win by reaching `goal`; `expert` is the 3-star line.
+export interface LevelDef {
+  id: number;
+  customers: number;          // guests that arrive over the level
+  spawnMin: number; spawnMax: number;
+  heartsSeconds: number;      // seconds for a full 5-heart drain while waiting
+  eatTime: number;            // seconds a guest spends eating
+  goal: number; expert: number;
+  dishes: number[];           // menu ids in play this level
+  vip: boolean;               // gold-crown big tippers appear
+  critic: boolean;            // the food critic may visit
 }
-export const DIFFICULTY_TIERS: Tier[] = [
-  { until: 60,  spawnMin: 5.6, spawnMax: 7.2, orderPatience: 30, eatTime: 3.2 },
-  { until: 120, spawnMin: 4.4, spawnMax: 5.6, orderPatience: 24, eatTime: 2.8 },
-  { until: 999, spawnMin: 3.4, spawnMax: 4.4, orderPatience: 19, eatTime: 2.4 },
+export const LEVELS: LevelDef[] = [
+  { id: 1, customers: 8,  spawnMin: 6.0, spawnMax: 8.5, heartsSeconds: 60, eatTime: 3.2, goal: 500,  expert: 1000, dishes: [0, 1],          vip: false, critic: false },
+  { id: 2, customers: 12, spawnMin: 5.0, spawnMax: 7.5, heartsSeconds: 52, eatTime: 3.0, goal: 950,  expert: 1700, dishes: [0, 1, 2],       vip: false, critic: false },
+  { id: 3, customers: 16, spawnMin: 4.2, spawnMax: 6.5, heartsSeconds: 46, eatTime: 2.8, goal: 1500, expert: 2600, dishes: [0, 1, 2, 4],    vip: true,  critic: false },
+  { id: 4, customers: 20, spawnMin: 3.6, spawnMax: 5.6, heartsSeconds: 40, eatTime: 2.6, goal: 2200, expert: 3600, dishes: [0, 1, 2, 3, 4], vip: true,  critic: false },
+  { id: 5, customers: 24, spawnMin: 3.0, spawnMax: 4.8, heartsSeconds: 35, eatTime: 2.4, goal: 3000, expert: 4800, dishes: [0, 1, 2, 3, 4, 5], vip: true, critic: true },
 ];
 
-// Patience phases (fractions of the tier's orderPatience unless noted)
-export const WAIT_PATIENCE_MUL = 1.6;  // fresh timer while food cooks (more forgiving)
-export const COLD_DECAY = 1.7;         // decay speed-up once food sits ready on the pass
-export const SERVING_DECAY = 0.4;      // decay while the waiter is already en route
-export const PAY_PATIENCE = 14;        // seconds a guest waits to pay (absolute)
+// Hearts decay multipliers per waiting phase (1 = the level's base rate)
+export const DECAY_QUEUE = 1.0;    // standing in line
+export const DECAY_HANDUP = 1.1;   // hand raised, waiting for the order to be taken
+export const DECAY_COOKING = 0.45; // order placed, food on the stove
+export const DECAY_COLD = 1.5;     // plate sits ready on the pass
+export const DECAY_CHECK = 1.0;    // waiting for the bill
+export const DECIDE_SECONDS = 2.2; // menu-reading pause before the hand goes up
 
-// Speed bonus by patience remaining at the moment food lands on the table
-export const SPEED_MULTIPLIERS = [
-  { minPct: 0.70, multiplier: 2.0, label: 'LIGHTNING' },
-  { minPct: 0.45, multiplier: 1.5, label: 'FAST' },
-  { minPct: 0.00, multiplier: 1.0, label: '' },
-];
+// Action points (Diner-Dash style: every completed command scores)
+export const POINTS = { seat: 10, order: 10, deliver: 20, clean: 10 };
+export const DOUBLE_HANDS_BONUS = 15;  // delivering with both hands full, per plate
+export const CHAIN_BONUS = 15;         // ×(n−1) for consecutive identical actions
+export const MIN_TIP_FRAC = 0.3;       // tip floor at zero hearts left
 
-// Combo milestones — consecutive payments without a walkout
-export const COMBO_MILESTONES = [
-  { min: 0,  multiplier: 1.0, label: '' },
-  { min: 3,  multiplier: 2.0, label: 'HOT STREAK' },
-  { min: 6,  multiplier: 3.0, label: 'ON FIRE' },
-  { min: 10, multiplier: 4.0, label: 'TABLE LEGEND' },
-  { min: 15, multiplier: 5.0, label: 'TABLE MASTER' },
-];
-
-// VIP guests — gold crown, big tip, short fuse (unlocked at level 5)
-export const VIP_UNLOCK_LEVEL = 5;
-export const VIP_CHANCE = 0.10;
+// VIP guests — gold crown, big tip, short fuse
+export const VIP_CHANCE = 0.14;
 export const VIP_PAY = 2.5;
 export const VIP_PATIENCE = 0.75;
 
-// Final rush — last 30 seconds pay double
-export const FINAL_RUSH_AT = 30;
-export const FINAL_RUSH_MUL = 2;
-
-// Food critic — rare visitor (at most one per shift, level 7+). Impress them
-// with a FAST or LIGHTNING delivery for a rave review worth ×3.
-export const CRITIC_UNLOCK_LEVEL = 7;
-export const CRITIC_CHANCE = 0.08;
+// Food critic — impress with ≥85% hearts at payment for a rave review
+export const CRITIC_CHANCE = 0.3;   // rolled once per level (levels that allow it)
 export const CRITIC_PAY = 3;
+export const CRITIC_RAVE_HEARTS = 0.85;
 
-// Tray capacity by player level (real, implemented unlocks)
-export function trayCapacity(level: number): number {
-  return level >= 6 ? 3 : level >= 3 ? 2 : 1;
-}
-
-// Upgrade shop — every shift's score banks into a persistent wallet, spent on
+// Upgrade shop — every level's score banks into a persistent wallet, spent on
 // three tracks that really change the simulation (see ProgressionSystem.getBoosts).
 export type UpgradeId = 'shoes' | 'stove' | 'decor';
 export interface UpgradeTrack {
@@ -110,12 +98,6 @@ export const UPGRADE_TRACKS: UpgradeTrack[] = [
   { id: 'stove', name: 'Pro Stove',   emoji: '🔥', desc: '−8% cooking time per tier',   effectPerTier: 0.08, costs: [1000, 2400, 5000, 9000, 15000] },
   { id: 'decor', name: 'Cozy Décor',  emoji: '🪴', desc: '+8% guest patience per tier', effectPerTier: 0.08, costs: [900, 2200, 4800, 8800, 14500] },
 ];
-
-// Star thresholds for the end-of-shift rating.
-// Calibrated against a perfect-play bot (~$9,900): 3★ demands sustained combos,
-// 2★ rewards a clean but unhurried shift.
-export const STAR_2 = 2600;
-export const STAR_3 = 5200;
 
 export function fmtScore(n: number): string {
   return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');

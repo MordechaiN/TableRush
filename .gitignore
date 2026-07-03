@@ -6,3 +6,4 @@ dist/
 
 # playtest harness output
 qa/shots/
+qa/shots-human/

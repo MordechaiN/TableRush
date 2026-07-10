@@ -17,8 +17,11 @@ async function shots(name, viewport, steps) {
   const page = await browser.newPage({ viewport });
   page.on('console', m => { if (m.type() === 'error') errors.push(`[${name}] ${m.text()}`); });
   page.on('pageerror', e => errors.push(`[${name}] PAGEERROR: ${e.message}`));
-  await page.goto('http://localhost:3000/');
+  await page.goto(process.env.PLAYTEST_URL ?? 'http://localhost:3000/');
   await page.waitForTimeout(2500);
+  await page.evaluate(() => localStorage.setItem('tablerush_tutorial_done', '1'));
+  await page.reload();
+  await page.waitForTimeout(2200);
   await page.screenshot({ path: `${OUT}/${name}_title.png` });
   await page.click('#tt-play');
   await page.waitForTimeout(2200);
@@ -32,8 +35,8 @@ async function shots(name, viewport, steps) {
   await page.close();
 }
 
-await shots('portrait', { width: 390, height: 844 }, 14);
-await shots('landscape', { width: 1280, height: 800 }, 14);
+await shots('portrait', { width: 390, height: 844 }, 26);
+await shots('landscape', { width: 1280, height: 800 }, 26);
 await browser.close();
 if (errors.length) { console.error('ERRORS:\n' + errors.join('\n')); process.exit(1); }
 console.log('ok');

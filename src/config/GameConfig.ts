@@ -67,9 +67,9 @@ export const LEVELS: LevelDef[] = [
   { id: 3, name: 'Pizza Party',    customers: 16, spawnMin: 4.2, spawnMax: 6.5, heartsSeconds: 46, eatTime: 2.8, goal: 900,  expert: 1850, dishes: [0, 1, 2, 4],             vip: true,  critic: false },
   { id: 4, name: 'Sushi Rush',     customers: 20, spawnMin: 3.6, spawnMax: 5.6, heartsSeconds: 40, eatTime: 2.6, goal: 1150, expert: 2350, dishes: [0, 1, 2, 3, 4],          vip: true,  critic: false },
   { id: 5, name: 'Sweet & Sour',   customers: 22, spawnMin: 3.6, spawnMax: 5.4, heartsSeconds: 36, eatTime: 2.4, goal: 1250, expert: 2500, dishes: [0, 1, 2, 3, 4, 5],       vip: true,  critic: true  },
-  { id: 6, name: 'Noodle Fever',   customers: 24, spawnMin: 3.8, spawnMax: 5.6, heartsSeconds: 34, eatTime: 2.3, goal: 1450, expert: 2900, dishes: [1, 2, 3, 4, 6],          vip: true,  critic: false },
+  { id: 6, name: 'Noodle Fever',   customers: 24, spawnMin: 4.0, spawnMax: 5.8, heartsSeconds: 34, eatTime: 2.3, goal: 1350, expert: 2700, dishes: [1, 2, 3, 4, 6],          vip: true,  critic: false },
   { id: 7, name: 'Prime Time',     customers: 26, spawnMin: 3.7, spawnMax: 5.4, heartsSeconds: 33, eatTime: 2.2, goal: 1650, expert: 3300, dishes: [1, 3, 4, 5, 6, 7],       vip: true,  critic: true  },
-  { id: 8, name: 'Full House',     customers: 28, spawnMin: 3.6, spawnMax: 5.2, heartsSeconds: 31, eatTime: 2.1, goal: 1800, expert: 3700, dishes: [0, 1, 2, 3, 4, 5, 6, 7], vip: true,  critic: true  },
+  { id: 8, name: 'Full House',     customers: 28, spawnMin: 3.8, spawnMax: 5.4, heartsSeconds: 31, eatTime: 2.1, goal: 1700, expert: 3500, dishes: [0, 1, 2, 3, 4, 5, 6, 7], vip: true,  critic: true  },
 ];
 
 // Hearts decay multipliers per waiting phase (1 = the level's base rate)

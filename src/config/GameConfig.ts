@@ -22,6 +22,8 @@ export const MENU_ITEMS: MenuItem[] = [
   { id: 3, name: 'Sushi',  emoji: '🍣', price: 19, cookTime: 4.6 },
   { id: 4, name: 'Pizza',  emoji: '🍕', price: 16, cookTime: 5.8 },
   { id: 5, name: 'Cake',   emoji: '🍰', price: 24, cookTime: 6.4 },
+  { id: 6, name: 'Ramen',  emoji: '🍜', price: 17, cookTime: 4.0 },
+  { id: 7, name: 'Steak',  emoji: '🥩', price: 26, cookTime: 6.8 },
 ];
 
 export type Accessory = 'none' | 'glasses' | 'sunglasses' | 'cap' | 'flower' | 'bow';
@@ -44,6 +46,7 @@ export const CUSTOMER_VARIANTS: Archetype[] = [
 // goal, not a timer. Win by reaching `goal`; `expert` is the 3-star line.
 export interface LevelDef {
   id: number;
+  name: string;               // shown on the level card
   customers: number;          // guests that arrive over the level
   spawnMin: number; spawnMax: number;
   heartsSeconds: number;      // seconds for a full 5-heart drain while waiting
@@ -54,11 +57,14 @@ export interface LevelDef {
   critic: boolean;            // the food critic may visit
 }
 export const LEVELS: LevelDef[] = [
-  { id: 1, customers: 8,  spawnMin: 6.0, spawnMax: 8.5, heartsSeconds: 60, eatTime: 3.2, goal: 500,  expert: 1000, dishes: [0, 1],          vip: false, critic: false },
-  { id: 2, customers: 12, spawnMin: 5.0, spawnMax: 7.5, heartsSeconds: 52, eatTime: 3.0, goal: 950,  expert: 1700, dishes: [0, 1, 2],       vip: false, critic: false },
-  { id: 3, customers: 16, spawnMin: 4.2, spawnMax: 6.5, heartsSeconds: 46, eatTime: 2.8, goal: 1500, expert: 2600, dishes: [0, 1, 2, 4],    vip: true,  critic: false },
-  { id: 4, customers: 20, spawnMin: 3.6, spawnMax: 5.6, heartsSeconds: 40, eatTime: 2.6, goal: 2200, expert: 3600, dishes: [0, 1, 2, 3, 4], vip: true,  critic: false },
-  { id: 5, customers: 24, spawnMin: 3.0, spawnMax: 4.8, heartsSeconds: 35, eatTime: 2.4, goal: 3000, expert: 4800, dishes: [0, 1, 2, 3, 4, 5], vip: true, critic: true },
+  { id: 1, name: 'First Shift',    customers: 8,  spawnMin: 6.0, spawnMax: 8.5, heartsSeconds: 60, eatTime: 3.2, goal: 500,  expert: 1000, dishes: [0, 1],                   vip: false, critic: false },
+  { id: 2, name: 'Pasta Night',    customers: 12, spawnMin: 5.0, spawnMax: 7.5, heartsSeconds: 52, eatTime: 3.0, goal: 950,  expert: 1700, dishes: [0, 1, 2],                vip: false, critic: false },
+  { id: 3, name: 'Pizza Party',    customers: 16, spawnMin: 4.2, spawnMax: 6.5, heartsSeconds: 46, eatTime: 2.8, goal: 1500, expert: 2600, dishes: [0, 1, 2, 4],             vip: true,  critic: false },
+  { id: 4, name: 'Sushi Rush',     customers: 20, spawnMin: 3.6, spawnMax: 5.6, heartsSeconds: 40, eatTime: 2.6, goal: 2200, expert: 3600, dishes: [0, 1, 2, 3, 4],          vip: true,  critic: false },
+  { id: 5, name: 'Sweet & Sour',   customers: 24, spawnMin: 3.0, spawnMax: 4.8, heartsSeconds: 35, eatTime: 2.4, goal: 3000, expert: 4800, dishes: [0, 1, 2, 3, 4, 5],       vip: true,  critic: true  },
+  { id: 6, name: 'Noodle Fever',   customers: 27, spawnMin: 2.8, spawnMax: 4.4, heartsSeconds: 33, eatTime: 2.3, goal: 3600, expert: 5700, dishes: [1, 2, 3, 4, 6],          vip: true,  critic: false },
+  { id: 7, name: 'Prime Time',     customers: 30, spawnMin: 2.7, spawnMax: 4.2, heartsSeconds: 31, eatTime: 2.2, goal: 4300, expert: 6800, dishes: [1, 3, 4, 5, 6, 7],       vip: true,  critic: true  },
+  { id: 8, name: 'Full House',     customers: 34, spawnMin: 2.5, spawnMax: 3.9, heartsSeconds: 29, eatTime: 2.1, goal: 5200, expert: 8200, dishes: [0, 1, 2, 3, 4, 5, 6, 7], vip: true,  critic: true  },
 ];
 
 // Hearts decay multipliers per waiting phase (1 = the level's base rate)
@@ -81,22 +87,23 @@ export const VIP_PAY = 2.5;
 export const VIP_PATIENCE = 0.75;
 
 // Food critic — impress with ≥85% hearts at payment for a rave review
-export const CRITIC_CHANCE = 0.3;   // rolled once per level (levels that allow it)
+export const CRITIC_CHANCE = 0.5;   // rolled once per level (levels that allow it)
 export const CRITIC_PAY = 3;
 export const CRITIC_RAVE_HEARTS = 0.85;
 
 // Upgrade shop — every level's score banks into a persistent wallet, spent on
-// three tracks that really change the simulation (see ProgressionSystem.getBoosts).
-export type UpgradeId = 'shoes' | 'stove' | 'decor';
+// four tracks that really change the simulation (see ProgressionSystem.getBoosts).
+export type UpgradeId = 'shoes' | 'stove' | 'decor' | 'charm';
 export interface UpgradeTrack {
   id: UpgradeId; name: string; emoji: string; desc: string;
   effectPerTier: number; // multiplier step per tier
   costs: number[];       // cost of tier 1..N
 }
 export const UPGRADE_TRACKS: UpgradeTrack[] = [
-  { id: 'shoes', name: 'Swift Shoes', emoji: '👟', desc: '+8% waiter speed per tier',   effectPerTier: 0.08, costs: [800, 2000, 4500, 8500, 14000] },
-  { id: 'stove', name: 'Pro Stove',   emoji: '🔥', desc: '−8% cooking time per tier',   effectPerTier: 0.08, costs: [1000, 2400, 5000, 9000, 15000] },
-  { id: 'decor', name: 'Cozy Décor',  emoji: '🪴', desc: '+8% guest patience per tier', effectPerTier: 0.08, costs: [900, 2200, 4800, 8800, 14500] },
+  { id: 'shoes', name: 'Swift Shoes',   emoji: '👟', desc: '+8% waiter speed per tier',   effectPerTier: 0.08, costs: [800, 2000, 4500, 8500, 14000] },
+  { id: 'stove', name: 'Pro Stove',     emoji: '🔥', desc: '−8% cooking time per tier',   effectPerTier: 0.08, costs: [1000, 2400, 5000, 9000, 15000] },
+  { id: 'decor', name: 'Cozy Décor',    emoji: '🪴', desc: '+8% guest patience per tier', effectPerTier: 0.08, costs: [900, 2200, 4800, 8800, 14500] },
+  { id: 'charm', name: 'Warm Welcome',  emoji: '😊', desc: '+6% tips per tier',           effectPerTier: 0.06, costs: [1200, 2800, 5500, 9500, 16000] },
 ];
 
 export function fmtScore(n: number): string {

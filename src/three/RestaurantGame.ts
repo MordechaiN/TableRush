@@ -9,11 +9,12 @@ import {
 import {
   M, G, shadows, DISH_EMOJI, chibi, Chibi,
   poseSit, poseStand, poseCarry, makeBubble, Bubble, numberSprite,
-  woodFloorTexture, signTexture,
+  woodFloorTexture, signTexture, ginghamTexture, rugTexture, wallArtTexture,
 } from './builders';
 import { Effects } from './effects';
 import { Kitchen, Ticket } from './kitchen';
 import { SoundManager } from '../systems/SoundManager';
+import { Prefs } from '../systems/Prefs';
 
 // ── Types shared with the UI layer ────────────────────────────────────────────
 export type AnnounceKind = 'chain' | 'tut' | 'vip' | 'level';
@@ -33,9 +34,13 @@ export interface GameCallbacks {
   onAnnounce: (text: string, kind: AnnounceKind) => void;
   onFlash: (kind: 'gold' | 'chain' | 'red') => void;
   onCoinFly: (x: number, y: number, n: number) => void;
+  /** Tap feedback ripple at screen coords; hit = the tap did something. */
+  onTap: (x: number, y: number, hit: boolean) => void;
+  /** Tutorial pointer hand — screen coords of the suggested tap, or null to hide. */
+  onHint: (x: number, y: number, visible: boolean) => void;
 }
 /** Multipliers from purchased upgrades (ProgressionSystem.getBoosts). */
-export interface Boosts { speed: number; cook: number; patience: number; }
+export interface Boosts { speed: number; cook: number; patience: number; tip: number; }
 
 // ── Simulation types ──────────────────────────────────────────────────────────
 type Phase =
@@ -72,13 +77,13 @@ export interface Hotspot { kind: 'guest' | 'plate' | 'table'; idx: number; x: nu
 
 // ── Layout (portrait-first) ───────────────────────────────────────────────────
 const TABLE_XZ: [number, number][] = [[-2.05, -2.55], [2.05, -2.55], [-2.05, 0.7], [2.05, 0.7], [-2.05, 3.95]];
-const DOOR = new THREE.Vector3(0.4, 0, 11.5);
-const MAT = new THREE.Vector3(0.4, 0, 6.9);
+const DOOR = new THREE.Vector3(0.4, 0, 9.9);
+const MAT = new THREE.Vector3(0.4, 0, 6.4);
 const QUEUE_X = [-1.35, -0.2, 0.95, 2.1];
-const QUEUE_Z = 6.55;
+const QUEUE_Z = 6.0;
 const WAITER_HOME = new THREE.Vector3(2.4, 0, 4.6);
 const BIN = new THREE.Vector3(-3.4, 0, -4.7);
-const LOOK = new THREE.Vector3(0, 0.8, 0.2);
+const LOOK = new THREE.Vector3(0, 0.8, -0.2);
 // Gameplay-critical points the camera must keep on screen at any aspect ratio
 const FIT_POINTS: [number, number, number][] = [
   [-2.9, 3.5, -2.55], [2.9, 3.5, -2.55],
@@ -86,7 +91,7 @@ const FIT_POINTS: [number, number, number][] = [
   [-2.9, 3.5, 3.95],
   [-3.9, 2.9, -5.85], [4.4, 1.3, -5.85],
   [-2.5, 3.1, -8.05], [0.3, 3.1, -8.05],
-  [-2.3, 3.1, 6.55], [3.1, 3.1, 6.55],   // the waiting line + its bubbles
+  [-2.3, 3.0, 6.0], [3.1, 3.0, 6.0],   // the waiting line + its bubbles
 ];
 
 const SKINS = [0xFAD2B0, 0xE9B891, 0xF3C19E, 0xEFCBA8, 0xF5C9A0, 0xF3C19E, 0xFAD2B0];
@@ -147,11 +152,25 @@ export class RestaurantGame {
   private arrow!: THREE.Group;
   private arrowMat!: THREE.MeshBasicMaterial;
 
+  // living-restaurant set pieces
+  private stoveLight!: THREE.PointLight;
+  private clockHand!: THREE.Mesh;
+  private washer!: Chibi;
+  private washT = 0;          // >0 while the dish washer is scrubbing
+  private doorL!: THREE.Mesh;
+  private doorR!: THREE.Mesh;
+  private doorOpen = 0;       // 0 closed … 1 swung open
+  private hudAcc = 0;         // HUD refresh throttle
+  private dustAcc = 0;        // distance since the waiter's last footstep puff
+  private hintAcc = 0;        // tutorial hand refresh throttle
+  private hintShown = false;
+  private reduceMotion = !Prefs.motion;
+
   constructor(
     private container: HTMLElement,
     private cbs: GameCallbacks,
     private level: LevelDef,
-    private boosts: Boosts = { speed: 1, cook: 1, patience: 1 },
+    private boosts: Boosts = { speed: 1, cook: 1, patience: 1, tip: 1 },
   ) {
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
     this.renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
@@ -161,8 +180,8 @@ export class RestaurantGame {
     this.renderer.domElement.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;display:block;z-index:1;';
     container.appendChild(this.renderer.domElement);
 
-    this.scene.background = new THREE.Color(0xF6E3BC);
-    this.scene.fog = new THREE.Fog(0xF6E3BC, 30, 62);
+    this.scene.background = new THREE.Color(0xFBEACB);
+    this.scene.fog = new THREE.Fog(0xFBEACB, 30, 62);
     this.camera = new THREE.PerspectiveCamera(50, 1, 0.1, 200);
     this.fitCam = new THREE.PerspectiveCamera(50, 1, 0.1, 200);
 
@@ -199,8 +218,8 @@ export class RestaurantGame {
 
   // ── world ────────────────────────────────────────────────────────────────
   private buildRoom() {
-    this.scene.add(new THREE.AmbientLight(0xfff1da, 0.6));
-    this.scene.add(new THREE.HemisphereLight(0xfff6e6, 0xE6A65A, 0.6));
+    this.scene.add(new THREE.AmbientLight(0xfff1da, 0.66));
+    this.scene.add(new THREE.HemisphereLight(0xfff6e6, 0xE8B36A, 0.62));
     const key = new THREE.DirectionalLight(0xffffff, 1.15);
     key.position.set(6, 14, 8); key.castShadow = true;
     key.shadow.mapSize.set(1024, 1024); key.shadow.bias = -0.0005;
@@ -209,47 +228,82 @@ export class RestaurantGame {
     this.scene.add(key);
     const dine = new THREE.PointLight(0xFFD27A, 0.5, 26); dine.position.set(0, 7.5, 1); this.scene.add(dine);
     const pass = new THREE.PointLight(0xFFB347, 0.5, 16); pass.position.set(0, 4.5, -6.5); this.scene.add(pass);
+    // stove glow — brightens with every pan that's actively cooking
+    this.stoveLight = new THREE.PointLight(0xFF8A3D, 0, 10);
+    this.stoveLight.position.set(-1.1, 2.6, -7.6); this.scene.add(this.stoveLight);
 
     const floor = new THREE.Mesh(G('floor', () => new THREE.PlaneGeometry(46, 46)), new THREE.MeshStandardMaterial({ map: woodFloorTexture(), roughness: 0.85 }));
     floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; this.scene.add(floor);
-    const rug = new THREE.Mesh(G('rug', () => new THREE.CircleGeometry(6.4, 40)), M(0xD98A54, { roughness: 0.95 }));
+    const rug = new THREE.Mesh(G('rug', () => new THREE.CircleGeometry(6.4, 40)), new THREE.MeshStandardMaterial({ map: rugTexture(), roughness: 0.95 }));
     rug.rotation.x = -Math.PI / 2; rug.position.set(0, 0.012, 0.6); rug.receiveShadow = true; this.scene.add(rug);
-    const rugRim = new THREE.Mesh(G('rugRim', () => new THREE.RingGeometry(5.9, 6.4, 40)), M(0xB86A38, { roughness: 0.95 }));
-    rugRim.rotation.x = -Math.PI / 2; rugRim.position.set(0, 0.013, 0.6); this.scene.add(rugRim);
 
-    const wall = new THREE.Mesh(G('wallB', () => new THREE.PlaneGeometry(46, 20)), M(0xF3DBBA, { roughness: 1 }));
+    const wall = new THREE.Mesh(G('wallB', () => new THREE.PlaneGeometry(46, 20)), M(0xF7E3C4, { roughness: 1 }));
     wall.position.set(0, 10, -9); wall.receiveShadow = true; this.scene.add(wall);
-    const wains = new THREE.Mesh(G('wains', () => new THREE.BoxGeometry(46, 2.6, 0.25)), M(0xC98B4E));
+    const wains = new THREE.Mesh(G('wains', () => new THREE.BoxGeometry(46, 2.6, 0.25)), M(0xD09A5C));
     wains.position.set(0, 1.3, -8.9); this.scene.add(wains);
     for (const sx of [-1, 1]) {
-      const sw = new THREE.Mesh(G('wallS', () => new THREE.PlaneGeometry(40, 20)), M(0xEFD0A6, { roughness: 1 }));
+      const sw = new THREE.Mesh(G('wallS', () => new THREE.PlaneGeometry(40, 20)), M(0xF3D8B0, { roughness: 1 }));
       sw.position.set(sx * 11, 10, 3); sw.rotation.y = -sx * Math.PI / 2; this.scene.add(sw);
       for (const wz of [-3, 3.5]) {
         const fr = new THREE.Mesh(G('winF', () => new THREE.BoxGeometry(0.25, 3.4, 4.2)), M(0x9A6534));
         fr.position.set(sx * 10.9, 4.2, wz); this.scene.add(fr);
-        const gl = new THREE.Mesh(G('winG', () => new THREE.PlaneGeometry(3.6, 2.9)), M(0xBFE6F4, { emissive: 0x9fd0e8, emissiveIntensity: 0.55, roughness: 0.3 }));
+        const gl = new THREE.Mesh(G('winG', () => new THREE.PlaneGeometry(3.6, 2.9)), M(0xCBEAF6, { emissive: 0xaddcf0, emissiveIntensity: 0.6, roughness: 0.3 }));
         gl.position.set(sx * 10.75, 4.2, wz); gl.rotation.y = -sx * Math.PI / 2; this.scene.add(gl);
       }
     }
 
-    const beam = new THREE.Mesh(G('beam', () => new THREE.BoxGeometry(22, 0.55, 0.8)), M(0x8A5A2A));
+    // framed café art + a ticking wall clock on the side walls
+    const arts: { e: string; f: string; x: number; z: number; s: number }[] = [
+      { e: '🍕', f: '#C0552F', x: -1, z: 0.4, s: 1 },
+      { e: '🥗', f: '#5B8C3E', x: -1, z: 5.6, s: 1 },
+      { e: '☕', f: '#8A5A2A', x: 1, z: 1.6, s: 1 },
+    ];
+    for (const a of arts) {
+      const art = new THREE.Mesh(G('art', () => new THREE.PlaneGeometry(1.7, 2.0)), new THREE.MeshBasicMaterial({ map: wallArtTexture(a.e, a.f) }));
+      art.position.set(a.x * 10.85, 4.6, a.z); art.rotation.y = -a.x * Math.PI / 2; this.scene.add(art);
+    }
+    const clockG = new THREE.Group();
+    const clockFace = new THREE.Mesh(G('clockF', () => new THREE.CylinderGeometry(0.62, 0.62, 0.08, 28)), M(0xFDF6E8, { roughness: 0.5 }));
+    clockFace.rotation.z = Math.PI / 2; clockG.add(clockFace);
+    const clockRim = new THREE.Mesh(G('clockR', () => new THREE.TorusGeometry(0.62, 0.07, 10, 28)), M(0x8A5A2A));
+    clockRim.rotation.y = Math.PI / 2; clockG.add(clockRim);
+    this.clockHand = new THREE.Mesh(G('clockH', () => new THREE.BoxGeometry(0.02, 0.05, 0.46)), M(0xE8442C));
+    this.clockHand.position.x = 0.06; clockG.add(this.clockHand);
+    const clockHr = new THREE.Mesh(G('clockH2', () => new THREE.BoxGeometry(0.03, 0.06, 0.3)), M(0x4A3524));
+    clockHr.position.set(0.055, 0, -0.08); clockHr.rotation.x = 2.2; clockG.add(clockHr);
+    clockG.position.set(10.85, 5.2, 4.9); clockG.rotation.y = -Math.PI / 2;
+    this.scene.add(clockG);
+
+    const beam = new THREE.Mesh(G('beam', () => new THREE.BoxGeometry(22, 0.55, 0.8)), M(0x9A6534));
     beam.position.set(0, 6.2, -5.85); this.scene.add(beam);
 
-    const bulbGeo = G('bulb', () => new THREE.SphereGeometry(0.09, 8, 6));
-    const bulbMat = new THREE.MeshStandardMaterial({ color: 0xFFE9A8, emissive: 0xFFC96B, emissiveIntensity: 1.2, roughness: 0.4 });
+    // string lights: catenary cords with warm bulbs
     const strands: [number, number][] = [[-1.2, 5.4], [2.6, 5.6]];
+    const bulbGeo = G('bulb', () => new THREE.SphereGeometry(0.1, 8, 6));
+    const bulbMat = new THREE.MeshStandardMaterial({ color: 0xFFE9A8, emissive: 0xFFC96B, emissiveIntensity: 1.35, roughness: 0.4 });
     const bulbs = new THREE.InstancedMesh(bulbGeo, bulbMat, strands.length * 15);
     let bi = 0; const im = new THREE.Matrix4();
     for (const [sz, sy] of strands) {
+      const pts: THREE.Vector3[] = [];
+      for (let k = 0; k <= 28; k++) {
+        const f = k / 28;
+        pts.push(new THREE.Vector3(-9 + f * 18, sy + 1.25 - Math.sin(f * Math.PI) * 1.1, sz));
+      }
+      const cord = new THREE.Mesh(
+        new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 30, 0.022, 5),
+        M(0x6E4A28, { roughness: 0.9 }),
+      );
+      this.scene.add(cord);
       for (let k = 0; k < 15; k++) {
-        const f = k / 14;
-        im.setPosition(-9 + f * 18, sy + 1.1 - Math.sin(f * Math.PI) * 1.1, sz);
+        const f = (k + 0.5) / 15;
+        im.setPosition(-9 + f * 18, sy + 1.17 - Math.sin(f * Math.PI) * 1.1, sz);
         bulbs.setMatrixAt(bi++, im);
       }
     }
     this.scene.add(bulbs);
 
-    // entrance: doormat, velvet-rope waiting line
+    // entrance: swinging doors, doormat, velvet-rope waiting line
+    this.buildDoor();
     const mat = new THREE.Mesh(G('mat', () => new THREE.BoxGeometry(4.6, 0.05, 1.9)), M(0xB33A22, { roughness: 0.95 }));
     mat.position.set(MAT.x, 0.025, MAT.z); this.scene.add(mat);
     for (const rx of [-2.6, 3.4]) {
@@ -271,19 +325,56 @@ export class RestaurantGame {
     tub.position.set(BIN.x, 0.9, -5.4); this.scene.add(shadows(tub));
     const tubSign = new THREE.Mesh(G('tubSign', () => new THREE.PlaneGeometry(1.5, 0.55)), new THREE.MeshBasicMaterial({ map: signTexture('DISHES', { bg: '#4A5560' }), transparent: true }));
     tubSign.position.set(BIN.x, 1.85, -5.2); this.scene.add(tubSign);
+
+    // the dish washer — scrubs whenever the waiter dumps a tub of dishes
+    this.washer = chibi({ skin: 0xE9B891, outfit: 0x4A6FA5, hair: 0x2C1810 });
+    this.washer.g.position.set(BIN.x - 0.9, 0, -5.35);
+    this.washer.g.rotation.y = Math.PI / 2.4;
+    this.washer.g.scale.setScalar(0.94);
+    this.scene.add(this.washer.g);
+  }
+
+  /** Saloon-style double doors that swing whenever a guest walks through. */
+  private buildDoor() {
+    const frameMat = M(0x9A6534, { roughness: 0.7 });
+    for (const sx of [-1.35, 1.35]) {
+      const post = new THREE.Mesh(G('doorPost', () => new THREE.BoxGeometry(0.22, 3.4, 0.22)), frameMat);
+      post.position.set(DOOR.x + sx, 1.7, DOOR.z); this.scene.add(shadows(post));
+    }
+    const lintel = new THREE.Mesh(G('doorTop', () => new THREE.BoxGeometry(2.95, 0.3, 0.3)), frameMat);
+    lintel.position.set(DOOR.x, 3.35, DOOR.z); this.scene.add(shadows(lintel));
+    const sign = new THREE.Mesh(G('openSign', () => new THREE.PlaneGeometry(1.7, 0.62)), new THREE.MeshBasicMaterial({ map: signTexture('OPEN', { bg: '#B33A22' }), transparent: true }));
+    sign.position.set(DOOR.x, 3.95, DOOR.z); this.scene.add(sign);
+    const panelGeo = G('doorPanel', () => {
+      const g = new THREE.BoxGeometry(1.16, 2.0, 0.09);
+      g.translate(0.58, 0, 0); // hinge on the left edge
+      return g;
+    });
+    const panelMat = M(0xC9762F, { roughness: 0.6 });
+    this.doorL = new THREE.Mesh(panelGeo, panelMat);
+    this.doorL.position.set(DOOR.x - 1.22, 1.35, DOOR.z);
+    this.doorR = new THREE.Mesh(panelGeo, panelMat);
+    this.doorR.position.set(DOOR.x + 1.22, 1.35, DOOR.z);
+    this.doorR.rotation.y = Math.PI; // mirrored: hinge on the right
+    this.scene.add(shadows(this.doorL), shadows(this.doorR));
   }
 
   private buildTables() {
+    const clothMat = new THREE.MeshStandardMaterial({ map: ginghamTexture(), roughness: 0.8 });
     for (let i = 0; i < TABLE_XZ.length; i++) {
       const [tx, tz] = TABLE_XZ[i];
       const pos = new THREE.Vector3(tx, 0, tz);
       const g = new THREE.Group(); g.position.copy(pos);
-      const topWood = new THREE.Mesh(G('tTop', () => new THREE.CylinderGeometry(1.0, 0.95, 0.16, 32)), M(0x9B5A2B)); topWood.position.y = 0.92; g.add(topWood);
-      const cloth = new THREE.Mesh(G('tCloth', () => new THREE.CylinderGeometry(0.92, 0.86, 0.06, 32)), M(0xF7F0E2, { roughness: 0.8 })); cloth.position.y = 1.02; g.add(cloth);
+      const topWood = new THREE.Mesh(G('tTop', () => new THREE.CylinderGeometry(1.02, 0.97, 0.16, 32)), M(0x9B5A2B)); topWood.position.y = 0.92; g.add(topWood);
+      const cloth = new THREE.Mesh(G('tCloth', () => new THREE.CylinderGeometry(0.94, 0.88, 0.06, 32)), clothMat); cloth.position.y = 1.02; g.add(cloth);
       const post = new THREE.Mesh(G('tPost', () => new THREE.CylinderGeometry(0.12, 0.14, 0.85, 12)), M(0x6E3F1E)); post.position.y = 0.48; g.add(post);
       const base = new THREE.Mesh(G('tBase', () => new THREE.CylinderGeometry(0.5, 0.56, 0.1, 20)), M(0x5A3318)); base.position.y = 0.06; g.add(base);
-      const seat = new THREE.Mesh(G('tSeat', () => new THREE.CylinderGeometry(0.36, 0.36, 0.12, 18)), M(0xC9762F)); seat.position.set(0, 0.56, -1.35); g.add(seat);
-      const back = new THREE.Mesh(G('tBack', () => new THREE.BoxGeometry(0.62, 0.62, 0.12)), M(0xB5651C)); back.position.set(0, 0.92, -1.68); g.add(back);
+      const seat = new THREE.Mesh(G('tSeat', () => new THREE.CylinderGeometry(0.38, 0.38, 0.14, 18)), M(0xD8804A)); seat.position.set(0, 0.56, -1.42); g.add(seat);
+      const back = new THREE.Mesh(G('tBack', () => new THREE.BoxGeometry(0.7, 0.78, 0.12)), M(0xC06A3A)); back.position.set(0, 1.0, -1.76); g.add(back);
+      for (const lx of [-0.26, 0.26]) {
+        const leg = new THREE.Mesh(G('tLeg', () => new THREE.CylinderGeometry(0.045, 0.055, 0.52, 8)), M(0x6E3F1E));
+        leg.position.set(lx, 0.26, -1.42); g.add(leg);
+      }
       const vase = new THREE.Mesh(G('vase', () => new THREE.CylinderGeometry(0.06, 0.08, 0.18, 10)), M(0xE8E2D4)); vase.position.set(0.42, 1.14, -0.3); g.add(vase);
       const bloom = new THREE.Mesh(G('bloom', () => new THREE.SphereGeometry(0.09, 8, 6)), M(0xE86A8A)); bloom.position.set(0.42, 1.3, -0.3); g.add(bloom);
       this.scene.add(shadows(g));
@@ -299,7 +390,7 @@ export class RestaurantGame {
 
       this.tables.push({
         i, pos,
-        chair: new THREE.Vector3(tx, 0, tz - 1.35),
+        chair: new THREE.Vector3(tx, 0, tz - 1.42),
         approach: new THREE.Vector3(tx, 0, tz + 1.6),
         state: 'clean', guest: null, food: null, dirty: null, ring,
       });
@@ -322,7 +413,7 @@ export class RestaurantGame {
     this.camera.aspect = aspect; this.camera.updateProjectionMatrix();
     this.fitCam.aspect = aspect; this.fitCam.fov = this.camera.fov; this.fitCam.updateProjectionMatrix();
     const t = THREE.MathUtils.clamp((aspect - 0.65) / (1.35 - 0.65), 0, 1);
-    const elev = THREE.MathUtils.lerp(0.85, 0.60, t);
+    const elev = THREE.MathUtils.lerp(0.76, 0.58, t);
     this.camDir.set(0, Math.sin(elev), Math.cos(elev));
     let lo = 8, hi = 46;
     for (let i = 0; i < 22; i++) {
@@ -356,7 +447,7 @@ export class RestaurantGame {
     this.cbs.onAnnounce(`LEVEL ${this.level.id} — GOAL $${this.level.goal}`, 'level');
     cancelAnimationFrame(this.raf);
     this.loop(this.last);
-    try { SoundManager.startMusic(); } catch { /* audio optional */ }
+    try { SoundManager.startMusic(); SoundManager.startAmbience(); } catch { /* audio optional */ }
   }
 
   pause() { if (!this.running || this.over) return; this.running = false; cancelAnimationFrame(this.raf); }
@@ -407,6 +498,7 @@ export class RestaurantGame {
     };
     this.guests.push(guest);
     this.spawned++;
+    try { SoundManager.doorChime(); } catch { /* */ }
     if (vip) { this.cbs.onAnnounce('VIP GUEST!', 'vip'); }
     if (critic) { this.cbs.onAnnounce('FOOD CRITIC! Keep them happy 🖋', 'vip'); }
     if (this.spawned === this.level.customers) this.cbs.onAnnounce('LAST GUESTS!', 'level');
@@ -564,10 +656,12 @@ export class RestaurantGame {
     }
     const lim = Math.min(innerWidth, innerHeight) * 0.34;
     if (!best || bestD > lim) {
+      this.cbs.onTap(px, py, false);
       if (this.selected) this.select(null); // tap elsewhere = cancel selection
       else this.bump();
       return;
     }
+    this.cbs.onTap(px, py, true);
     this.execute(best);
   }
 
@@ -799,7 +893,8 @@ export class RestaurantGame {
       MENU_ITEMS[g.dish].price * 5
       * Math.max(MIN_TIP_FRAC, heartsFrac)
       * (g.vip ? VIP_PAY : 1)
-      * (rave ? CRITIC_PAY : 1),
+      * (rave ? CRITIC_PAY : 1)
+      * this.boosts.tip,
     );
     this.score += tip;
     this.served++;
@@ -853,6 +948,7 @@ export class RestaurantGame {
       this.handL.remove(this.carriedDirty);
       this.carriedDirty = null;
       this.fx.steam(new THREE.Vector3(BIN.x, 1.4, -5.3), true);
+      this.washT = 2.4; // the dish washer gets to work
       try { SoundManager.dishwasher(); } catch { /* */ }
     }
     if (this.carried.length === 0) poseStand(this.waiter);
@@ -923,15 +1019,20 @@ export class RestaurantGame {
     const pk = punch ? Math.sin(punch.t * 60) * 0.12 * Math.max(0, 1 - punch.t * 5) : 0;
     const extra = this.camDist * 0.35 * (1 - ease);
     this.camera.position.copy(LOOK).addScaledVector(this.camDir, this.camDist + extra);
-    this.camera.position.x += Math.sin(now / 3200) * 0.4;
-    this.camera.position.y += Math.sin(now / 2600) * 0.18 + pk + (1 - ease) * 1.2;
+    if (!this.reduceMotion) {
+      this.camera.position.x += Math.sin(now / 3200) * 0.4;
+      this.camera.position.y += Math.sin(now / 2600) * 0.18 + pk;
+    }
+    this.camera.position.y += (1 - ease) * 1.2;
     this.camera.lookAt(LOOK);
 
     this.renderer.render(this.scene, this.camera);
   }
 
   private step(dt: number, now: number) {
-    this.emitHud();
+    // HUD refresh is throttled; score/guest changes emit immediately anyway
+    this.hudAcc += dt;
+    if (this.hudAcc >= 0.2) { this.hudAcc = 0; this.emitHud(); }
 
     // spawning into the waiting line
     if (this.spawned < this.level.customers) {
@@ -947,6 +1048,8 @@ export class RestaurantGame {
     this.kitchen.update(dt, now);
     try { SoundManager.setSizzle(this.kitchen.activeBurners()); } catch { /* */ }
     this.updateArrow(now);
+    this.updateSetPieces(dt, now);
+    this.updateHint(dt);
 
     // selection marker follows its guest
     if (this.selected) {
@@ -990,7 +1093,10 @@ export class RestaurantGame {
         this.nextStep();
       } else {
         this.tmp.normalize();
-        w.g.position.addScaledVector(this.tmp, Math.min(8.0 * this.boosts.speed * dt, d));
+        const stepLen = Math.min(8.0 * this.boosts.speed * dt, d);
+        w.g.position.addScaledVector(this.tmp, stepLen);
+        this.dustAcc += stepLen;
+        if (this.dustAcc > 1.2) { this.dustAcc = 0; this.fx.dust(w.g.position); }
         let dr = Math.atan2(this.tmp.x, this.tmp.z) - w.g.rotation.y;
         dr = Math.atan2(Math.sin(dr), Math.cos(dr));
         w.g.rotation.y += dr * Math.min(1, dt * 16);
@@ -1173,10 +1279,62 @@ export class RestaurantGame {
     } else this.arrow.visible = false;
   }
 
+  // door swing, dish washer, wall clock, stove glow — the restaurant breathes
+  private updateSetPieces(dt: number, now: number) {
+    let near = false;
+    for (const g of this.guests) {
+      const p = g.c.g.position;
+      if (Math.abs(p.x - DOOR.x) < 1.7 && Math.abs(p.z - DOOR.z) < 1.5) { near = true; break; }
+    }
+    const target = near ? 1 : 0;
+    this.doorOpen += (target - this.doorOpen) * Math.min(1, dt * (near ? 10 : 4));
+    const swing = this.doorOpen * 1.25;
+    this.doorL.rotation.y = swing;
+    this.doorR.rotation.y = Math.PI - swing;
+
+    if (this.washT > 0) {
+      this.washT -= dt;
+      this.washer.armR.rotation.x = -1.2 + Math.sin(now / 90) * 0.4;
+      this.washer.armL.rotation.x = -1.2 - Math.sin(now / 90) * 0.4;
+      this.washer.g.position.y = Math.abs(Math.sin(now / 180)) * 0.05;
+      if (Math.random() < dt * 3) this.fx.steam(this.tmp.set(BIN.x, 1.5, -5.35), false);
+      if (this.washT <= 0) { poseStand(this.washer); this.washer.g.position.y = 0; }
+    } else {
+      this.washer.g.position.y = Math.sin(now / 700) * 0.03;
+      this.washer.armR.rotation.x = Math.sin(now / 900) * 0.12 - 0.2;
+    }
+
+    this.clockHand.rotation.x = -(now / 60000) * Math.PI * 2;
+
+    const active = this.kitchen.activeBurners();
+    const glowTarget = active > 0 ? 0.35 + active * 0.18 + Math.sin(now / 70) * 0.08 : 0;
+    this.stoveLight.intensity += (glowTarget - this.stoveLight.intensity) * Math.min(1, dt * 6);
+  }
+
+  // tutorial pointer hand: hovers over the tap a new player should make next
+  private updateHint(dt: number) {
+    if (!this.tutorial) {
+      if (this.hintShown) { this.hintShown = false; this.cbs.onHint(0, 0, false); }
+      return;
+    }
+    this.hintAcc += dt;
+    if (this.hintAcc < 0.4) return;
+    this.hintAcc = 0;
+    const spots = this.hotspots();
+    const pri = ['collect', 'deliver', 'pickup', 'order', 'seat', 'clean', 'select'];
+    let best: Hotspot | null = null, bestP = 99;
+    for (const s of spots) {
+      const p = pri.indexOf(s.action);
+      if (p >= 0 && p < bestP) { bestP = p; best = s; }
+    }
+    if (best) { this.hintShown = true; this.cbs.onHint(best.x, best.y, true); }
+    else if (this.hintShown) { this.hintShown = false; this.cbs.onHint(0, 0, false); }
+  }
+
   private end() {
     this.running = false; this.over = true;
     cancelAnimationFrame(this.raf);
-    try { SoundManager.setSizzle(0); } catch { /* */ }
+    try { SoundManager.setSizzle(0); SoundManager.stopAmbience(); } catch { /* */ }
     const mid = Math.round((this.level.goal + this.level.expert) / 2);
     const stars = this.score >= this.level.expert ? 3 : this.score >= mid ? 2 : this.score >= this.level.goal ? 1 : 0;
     try { if (stars >= 1) SoundManager.roundEnd(); else SoundManager.comboLost(); } catch { /* */ }
@@ -1197,7 +1355,7 @@ export class RestaurantGame {
     this.stop();
     removeEventListener('resize', this.resize);
     this.renderer.domElement.removeEventListener('pointerdown', this.onPointer);
-    try { SoundManager.setSizzle(0); } catch { /* */ }
+    try { SoundManager.setSizzle(0); SoundManager.stopAmbience(); } catch { /* */ }
     this.renderer.dispose();
     this.renderer.forceContextLoss();
     this.renderer.domElement.remove();

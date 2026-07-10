@@ -19,6 +19,8 @@ interface Burner {
   bubble: Bubble;
   done: boolean;
   steamAcc: number;
+  flame: THREE.Mesh;
+  flameMat: THREE.MeshBasicMaterial;
 }
 interface Slot {
   pos: THREE.Vector3;
@@ -61,7 +63,12 @@ export class Kitchen {
       const bubble = makeBubble();
       bubble.spr.position.set(pos.x, pos.y + 1.15, pos.z); bubble.spr.scale.set(1.15, 1.15, 1); bubble.spr.visible = false;
       scene.add(bubble.spr);
-      this.burners.push({ pos, pan, content: null, ticket: null, t: 0, dur: 1, bubble, done: false, steamAcc: 0 });
+      // flame ring that flickers while this burner is cooking
+      const flameMat = new THREE.MeshBasicMaterial({ color: 0xFF8A3D, transparent: true, opacity: 0, depthWrite: false });
+      const flame = new THREE.Mesh(G('flame', () => new THREE.RingGeometry(0.3, 0.46, 18)), flameMat);
+      flame.rotation.x = -Math.PI / 2; flame.position.set(pos.x, pos.y - 0.012, pos.z);
+      scene.add(flame);
+      this.burners.push({ pos, pan, content: null, ticket: null, t: 0, dur: 1, bubble, done: false, steamAcc: 0, flame, flameMat });
     }
     const slotXs = [1.5, 2.6, 3.7].slice(0, SHELF_SLOTS);
     for (const sx of slotXs) {
@@ -92,23 +99,25 @@ export class Kitchen {
     const kick = new THREE.Mesh(G('kKick', () => new THREE.BoxGeometry(8.6, 0.18, 0.06)), M(0x9A5528));
     kick.position.set(0, 0.65, -5.06); s.add(kick);
 
-    // stove block against the back wall
-    const stove = new THREE.Mesh(G('kStove', () => new THREE.BoxGeometry(4.6, 1.5, 1.4)), M(0x8A8F98, { roughness: 0.35, metalness: 0.45 }));
+    // stove block against the back wall — warm cream enamel with steel top
+    const stove = new THREE.Mesh(G('kStove', () => new THREE.BoxGeometry(4.6, 1.5, 1.4)), M(0xEDE2CC, { roughness: 0.45, metalness: 0.15 }));
     stove.position.set(-1.1, 0.75, -8.1); s.add(shadows(stove));
-    const cooktop = new THREE.Mesh(G('kCooktop', () => new THREE.BoxGeometry(4.7, 0.08, 1.5)), M(0x2E3138, { roughness: 0.3, metalness: 0.3 }));
+    const cooktop = new THREE.Mesh(G('kCooktop', () => new THREE.BoxGeometry(4.7, 0.08, 1.5)), M(0x5A616E, { roughness: 0.3, metalness: 0.4 }));
     cooktop.position.set(-1.1, 1.53, -8.1); s.add(cooktop);
     for (const bx of [-2.5, -1.1, 0.3]) {
-      const burnerRing = new THREE.Mesh(G('kBurner', () => new THREE.CylinderGeometry(0.46, 0.46, 0.03, 20)), M(0x14161C, { roughness: 0.5 }));
+      const burnerRing = new THREE.Mesh(G('kBurner', () => new THREE.CylinderGeometry(0.46, 0.46, 0.03, 20)), M(0x2A2E36, { roughness: 0.5 }));
       burnerRing.position.set(bx, 1.58, -8.05); s.add(burnerRing);
     }
-    // hood + duct
-    const hood = new THREE.Mesh(G('kHood', () => new THREE.BoxGeometry(4.9, 0.8, 1.6)), M(0xB0662E, { roughness: 0.4, metalness: 0.5 }));
+    // copper hood + duct
+    const hood = new THREE.Mesh(G('kHood', () => new THREE.BoxGeometry(4.9, 0.8, 1.6)), M(0xC97B42, { roughness: 0.35, metalness: 0.55 }));
     hood.position.set(-1.1, 3.55, -8.2); s.add(shadows(hood));
-    const duct = new THREE.Mesh(G('kDuct', () => new THREE.BoxGeometry(1.2, 2.2, 1.0)), M(0x9A5A28, { roughness: 0.45, metalness: 0.5 }));
+    const hoodTrim = new THREE.Mesh(G('kHoodT', () => new THREE.BoxGeometry(4.95, 0.14, 1.65)), M(0xE8A05C, { roughness: 0.3, metalness: 0.6 }));
+    hoodTrim.position.set(-1.1, 3.2, -8.2); s.add(hoodTrim);
+    const duct = new THREE.Mesh(G('kDuct', () => new THREE.BoxGeometry(1.2, 2.2, 1.0)), M(0xC97B42, { roughness: 0.4, metalness: 0.55 }));
     duct.position.set(-1.1, 5.0, -8.3); s.add(duct);
 
     // fridge in the right-back corner
-    const fridge = new THREE.Mesh(G('kFridge', () => new THREE.BoxGeometry(1.5, 3.0, 1.3)), M(0xC8CDD6, { roughness: 0.3, metalness: 0.5 }));
+    const fridge = new THREE.Mesh(G('kFridge', () => new THREE.BoxGeometry(1.5, 3.0, 1.3)), M(0xD8DDE4, { roughness: 0.3, metalness: 0.5 }));
     fridge.position.set(3.3, 1.5, -8.15); s.add(shadows(fridge));
     const fHandle = new THREE.Mesh(G('kFH', () => new THREE.CylinderGeometry(0.04, 0.04, 1.0, 8)), M(0x6E7480));
     fHandle.position.set(2.75, 1.7, -7.45); s.add(fHandle);
@@ -129,7 +138,7 @@ export class Kitchen {
 
     // menu board on the back wall, left side
     const board = new THREE.Mesh(G('kBoard', () => new THREE.PlaneGeometry(2.1, 2.8)), new THREE.MeshBasicMaterial({ map: menuBoardTexture() }));
-    board.position.set(-3.55, 3.6, -8.93); s.add(board);
+    board.position.set(-4.4, 3.3, -8.93); s.add(board);
   }
 
   /** Where the waiter should stand to pick up a ready plate. */
@@ -223,6 +232,10 @@ export class Kitchen {
   update(dt: number, now: number) {
     // cooking progress
     for (const b of this.burners) {
+      const cooking = !!b.ticket && !b.done;
+      const flameTarget = cooking ? 0.55 + Math.sin(now / 55 + b.pos.x * 7) * 0.2 : 0;
+      b.flameMat.opacity += (flameTarget - b.flameMat.opacity) * Math.min(1, dt * 8);
+      if (cooking) b.flame.scale.setScalar(1 + Math.sin(now / 70 + b.pos.x * 3) * 0.1);
       if (!b.ticket) continue;
       if (!b.done) {
         b.t += dt;

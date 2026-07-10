@@ -21,6 +21,8 @@ function startLevel(levelId: number) {
     onAnnounce: (text, kind) => hud?.announce(text, kind),
     onFlash: (kind) => hud?.flash(kind),
     onCoinFly: (x, y, n) => hud?.coinFly(x, y, n),
+    onTap: (x, y, hit) => hud?.tapRipple(x, y, hit),
+    onHint: (x, y, visible) => hud?.hint(x, y, visible),
   }, level, ProgressionSystem.getBoosts());
   game.start(!ProgressionSystem.isTutorialDone());
   (window as unknown as { __game: RestaurantGame }).__game = game;
@@ -61,9 +63,19 @@ if (import.meta.env.PROD && 'serviceWorker' in navigator) {
   });
 }
 
-initTitle({
-  onPlay: () => startLevel(ProgressionSystem.getData().levelReached),
-  onShop: () => showShop(() => showTitle()),
-  onSettings: () => showSettings(() => { /* title stays */ }),
-  onCredits: () => showCredits(() => { /* title stays */ }),
+// Wait (briefly) for the display font so canvas-drawn signage uses it too.
+const fontsReady = 'fonts' in document
+  ? Promise.race([
+    document.fonts.load('800 64px "Baloo 2"').catch(() => undefined),
+    new Promise(res => setTimeout(res, 1200)),
+  ])
+  : Promise.resolve();
+
+fontsReady.then(() => {
+  initTitle({
+    onPlay: (levelId) => startLevel(levelId ?? ProgressionSystem.getData().levelReached),
+    onShop: () => showShop(() => showTitle()),
+    onSettings: () => showSettings(() => { /* title stays */ }),
+    onCredits: () => showCredits(() => { /* title stays */ }),
+  });
 });

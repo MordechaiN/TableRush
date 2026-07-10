@@ -3,7 +3,7 @@
 //
 // Vite fingerprints every asset (index-XXXX.js), so cache-first is safe:
 // new deploys produce new URLs, and CACHE_VERSION bumps clear stale shells.
-const CACHE_VERSION = 'tablerush-v3';
+const CACHE_VERSION = 'tablerush-v4';
 
 self.addEventListener('install', (e) => {
   e.waitUntil(self.skipWaiting());

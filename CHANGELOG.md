@@ -1,5 +1,64 @@
 # CHANGELOG
 
+## V1.1 — The Premium Polish update (2026-07-10)
+
+A full studio pass over presentation, feel, content and accessibility —
+the same Diner-Dash loop, now dressed for launch.
+
+### Look & identity
+- **Real display type**: Baloo 2 (variable, self-hosted, OFL) replaces Arial
+  Black everywhere — logo, HUD, buttons, canvas-drawn signage and price tags.
+- **The waiter is the mascot**: he waves from a podium on the title screen
+  while the menu's dishes orbit behind him. The metal cloche is gone.
+- **Faces that read**: every character got a protruding face, eyes that clear
+  the hairline, and a smile. Bodies are taller so they read from the steep
+  portrait camera.
+- **Warm, cohesive room**: red-gingham tablecloths, a patterned cream rug,
+  brighter honey floors, cream-enamel stove with a copper hood, framed café
+  art, a ticking wall clock, and string lights that finally hang from cords.
+- **Swinging entrance doors** under an OPEN sign — guests push through them.
+
+### The restaurant is more alive
+- **Burner flames** flicker under cooking pans; the stove throws warm light
+  that scales with how busy the kitchen is.
+- **A dish washer** works the tub: bus a table and he scrubs, with steam.
+- Footstep dust when the waiter hustles; door chime when guests arrive.
+
+### Game feel & clarity
+- **Tap ripples**: every tap answers instantly — gold when it lands on an
+  action, gray when it misses.
+- **Tutorial pointing hand**: a bobbing 👆 hovers over the suggested next tap
+  during the first level.
+- Camera flattened slightly in portrait; the entrance moved closer, cutting
+  dead space so tables and guests render larger.
+
+### Content & economy
+- **Three new levels** (6 Noodle Fever, 7 Prime Time, 8 Full House) and
+  **two new dishes** — Ramen 🍜 and Steak 🥩.
+- **Level select on the title screen**: every unlocked level is replayable
+  for stars; the current level is highlighted.
+- **Fourth upgrade track**: 😊 Warm Welcome (+6% tips per tier).
+- Level names on every level; goals recalibrated against bot playthroughs.
+
+### Audio
+- **Room-tone ambience** during levels: soft murmurs and cutlery clinks over
+  a warm noise bed.
+- Music grew brushed off-beat hats and a glockenspiel answer every 4th bar.
+
+### Accessibility & mobile
+- **Settings**: Haptics toggle and a Camera Motion & Flashes toggle
+  (reduced motion: no sway, no screen flashes, no confetti).
+- **Safe-area insets** everywhere (notches, home indicators, rounded corners);
+  `viewport-fit=cover`.
+- Win screen confetti; consistent one-design-language overlays.
+
+### Fixes & performance
+- Fixed a double requestAnimationFrame chain that kept the title screen
+  rendering behind gameplay (GPU/battery drain).
+- HUD DOM writes only on change; HUD state emits throttled to 5Hz.
+- Speech bubbles slightly smaller so the queue never covers the goal bar
+  in landscape.
+
 ## V1.0 — The Diner-Dash rebuild (2026-07-03)
 
 Complete gameplay redesign: **every tap is an explicit command** — the waiter

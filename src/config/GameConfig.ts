@@ -66,10 +66,10 @@ export const LEVELS: LevelDef[] = [
   { id: 2, name: 'Pasta Night',    customers: 12, spawnMin: 5.0, spawnMax: 7.5, heartsSeconds: 52, eatTime: 3.0, goal: 700,  expert: 1400, dishes: [0, 1, 2],                vip: false, critic: false },
   { id: 3, name: 'Pizza Party',    customers: 16, spawnMin: 4.2, spawnMax: 6.5, heartsSeconds: 46, eatTime: 2.8, goal: 900,  expert: 1850, dishes: [0, 1, 2, 4],             vip: true,  critic: false },
   { id: 4, name: 'Sushi Rush',     customers: 20, spawnMin: 3.6, spawnMax: 5.6, heartsSeconds: 40, eatTime: 2.6, goal: 1150, expert: 2350, dishes: [0, 1, 2, 3, 4],          vip: true,  critic: false },
-  { id: 5, name: 'Sweet & Sour',   customers: 24, spawnMin: 3.4, spawnMax: 5.2, heartsSeconds: 36, eatTime: 2.4, goal: 1400, expert: 2800, dishes: [0, 1, 2, 3, 4, 5],       vip: true,  critic: true  },
-  { id: 6, name: 'Noodle Fever',   customers: 27, spawnMin: 3.3, spawnMax: 5.0, heartsSeconds: 34, eatTime: 2.3, goal: 1650, expert: 3300, dishes: [1, 2, 3, 4, 6],          vip: true,  critic: false },
-  { id: 7, name: 'Prime Time',     customers: 30, spawnMin: 3.2, spawnMax: 4.8, heartsSeconds: 33, eatTime: 2.2, goal: 2000, expert: 4000, dishes: [1, 3, 4, 5, 6, 7],       vip: true,  critic: true  },
-  { id: 8, name: 'Full House',     customers: 34, spawnMin: 3.0, spawnMax: 4.6, heartsSeconds: 31, eatTime: 2.1, goal: 2350, expert: 4600, dishes: [0, 1, 2, 3, 4, 5, 6, 7], vip: true,  critic: true  },
+  { id: 5, name: 'Sweet & Sour',   customers: 22, spawnMin: 3.6, spawnMax: 5.4, heartsSeconds: 36, eatTime: 2.4, goal: 1250, expert: 2500, dishes: [0, 1, 2, 3, 4, 5],       vip: true,  critic: true  },
+  { id: 6, name: 'Noodle Fever',   customers: 24, spawnMin: 3.8, spawnMax: 5.6, heartsSeconds: 34, eatTime: 2.3, goal: 1450, expert: 2900, dishes: [1, 2, 3, 4, 6],          vip: true,  critic: false },
+  { id: 7, name: 'Prime Time',     customers: 26, spawnMin: 3.7, spawnMax: 5.4, heartsSeconds: 33, eatTime: 2.2, goal: 1650, expert: 3300, dishes: [1, 3, 4, 5, 6, 7],       vip: true,  critic: true  },
+  { id: 8, name: 'Full House',     customers: 28, spawnMin: 3.6, spawnMax: 5.2, heartsSeconds: 31, eatTime: 2.1, goal: 1800, expert: 3700, dishes: [0, 1, 2, 3, 4, 5, 6, 7], vip: true,  critic: true  },
 ];
 
 // Hearts decay multipliers per waiting phase (1 = the level's base rate)

@@ -137,7 +137,8 @@ Design decisions worth knowing:
   bleeds off-screen horizontally while its silhouette stays in frame).
 - **The restaurant is alive** — swinging entrance doors, a chef who stirs and
   carries plates, a dish washer who scrubs what you bus, burner flames, a
-  ticking wall clock, footstep dust, steam everywhere. Nothing teleports.
+  ticking wall clock, footstep dust, curling steam, drifting clouds, gliding
+  birds — and everyone blinks. Nothing teleports.
 - **Fixed-substep simulation** — game time tracks real time even at 20fps.
 - **Zero mid-game allocation** — cached geometry/materials, pooled particles.
 - **Accessibility** — reduced-motion setting (no camera sway / screen

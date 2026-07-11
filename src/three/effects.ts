@@ -111,8 +111,9 @@ export class Effects {
         const m = (p.o as THREE.Mesh).material as THREE.MeshBasicMaterial;
         m.opacity = Math.max(0, 1 - p.t / p.life);
         if (p.t > p.life) { p.alive = false; p.o.visible = false; }
-      } else { // steam
-        p.o.position.x += p.vx * dt; p.o.position.y += p.vy * dt; p.o.position.z += p.vz * dt;
+      } else { // steam — curls sideways as it rises instead of climbing a rail
+        const sway = Math.sin(p.t * 5 + p.baseScale * 40) * 0.3;
+        p.o.position.x += (p.vx + sway) * dt; p.o.position.y += p.vy * dt; p.o.position.z += p.vz * dt;
         const f = p.t / p.life;
         p.o.scale.setScalar(p.baseScale * (1 + f * 1.6));
         const m = (p.o as THREE.Sprite).material as THREE.SpriteMaterial;

@@ -136,6 +136,20 @@ export function skyTexture(): THREE.CanvasTexture {
   });
 }
 
+/** Tiny gliding bird — two soft wing arcs. */
+export function birdTexture(): THREE.CanvasTexture {
+  return cachedTex('bird', () => {
+    const cv = document.createElement('canvas'); cv.width = 64; cv.height = 32;
+    const c = cv.getContext('2d')!;
+    c.strokeStyle = 'rgba(90,58,46,0.8)'; c.lineWidth = 4; c.lineCap = 'round';
+    c.beginPath(); c.moveTo(6, 22); c.quadraticCurveTo(19, 6, 32, 20); c.stroke();
+    c.beginPath(); c.moveTo(32, 20); c.quadraticCurveTo(45, 6, 58, 22); c.stroke();
+    const tex = new THREE.CanvasTexture(cv);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    return tex;
+  });
+}
+
 /** Soft puffy cloud sprite. */
 export function cloudTexture(): THREE.CanvasTexture {
   return cachedTex('cloud', () => {
@@ -221,64 +235,66 @@ export function plate(): THREE.Group {
 
 // Index order matches GameConfig MENU_ITEMS.
 export const DISH_EMOJI = MENU_ITEMS.map(m => m.emoji);
+// Food gets its own gloss — sauces shine, cheese glistens, people get hungry.
+const F = (c: number, o: Partial<THREE.MeshStandardMaterialParameters> = {}) => M(c, { roughness: 0.42, ...o });
 export function buildDish(i: number): THREE.Group {
   const g = new THREE.Group();
   if (i === 0) { // salad
     for (let k = 0; k < 10; k++) {
-      const l = new THREE.Mesh(G('leaf', () => new THREE.IcosahedronGeometry(0.15, 0)), M([0x4FA63A, 0x6FBF4A, 0x3E8E2E][k % 3]));
+      const l = new THREE.Mesh(G('leaf', () => new THREE.IcosahedronGeometry(0.15, 0)), F([0x4FA63A, 0x6FBF4A, 0x3E8E2E][k % 3]));
       l.position.set((Math.random() - 0.5) * 0.5, 0.08 + Math.random() * 0.1, (Math.random() - 0.5) * 0.5);
       l.scale.setScalar(0.8 + Math.random() * 0.4); g.add(l);
     }
-    const t = new THREE.Mesh(G('tom', () => new THREE.SphereGeometry(0.1, 10, 8)), M(0xE3403F)); t.position.set(0.15, 0.12, -0.08); g.add(t);
+    const t = new THREE.Mesh(G('tom', () => new THREE.SphereGeometry(0.1, 10, 8)), F(0xE3403F, { roughness: 0.3 })); t.position.set(0.15, 0.12, -0.08); g.add(t);
   } else if (i === 1) { // burger
-    const b0 = new THREE.Mesh(G('bunB', () => new THREE.CylinderGeometry(0.36, 0.4, 0.15, 22)), M(0xE3A24E));
-    const p = new THREE.Mesh(G('patty', () => new THREE.CylinderGeometry(0.42, 0.42, 0.13, 22)), M(0x6B3B22)); p.position.y = 0.13;
-    const ch = new THREE.Mesh(G('cheese', () => new THREE.BoxGeometry(0.66, 0.05, 0.66)), M(0xFFC23D)); ch.position.y = 0.22; ch.rotation.y = 0.8;
-    const bt = new THREE.Mesh(G('bunT', () => new THREE.SphereGeometry(0.44, 22, 14, 0, 6.3, 0, Math.PI / 2)), M(0xF0B45E)); bt.position.y = 0.27; bt.scale.y = 0.7;
+    const b0 = new THREE.Mesh(G('bunB', () => new THREE.CylinderGeometry(0.36, 0.4, 0.15, 22)), F(0xE3A24E));
+    const p = new THREE.Mesh(G('patty', () => new THREE.CylinderGeometry(0.42, 0.42, 0.13, 22)), F(0x6B3B22, { roughness: 0.5 })); p.position.y = 0.13;
+    const ch = new THREE.Mesh(G('cheese', () => new THREE.BoxGeometry(0.66, 0.05, 0.66)), F(0xFFC23D, { roughness: 0.32 })); ch.position.y = 0.22; ch.rotation.y = 0.8;
+    const bt = new THREE.Mesh(G('bunT', () => new THREE.SphereGeometry(0.44, 22, 14, 0, 6.3, 0, Math.PI / 2)), F(0xF0B45E)); bt.position.y = 0.27; bt.scale.y = 0.7;
     g.add(b0, p, ch, bt);
   } else if (i === 2) { // pasta
-    const bowl = new THREE.Mesh(G('bowl', () => new THREE.SphereGeometry(0.46, 22, 12, 0, 6.3, Math.PI / 2, Math.PI / 2)), M(0xE74C3C, { roughness: 0.35 })); bowl.scale.y = 0.6; bowl.position.y = 0.12;
-    const n = new THREE.Mesh(G('noodle', () => new THREE.TorusKnotGeometry(0.2, 0.06, 60, 8)), M(0xF2CF6B)); n.position.y = 0.2; n.scale.set(1, 0.5, 1);
-    const mb = new THREE.Mesh(G('mball', () => new THREE.SphereGeometry(0.12, 12, 10)), M(0x7A3B1E)); mb.position.set(0.13, 0.24, 0.06);
+    const bowl = new THREE.Mesh(G('bowl', () => new THREE.SphereGeometry(0.46, 22, 12, 0, 6.3, Math.PI / 2, Math.PI / 2)), F(0xE74C3C, { roughness: 0.35 })); bowl.scale.y = 0.6; bowl.position.y = 0.12;
+    const n = new THREE.Mesh(G('noodle', () => new THREE.TorusKnotGeometry(0.2, 0.06, 60, 8)), F(0xF2CF6B, { roughness: 0.35 })); n.position.y = 0.2; n.scale.set(1, 0.5, 1);
+    const mb = new THREE.Mesh(G('mball', () => new THREE.SphereGeometry(0.12, 12, 10)), F(0x7A3B1E, { roughness: 0.5 })); mb.position.set(0.13, 0.24, 0.06);
     g.add(bowl, n, mb);
   } else if (i === 3) { // sushi
-    const rice = new THREE.Mesh(G('rice', () => new THREE.CapsuleGeometry(0.22, 0.3, 6, 12)), M(0xFBF6EC, { roughness: 0.5 })); rice.rotation.z = Math.PI / 2; rice.scale.y = 0.7; rice.position.y = 0.12;
-    const fish = new THREE.Mesh(G('fish', () => new THREE.BoxGeometry(0.68, 0.11, 0.36)), M(0xF2784B, { roughness: 0.4 })); fish.position.y = 0.28;
-    const band = new THREE.Mesh(G('nori', () => new THREE.BoxGeometry(0.14, 0.3, 0.42)), M(0x2E3A2A)); band.position.y = 0.14;
+    const rice = new THREE.Mesh(G('rice', () => new THREE.CapsuleGeometry(0.22, 0.3, 6, 12)), F(0xFBF6EC, { roughness: 0.5 })); rice.rotation.z = Math.PI / 2; rice.scale.y = 0.7; rice.position.y = 0.12;
+    const fish = new THREE.Mesh(G('fish', () => new THREE.BoxGeometry(0.68, 0.11, 0.36)), F(0xF2784B, { roughness: 0.3 })); fish.position.y = 0.28;
+    const band = new THREE.Mesh(G('nori', () => new THREE.BoxGeometry(0.14, 0.3, 0.42)), F(0x2E3A2A, { roughness: 0.55 })); band.position.y = 0.14;
     g.add(rice, fish, band);
   } else if (i === 4) { // pizza
     const slice = new THREE.Mesh(G('pizza', () => {
       const s = new THREE.Shape(); s.moveTo(0, 0); s.lineTo(0.8, 0.42); s.lineTo(0.8, -0.42); s.lineTo(0, 0);
       return new THREE.ExtrudeGeometry(s, { depth: 0.1, bevelEnabled: false });
-    }), M(0xF2B33B)); slice.rotation.x = -Math.PI / 2; slice.position.set(-0.4, 0.12, 0); g.add(slice);
+    }), F(0xF2B33B, { roughness: 0.35 })); slice.rotation.x = -Math.PI / 2; slice.position.set(-0.4, 0.12, 0); g.add(slice);
     for (const [x, z] of [[-0.05, 0.05], [0.15, -0.15], [0.2, 0.18]]) {
-      const pp = new THREE.Mesh(G('pep', () => new THREE.SphereGeometry(0.06, 8, 6)), M(0xC0392B)); pp.position.set(x, 0.2, z); g.add(pp);
+      const pp = new THREE.Mesh(G('pep', () => new THREE.SphereGeometry(0.06, 8, 6)), F(0xC0392B, { roughness: 0.3 })); pp.position.set(x, 0.2, z); g.add(pp);
     }
   } else if (i === 5) { // cake
-    const base = new THREE.Mesh(G('cakeB', () => new THREE.CylinderGeometry(0.34, 0.36, 0.22, 22)), M(0xF7D9E4, { roughness: 0.5 })); base.position.y = 0.11;
-    const top = new THREE.Mesh(G('cakeT', () => new THREE.CylinderGeometry(0.24, 0.26, 0.18, 22)), M(0xFBEFF4, { roughness: 0.5 })); top.position.y = 0.3;
-    const icing = new THREE.Mesh(G('icing', () => new THREE.TorusGeometry(0.3, 0.05, 10, 22)), M(0xE86A8A)); icing.rotation.x = Math.PI / 2; icing.position.y = 0.22;
-    const cherry = new THREE.Mesh(G('tom', () => new THREE.SphereGeometry(0.1, 10, 8)), M(0xD82E4E, { roughness: 0.3 })); cherry.position.y = 0.44;
+    const base = new THREE.Mesh(G('cakeB', () => new THREE.CylinderGeometry(0.34, 0.36, 0.22, 22)), F(0xF7D9E4, { roughness: 0.5 })); base.position.y = 0.11;
+    const top = new THREE.Mesh(G('cakeT', () => new THREE.CylinderGeometry(0.24, 0.26, 0.18, 22)), F(0xFBEFF4, { roughness: 0.5 })); top.position.y = 0.3;
+    const icing = new THREE.Mesh(G('icing', () => new THREE.TorusGeometry(0.3, 0.05, 10, 22)), F(0xE86A8A, { roughness: 0.3 })); icing.rotation.x = Math.PI / 2; icing.position.y = 0.22;
+    const cherry = new THREE.Mesh(G('tom', () => new THREE.SphereGeometry(0.1, 10, 8)), F(0xD82E4E, { roughness: 0.25 })); cherry.position.y = 0.44;
     g.add(base, top, icing, cherry);
   } else if (i === 6) { // ramen
-    const bowl = new THREE.Mesh(G('rbowl', () => new THREE.SphereGeometry(0.44, 22, 12, 0, 6.3, Math.PI / 2, Math.PI / 2)), M(0x3FA7A0, { roughness: 0.35 })); bowl.scale.y = 0.68; bowl.position.y = 0.14;
-    const broth = new THREE.Mesh(G('broth', () => new THREE.CylinderGeometry(0.38, 0.38, 0.04, 22)), M(0xF2CF6B, { roughness: 0.4 })); broth.position.y = 0.24;
-    const eggW = new THREE.Mesh(G('eggW', () => new THREE.SphereGeometry(0.11, 12, 10)), M(0xFBF6EC, { roughness: 0.5 })); eggW.position.set(0.16, 0.28, 0.05); eggW.scale.y = 0.6;
-    const eggY = new THREE.Mesh(G('eggY', () => new THREE.SphereGeometry(0.055, 10, 8)), M(0xF5B83D, { roughness: 0.45 })); eggY.position.set(0.16, 0.31, 0.05); eggY.scale.y = 0.55;
-    const nori = new THREE.Mesh(G('rnori', () => new THREE.BoxGeometry(0.16, 0.14, 0.02)), M(0x2E3A2A)); nori.position.set(-0.2, 0.32, -0.08); nori.rotation.y = 0.5;
-    const stick1 = new THREE.Mesh(G('stick', () => new THREE.CylinderGeometry(0.014, 0.02, 0.72, 6)), M(0xC98B4E)); stick1.position.set(-0.24, 0.4, 0.14); stick1.rotation.z = 1.05; stick1.rotation.y = 0.4;
+    const bowl = new THREE.Mesh(G('rbowl', () => new THREE.SphereGeometry(0.44, 22, 12, 0, 6.3, Math.PI / 2, Math.PI / 2)), F(0x3FA7A0, { roughness: 0.35 })); bowl.scale.y = 0.68; bowl.position.y = 0.14;
+    const broth = new THREE.Mesh(G('broth', () => new THREE.CylinderGeometry(0.38, 0.38, 0.04, 22)), F(0xF2CF6B, { roughness: 0.25 })); broth.position.y = 0.24;
+    const eggW = new THREE.Mesh(G('eggW', () => new THREE.SphereGeometry(0.11, 12, 10)), F(0xFBF6EC, { roughness: 0.45 })); eggW.position.set(0.16, 0.28, 0.05); eggW.scale.y = 0.6;
+    const eggY = new THREE.Mesh(G('eggY', () => new THREE.SphereGeometry(0.055, 10, 8)), F(0xF5B83D, { roughness: 0.35 })); eggY.position.set(0.16, 0.31, 0.05); eggY.scale.y = 0.55;
+    const nori = new THREE.Mesh(G('rnori', () => new THREE.BoxGeometry(0.16, 0.14, 0.02)), F(0x2E3A2A, { roughness: 0.55 })); nori.position.set(-0.2, 0.32, -0.08); nori.rotation.y = 0.5;
+    const stick1 = new THREE.Mesh(G('stick', () => new THREE.CylinderGeometry(0.014, 0.02, 0.72, 6)), F(0xC98B4E)); stick1.position.set(-0.24, 0.4, 0.14); stick1.rotation.z = 1.05; stick1.rotation.y = 0.4;
     const stick2 = stick1.clone(); stick2.position.z = 0.22; stick2.rotation.y = 0.2;
     g.add(bowl, broth, eggW, eggY, nori, stick1, stick2);
   } else { // steak
-    const meat = new THREE.Mesh(G('steak', () => new THREE.CapsuleGeometry(0.2, 0.42, 6, 14)), M(0x8A4A2A, { roughness: 0.6 }));
+    const meat = new THREE.Mesh(G('steak', () => new THREE.CapsuleGeometry(0.2, 0.42, 6, 14)), F(0x8A4A2A, { roughness: 0.45 }));
     meat.rotation.z = Math.PI / 2; meat.rotation.y = 0.4; meat.scale.set(1, 1.4, 1); meat.position.y = 0.14;
     g.add(meat);
     for (let k = 0; k < 3; k++) {
-      const mark = new THREE.Mesh(G('gmark', () => new THREE.BoxGeometry(0.05, 0.015, 0.4)), M(0x4A2412, { roughness: 0.8 }));
+      const mark = new THREE.Mesh(G('gmark', () => new THREE.BoxGeometry(0.05, 0.015, 0.4)), F(0x4A2412, { roughness: 0.7 }));
       mark.position.set(-0.18 + k * 0.18, 0.285, 0); mark.rotation.y = 0.4; g.add(mark);
     }
-    const butter = new THREE.Mesh(G('butter', () => new THREE.BoxGeometry(0.11, 0.08, 0.11)), M(0xFFE08A, { roughness: 0.35 })); butter.position.set(0.02, 0.33, 0.02); butter.rotation.y = 0.3;
-    const herb = new THREE.Mesh(G('herb', () => new THREE.IcosahedronGeometry(0.07, 0)), M(0x4FA63A)); herb.position.set(0.3, 0.12, 0.22);
+    const butter = new THREE.Mesh(G('butter', () => new THREE.BoxGeometry(0.11, 0.08, 0.11)), F(0xFFE08A, { roughness: 0.25 })); butter.position.set(0.02, 0.33, 0.02); butter.rotation.y = 0.3;
+    const herb = new THREE.Mesh(G('herb', () => new THREE.IcosahedronGeometry(0.07, 0)), F(0x4FA63A)); herb.position.set(0.3, 0.12, 0.22);
     g.add(butter, herb);
   }
   return g;
@@ -290,6 +306,22 @@ export interface Chibi {
   armL: THREE.Group; armR: THREE.Group;
   head: THREE.Group;
   feet: THREE.Mesh[];
+  eyes: THREE.Group[];
+}
+
+/** Occasional natural blinks. Call once per frame with performance.now(). */
+export function tickBlink(c: Chibi, now: number) {
+  const ud = c.g.userData as { nextBlink?: number };
+  if (ud.nextBlink === undefined) ud.nextBlink = now + 1200 + Math.random() * 3400;
+  const t = now - ud.nextBlink;
+  if (t < 0) return;
+  if (t > 150) {
+    ud.nextBlink = now + 1800 + Math.random() * 3600;
+    for (const e of c.eyes) e.scale.y = 1;
+    return;
+  }
+  const f = Math.sin((t / 150) * Math.PI);
+  for (const e of c.eyes) e.scale.y = Math.max(0.08, 1 - f);
 }
 export interface ChibiOpts {
   skin: number; outfit: number; hair: number;
@@ -357,14 +389,17 @@ export function chibi(o: ChibiOpts): Chibi {
   // the face sits proud of the hair shell so it reads at any camera angle
   const face = new THREE.Mesh(G('face', () => new THREE.SphereGeometry(0.4, 22, 16)), M(o.skin, { roughness: 0.55 }));
   face.position.set(0, -0.04, 0.13); head.add(face);
-  // real eyes: white sclera, dark pupil, sparkle highlight, a brow
+  // real eyes: white sclera, dark pupil, sparkle highlight, a brow.
+  // Each eye lives in its own group so blinks can squash it shut.
+  const eyes: THREE.Group[] = [];
   for (const sx of [-1, 1]) {
+    const eye = new THREE.Group(); eye.position.set(sx * 0.16, 0.05, 0.42); head.add(eye); eyes.push(eye);
     const sclera = new THREE.Mesh(G('sclera', () => new THREE.SphereGeometry(0.105, 14, 12)), M(0xFFFFFF, { roughness: 0.25 }));
-    sclera.position.set(sx * 0.16, 0.05, 0.42); sclera.scale.set(1, 1.3, 0.55); head.add(sclera);
+    sclera.scale.set(1, 1.3, 0.55); eye.add(sclera);
     const pupil = new THREE.Mesh(G('pupil', () => new THREE.SphereGeometry(0.052, 12, 10)), M(0x33221A, { roughness: 0.25 }));
-    pupil.position.set(sx * 0.16, 0.04, 0.49); pupil.scale.set(1, 1.25, 0.5); head.add(pupil);
+    pupil.position.set(0, -0.01, 0.07); pupil.scale.set(1, 1.25, 0.5); eye.add(pupil);
     const spark = new THREE.Mesh(G('spark', () => new THREE.SphereGeometry(0.02, 8, 6)), M(0xFFFFFF, { roughness: 0.2 }));
-    spark.position.set(sx * 0.16 + 0.028, 0.085, 0.52); head.add(spark);
+    spark.position.set(0.028, 0.035, 0.1); eye.add(spark);
     const brow = new THREE.Mesh(G('brow', () => new THREE.BoxGeometry(0.13, 0.032, 0.03)), M(o.chef ? 0x8A6A52 : o.hair));
     brow.position.set(sx * 0.16, 0.235, 0.415); brow.rotation.z = sx * -0.12; brow.rotation.x = -0.3; head.add(brow);
     const cheek = new THREE.Mesh(G('cheek', () => new THREE.SphereGeometry(0.07, 10, 8)), M(0xFF9E9E, { transparent: true, opacity: 0.55 }));
@@ -407,7 +442,7 @@ export function chibi(o: ChibiOpts): Chibi {
     foot.position.set(sx * 0.15, 0.12, 0.05); foot.scale.set(1, 0.7, 1.3); g.add(foot); feet.push(foot);
   }
   shadows(g);
-  return { g, armL, armR, head, feet };
+  return { g, armL, armR, head, feet, eyes };
 }
 
 // Poses

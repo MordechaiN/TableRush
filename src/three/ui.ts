@@ -63,7 +63,9 @@ function css() {
     background:linear-gradient(180deg,rgba(143,220,200,.96),rgba(255,243,216,.97));transition:opacity .3s;}
   .ov.hide{opacity:0;pointer-events:none}
   .card{width:min(86vw,380px);max-height:100%;overflow-y:auto;background:var(--ui-cream);border:4px solid #fff;border-radius:30px;padding:26px 22px;text-align:center;
-    box-shadow:0 10px 0 rgba(90,58,46,.12),0 26px 48px rgba(90,58,46,.28);position:relative}
+    box-shadow:0 10px 0 rgba(90,58,46,.12),0 26px 48px rgba(90,58,46,.28);position:relative;
+    animation:cardIn .42s cubic-bezier(.3,1.45,.55,1)}
+  @keyframes cardIn{0%{transform:translateY(26px) scale(.88);opacity:0}100%{transform:translateY(0) scale(1);opacity:1}}
   .card h1{color:#F2505A;font-size:30px;font-weight:800;-webkit-text-stroke:1px #fff;margin-bottom:4px}
   .stars{font-size:46px;letter-spacing:6px;margin:6px 0 2px;color:#FFC838}
   .stars span{display:inline-block;transform:scale(0)}
@@ -80,7 +82,7 @@ function css() {
     font-family:var(--font-display);font-weight:800;font-size:20px;color:#fff;letter-spacing:1px}
   .btn-p{background:linear-gradient(180deg,#FF8A3D,#F4671E);box-shadow:0 6px 0 #C24A12}
   .btn-s{background:linear-gradient(180deg,#5BBF4A,#3E9E33);box-shadow:0 6px 0 #2C7A24}
-  .btn-g{background:linear-gradient(180deg,#C9A36A,#B08A50);box-shadow:0 6px 0 #8A6A3A}
+  .btn-g{background:#FFFDF6;color:var(--ui-ink);border:3px solid #F0E4CE;box-shadow:0 6px 0 #E2D2B8}
   .btn:active{transform:translateY(4px);box-shadow:none}
   .credits-list{color:#7a4516;font-size:15px;font-weight:600;line-height:2;margin:14px 0}
   .wallet{display:inline-flex;align-items:center;gap:6px;background:rgba(255,210,122,.4);border:2px solid rgba(244,160,60,.5);

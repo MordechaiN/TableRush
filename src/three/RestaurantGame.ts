@@ -7,10 +7,10 @@ import {
   VIP_CHANCE, VIP_PAY, VIP_PATIENCE, CRITIC_CHANCE, CRITIC_PAY, CRITIC_RAVE_HEARTS,
 } from '../config/GameConfig';
 import {
-  M, G, shadows, DISH_EMOJI, chibi, Chibi,
+  M, G, shadows, DISH_EMOJI, chibi, Chibi, tickBlink,
   poseSit, poseStand, poseCarry, makeBubble, Bubble, numberSprite,
   woodFloorTexture, signTexture, ginghamTexture,
-  checkerTexture, pathTexture, awningTexture, skyTexture, cloudTexture,
+  checkerTexture, pathTexture, awningTexture, skyTexture, cloudTexture, birdTexture,
 } from './builders';
 import { Effects } from './effects';
 import { Kitchen, Ticket } from './kitchen';
@@ -74,7 +74,7 @@ interface TableD {
 }
 type TaskKind = 'seat' | 'order' | 'pickup' | 'deliver' | 'collect' | 'clean';
 interface Task { kind: TaskKind; table: TableD; guest?: Guest; }
-interface Anim { k: 'pop' | 'hop' | 'bump' | 'punch' | 'fly'; t: number; o?: THREE.Object3D; s?: number; from?: THREE.Vector3; to?: THREE.Vector3; dur?: number; }
+interface Anim { k: 'pop' | 'hop' | 'bump' | 'fly'; t: number; o?: THREE.Object3D; s?: number; from?: THREE.Vector3; to?: THREE.Vector3; dur?: number; }
 export interface Hotspot { kind: 'guest' | 'plate' | 'table'; idx: number; x: number; y: number; action: string; }
 
 // ── Layout (portrait-first) ───────────────────────────────────────────────────
@@ -170,6 +170,7 @@ export class RestaurantGame {
   private doorR!: THREE.Mesh;
   private doorOpen = 0;       // 0 closed … 1 swung open
   private clouds: { spr: THREE.Sprite; speed: number }[] = [];
+  private birds: { spr: THREE.Sprite; speed: number; baseY: number; ph: number }[] = [];
   private hudAcc = 0;         // HUD refresh throttle
   private dustAcc = 0;        // distance since the waiter's last footstep puff
   private hintAcc = 0;        // tutorial hand refresh throttle
@@ -410,6 +411,15 @@ export class RestaurantGame {
       spr.scale.set(cs, cs * 0.5, 1);
       this.scene.add(spr);
       this.clouds.push({ spr, speed: sp });
+    }
+    // a couple of birds gliding past, high above the wall
+    const birdMat = new THREE.SpriteMaterial({ map: birdTexture(), transparent: true, opacity: 0.85, depthWrite: false });
+    for (const [bx, by, bz, sp] of [[-10, 8.6, -12, 1.1], [6, 7.6, -12.5, 0.8]] as const) {
+      const spr = new THREE.Sprite(birdMat);
+      spr.position.set(bx, by, bz);
+      spr.scale.set(0.9, 0.45, 1);
+      this.scene.add(spr);
+      this.birds.push({ spr, speed: sp, baseY: by, ph: Math.random() * 6 });
     }
   }
 
@@ -1014,6 +1024,10 @@ export class RestaurantGame {
     this.hop(g.c.g); this.hop(this.waiter.g);
     this.cbs.onFlash('gold');
     this.chain('collect', t.pos.x, t.pos.z);
+    if (heartsFrac < 0.25) { // rescued at the last moment
+      this.fx.float('PHEW!', t.pos.x, t.pos.z + 0.6, '#9BE3FF', 2.8);
+      try { SoundManager.nearMiss(); } catch { /* */ }
+    }
     try { SoundManager.paymentCollected(); } catch { /* */ }
     if (g.bubble) { g.c.g.remove(g.bubble.spr); g.bubble.dispose(); g.bubble = null; }
     g.phase = 'leaving'; g.happy = true;
@@ -1116,12 +1130,10 @@ export class RestaurantGame {
     if (!this.running) return;
 
     const ease = 1 - Math.pow(1 - this.introT, 3);
-    const punch = this.anims.find(a => a.k === 'punch');
-    const pk = punch ? Math.sin(punch.t * 60) * 0.1 * Math.max(0, 1 - punch.t * 5) : 0;
     this.camera.position.copy(LOOK).addScaledVector(this.camDir, CAM_DIST);
     if (!this.reduceMotion) {
       this.camera.position.x += Math.sin(now / 3400) * 0.22;
-      this.camera.position.y += Math.sin(now / 2700) * 0.1 + pk;
+      this.camera.position.y += Math.sin(now / 2700) * 0.1;
     }
     this.camera.lookAt(LOOK);
     // intro: a gentle ortho zoom-in as the shift starts
@@ -1204,6 +1216,7 @@ export class RestaurantGame {
         w.g.rotation.y += dr * Math.min(1, dt * 16);
         w.g.position.y = Math.abs(Math.sin(now / 75)) * 0.14;
         w.g.rotation.z = Math.sin(now / 75) * 0.05;
+        w.g.rotation.x += (0.1 - w.g.rotation.x) * Math.min(1, dt * 8); // lean into the run
         if (!this.carried.length && !this.carriedDirty) {
           w.armL.rotation.x = Math.sin(now / 75) * 0.5;
           w.armR.rotation.x = -Math.sin(now / 75) * 0.5;
@@ -1212,6 +1225,7 @@ export class RestaurantGame {
     } else {
       w.g.position.y = Math.sin(now / 600) * 0.04;
       w.g.rotation.z *= 0.85;
+      w.g.rotation.x *= 0.82; // settle out of the lean
       w.armL.rotation.x *= 0.85; w.armR.rotation.x *= 0.85;
     }
     // escorted guest trails the waiter
@@ -1245,6 +1259,7 @@ export class RestaurantGame {
     for (let i = this.guests.length - 1; i >= 0; i--) {
       const g = this.guests[i];
       g.t += dt;
+      tickBlink(g.c, now);
       const o = g.c.g;
       const walk = (speedMul = 1): boolean => {
         const target = g.path[0];
@@ -1360,8 +1375,6 @@ export class RestaurantGame {
           if (ud.ticket) this.kitchen.submit(ud.ticket);
           this.anims.splice(i, 1);
         }
-      } else if (a.k === 'punch') {
-        if (a.t > 0.18) this.anims.splice(i, 1);
       }
     }
   }
@@ -1417,6 +1430,14 @@ export class RestaurantGame {
       if (c.spr.position.x > 20) c.spr.position.x = -20;
       if (c.spr.position.x < -20) c.spr.position.x = 20;
     }
+    // birds glide by with a gentle wing-beat bob
+    for (const b of this.birds) {
+      b.spr.position.x += b.speed * dt;
+      b.spr.position.y = b.baseY + Math.sin(now / 260 + b.ph) * 0.25;
+      if (b.spr.position.x > 18) b.spr.position.x = -18;
+    }
+    tickBlink(this.waiter, now);
+    tickBlink(this.washer, now);
 
     const active = this.kitchen.activeBurners();
     const glowTarget = active > 0 ? 0.35 + active * 0.18 + Math.sin(now / 70) * 0.08 : 0;

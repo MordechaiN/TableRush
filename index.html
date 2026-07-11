@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="theme-color" content="#C4813A" />
   <meta name="description" content="Table Rush — run the floor of a bustling 3D restaurant. Take orders, watch the kitchen cook, serve, collect and clear tables before the shift ends." />
   <meta name="mobile-web-app-capable" content="yes" />
@@ -12,8 +12,22 @@
   <link rel="icon" type="image/png" href="icons/icon-192.png" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="preload" href="fonts/Baloo2-variable.woff2" as="font" type="font/woff2" crossorigin />
   <title>Table Rush</title>
   <style>
+    @font-face {
+      font-family: 'Baloo 2';
+      src: url('fonts/Baloo2-variable.woff2') format('woff2');
+      font-weight: 400 800;
+      font-display: swap;
+    }
+    :root {
+      --font-display: 'Baloo 2', 'Arial Rounded MT Bold', 'Hiragino Maru Gothic ProN', Arial, sans-serif;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --safe-left: env(safe-area-inset-left, 0px);
+      --safe-right: env(safe-area-inset-right, 0px);
+    }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body {
       background: #F5E6C8;
@@ -29,7 +43,7 @@
     }
     body { display: flex; justify-content: center; align-items: center; }
     canvas { display: block; touch-action: none; }
-    button { touch-action: manipulation; }
+    button { touch-action: manipulation; font-family: var(--font-display); }
   </style>
 </head>
 <body>

@@ -1,0 +1,6 @@
+Baloo 2 — designed by Ek Type (https://ektype.in)
+Licensed under the SIL Open Font License, Version 1.1.
+https://openfontlicense.org
+
+This directory contains the latin subset of the Baloo 2 variable font
+(weights 400–800), self-hosted for offline PWA play.

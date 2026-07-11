@@ -77,6 +77,18 @@ export class Effects {
     p.vx = (Math.random() - 0.5) * 0.2; p.vy = 0.9 + Math.random() * 0.4; p.vz = (Math.random() - 0.5) * 0.2;
   }
 
+  /** Small tan footstep puff at floor level (the waiter hustling). */
+  dust(pos: THREE.Vector3) {
+    const p = this.take('steam'); if (!p) return;
+    p.alive = true; p.t = 0; p.life = 0.5;
+    p.o.position.set(pos.x + (Math.random() - 0.5) * 0.2, 0.12, pos.z + (Math.random() - 0.5) * 0.2);
+    p.o.visible = true;
+    p.baseScale = 0.22 + Math.random() * 0.1;
+    const m = (p.o as THREE.Sprite).material as THREE.SpriteMaterial;
+    m.color.setHex(0xD8B98A);
+    p.vx = (Math.random() - 0.5) * 0.4; p.vy = 0.35; p.vz = 0.2 + Math.random() * 0.3;
+  }
+
   float(txt: string, x: number, z: number, color?: string, y = 2.2) {
     const spr = floatSprite(txt, color);
     spr.position.set(x, y, z);

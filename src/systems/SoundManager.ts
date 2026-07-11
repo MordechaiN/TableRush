@@ -1,5 +1,7 @@
 // Web Audio API synthesis — no external audio files required.
 // All sounds are procedurally generated via oscillators and envelope shaping.
+import { Prefs } from './Prefs';
+
 let ctx: AudioContext | null = null;
 let musicLoopTimer: ReturnType<typeof setTimeout> | null = null;
 let musicPlaying = false;
@@ -58,7 +60,7 @@ function noise(ac: AudioContext, dest: AudioNode, vol: number, startAt: number, 
 }
 
 function isMusicEnabled(): boolean {
-  try { return localStorage.getItem('tablerush_music') !== 'off'; } catch { return true; }
+  return Prefs.music;
 }
 
 function scheduleMusicLoop(ac: AudioContext) {
@@ -133,10 +135,45 @@ function playMusicBar(ac: AudioContext, barIdx: number, startT: number) {
     osc.start(st); osc.stop(st + beat * 0.6);
   });
 
+  // Brushed hats on the off-beats — a light rhythmic pulse under the chords
+  for (let i = 0; i < 8; i++) {
+    if (i % 2 === 0) continue;
+    noise(ac, m, 0.05 + (i === 7 ? 0.02 : 0), startT + i * (bar / 8), 0.035);
+  }
+  // A tiny glockenspiel answer every fourth bar
+  if (b % 4 === 3) {
+    const run = [1046.5, 1318.5, 1568.0];
+    run.forEach((f, i) => tone(ac, m, 'sine', f, 0.16, startT + bar * 0.62 + i * 0.11, 0.3));
+  }
+
   return bar;
 }
 
+// ── Restaurant room-tone: filtered noise + occasional soft clinks/murmurs ────
+let ambSrc: AudioBufferSourceNode | null = null;
+let ambGain: GainNode | null = null;
+let ambTimer: ReturnType<typeof setTimeout> | null = null;
+let ambPlaying = false;
+
+function ambienceEvent(ac: AudioContext) {
+  if (!ambPlaying || !Prefs.sfx) return;
+  const t = ac.currentTime + 0.02;
+  const master = gain(ac, 0.06);
+  master.connect(ac.destination);
+  if (Math.random() < 0.5) {
+    // cutlery clink
+    tone(ac, master, 'sine', 1800 + Math.random() * 900, 0.5, t, 0.09);
+    tone(ac, master, 'sine', 2400 + Math.random() * 900, 0.25, t + 0.01, 0.07);
+  } else {
+    // a distant, wordless murmur
+    const f = 150 + Math.random() * 90;
+    tone(ac, master, 'sine', f, 0.5, t, 0.22, f * (0.9 + Math.random() * 0.25));
+    tone(ac, master, 'sine', f * 1.5, 0.2, t + 0.1, 0.18);
+  }
+}
+
 function vibrate(pattern: number | number[]) {
+  if (!Prefs.haptics) return;
   if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
     try { navigator.vibrate(pattern); } catch { /* ignore */ }
   }
@@ -150,7 +187,67 @@ let sizzleLevel = -1;
 
 export const SoundManager = {
   isEnabled(): boolean {
-    try { return localStorage.getItem('tablerush_sfx') !== 'off'; } catch { return true; }
+    return Prefs.sfx;
+  },
+
+  /** Soft restaurant room-tone: murmurs and cutlery clinks. Runs during levels. */
+  startAmbience() {
+    if (ambPlaying) return;
+    const ac = getCtx(); if (!ac) return;
+    ambPlaying = true;
+    if (!ambSrc) {
+      const dur = 2.2;
+      const buf = ac.createBuffer(1, ac.sampleRate * dur, ac.sampleRate);
+      const data = buf.getChannelData(0);
+      let last = 0;
+      for (let i = 0; i < data.length; i++) {
+        // brown-ish noise: integrate white noise for a warm, low room tone
+        last = (last + (Math.random() * 2 - 1) * 0.04) * 0.985;
+        data[i] = last * 3;
+      }
+      const src = ac.createBufferSource();
+      src.buffer = buf; src.loop = true;
+      const lp = ac.createBiquadFilter();
+      lp.type = 'lowpass'; lp.frequency.value = 420; lp.Q.value = 0.5;
+      ambGain = ac.createGain(); ambGain.gain.value = 0;
+      src.connect(lp); lp.connect(ambGain); ambGain.connect(ac.destination);
+      src.start();
+      ambSrc = src;
+    }
+    if (ambGain) {
+      ambGain.gain.cancelScheduledValues(ac.currentTime);
+      ambGain.gain.setValueAtTime(ambGain.gain.value, ac.currentTime);
+      ambGain.gain.linearRampToValueAtTime(Prefs.sfx ? 0.05 : 0, ac.currentTime + 1.2);
+    }
+    const tick = () => {
+      if (!ambPlaying) return;
+      const a = getCtx();
+      if (a && a.state !== 'suspended') ambienceEvent(a);
+      ambTimer = setTimeout(tick, 2600 + Math.random() * 4200);
+    };
+    ambTimer = setTimeout(tick, 1800);
+  },
+
+  stopAmbience() {
+    ambPlaying = false;
+    if (ambTimer) { clearTimeout(ambTimer); ambTimer = null; }
+    const ac = getCtx();
+    if (ambGain && ac) {
+      ambGain.gain.cancelScheduledValues(ac.currentTime);
+      ambGain.gain.setValueAtTime(ambGain.gain.value, ac.currentTime);
+      ambGain.gain.linearRampToValueAtTime(0, ac.currentTime + 0.6);
+    }
+  },
+
+  /** Two warm notes when a guest pushes through the door. */
+  doorChime() {
+    if (!this.isEnabled()) return;
+    const ac = getCtx(); if (!ac) return;
+    const t = ac.currentTime;
+    const master = gain(ac, 0.12);
+    master.connect(ac.destination);
+    tone(ac, master, 'sine', 1319, 0.8, t, 0.28);
+    tone(ac, master, 'sine', 1760, 0.55, t + 0.09, 0.34);
   },
 
   // Call this on the very first user interaction to unlock the AudioContext.

@@ -2,7 +2,7 @@ import { UPGRADE_TRACKS, UpgradeId, LEVELS } from '../config/GameConfig';
 
 // ── Persistent player progress: level unlocks, stars, wallet, upgrades ────────
 
-export type Upgrades = { shoes: number; stove: number; decor: number };
+export type Upgrades = { shoes: number; stove: number; decor: number; charm: number };
 
 interface ProgressData {
   levelReached: number;      // highest unlocked level (1-based)
@@ -32,13 +32,13 @@ function load(): ProgressData {
         dailyDate: p.dailyDate ?? '',
         dailyGoalDone: p.dailyGoalDone ?? false,
         coins: p.coins ?? 0,
-        upgrades: { shoes: p.upgrades?.shoes ?? 0, stove: p.upgrades?.stove ?? 0, decor: p.upgrades?.decor ?? 0 },
+        upgrades: { shoes: p.upgrades?.shoes ?? 0, stove: p.upgrades?.stove ?? 0, decor: p.upgrades?.decor ?? 0, charm: p.upgrades?.charm ?? 0 },
       };
     }
   } catch { /* ignore */ }
   return {
     levelReached: 1, levelStars: [], highScore: 0, totalRounds: 0, lastScore: 0,
-    dailyDate: '', dailyGoalDone: false, coins: 0, upgrades: { shoes: 0, stove: 0, decor: 0 },
+    dailyDate: '', dailyGoalDone: false, coins: 0, upgrades: { shoes: 0, stove: 0, decor: 0, charm: 0 },
   };
 }
 
@@ -103,13 +103,14 @@ export class ProgressionSystem {
   }
 
   /** Gameplay multipliers from purchased upgrades. */
-  static getBoosts(): { speed: number; cook: number; patience: number } {
+  static getBoosts(): { speed: number; cook: number; patience: number; tip: number } {
     const u = load().upgrades;
     const per = (id: UpgradeId) => UPGRADE_TRACKS.find(t => t.id === id)!.effectPerTier;
     return {
       speed: 1 + u.shoes * per('shoes'),
       cook: Math.max(0.5, 1 - u.stove * per('stove')),
       patience: 1 + u.decor * per('decor'),
+      tip: 1 + u.charm * per('charm'),
     };
   }
 

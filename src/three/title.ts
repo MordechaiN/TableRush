@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { ProgressionSystem } from '../systems/ProgressionSystem';
 import { SoundManager } from '../systems/SoundManager';
 import { fmtScore, LEVELS } from '../config/GameConfig';
-import { M, chibi, Chibi } from './builders';
+import { M, chibi, Chibi, tickBlink } from './builders';
 
 // 3D animated title / menu. Pure presentation; calls back to the orchestrator.
 // The hero is the game's mascot: the waiter, waving on a little podium while
@@ -48,7 +48,6 @@ export function initTitle(handlers: { onPlay: (levelId?: number) => void; onShop
   const key = new THREE.DirectionalLight(0xffffff, 1.25); key.position.set(3.5, 6, 4); key.castShadow = true;
   key.shadow.mapSize.set(1024, 1024); Object.assign(key.shadow.camera, { near: 1, far: 20, left: -6, right: 6, top: 6, bottom: -6 }); scene.add(key);
   scene.add(new THREE.PointLight(0xff9a3d, 0.7, 30).translateX(-3).translateY(2).translateZ(3));
-  const ground = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), new THREE.ShadowMaterial({ opacity: 0.22 })); ground.rotation.x = -Math.PI / 2; ground.position.y = -1.5; ground.receiveShadow = true; scene.add(ground);
 
   // the mascot on his podium
   podium = new THREE.Group();
@@ -63,8 +62,8 @@ export function initTitle(handlers: { onPlay: (levelId?: number) => void; onShop
   podium.add(mascot.g);
   scene.add(podium);
 
-  const burger = mkBurger(), donut = new THREE.Mesh(new THREE.TorusGeometry(0.38, 0.18, 16, 32), M(0xF58FB6)), cherry = mkCherry(), pizza = mkPizza();
-  [burger, donut, cherry, pizza].forEach((f, i) => { scene.add(f); orbiters.push({ m: f, r: [2.7, 2.4, 2.9, 2.5][i], sp: [0.5, -0.62, 0.43, -0.55][i], ph: (i / 4) * 6.28, y: 0.4 + i * 0.12 }); });
+  const burger = mkBurger(), donut = new THREE.Mesh(new THREE.TorusGeometry(0.38, 0.18, 16, 32), M(0xF58FB6)), cherry = mkCherry(), cake = mkCake();
+  [burger, donut, cherry, cake].forEach((f, i) => { scene.add(f); orbiters.push({ m: f, r: [2.7, 2.4, 2.9, 2.5][i], sp: [0.5, -0.62, 0.43, -0.55][i], ph: (i / 4) * 6.28, y: 0.4 + i * 0.12 }); });
 
   resize(); addEventListener('resize', resize);
   const play = (id?: number) => { try { SoundManager.uiClick(); } catch { /* */ } onPlayCb(id); };
@@ -77,7 +76,7 @@ export function initTitle(handlers: { onPlay: (levelId?: number) => void; onShop
 
 function mkBurger() { const g = new THREE.Group(); const b = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.46, 0.18, 24), M(0xE3A24E)); b.position.y = -0.18; const p = new THREE.Mesh(new THREE.CylinderGeometry(0.48, 0.48, 0.16, 24), M(0x6B3B22)); const c = new THREE.Mesh(new THREE.BoxGeometry(0.78, 0.06, 0.78), M(0xFFC23D)); c.position.y = 0.1; c.rotation.y = 0.78; const t = new THREE.Mesh(new THREE.SphereGeometry(0.5, 24, 16, 0, 6.3, 0, Math.PI / 2), M(0xF0B45E)); t.position.y = 0.16; t.scale.y = 0.7; g.add(b, p, c, t); g.traverse(o => (o as THREE.Mesh).castShadow = true); return g; }
 function mkCherry() { const g = new THREE.Group(); const b = new THREE.Mesh(new THREE.SphereGeometry(0.32, 20, 16), M(0xE3403F, { roughness: 0.35 })); b.castShadow = true; const s = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.4, 8), M(0x4E7A36)); s.position.y = 0.34; s.rotation.z = 0.3; g.add(b, s); return g; }
-function mkPizza() { const s = new THREE.Shape(); s.moveTo(0, 0); s.lineTo(0.85, 0.42); s.lineTo(0.85, -0.42); s.lineTo(0, 0); const m = new THREE.Mesh(new THREE.ExtrudeGeometry(s, { depth: 0.12, bevelEnabled: false }), M(0xF2B33B)); m.castShadow = true; return m; }
+function mkCake() { const g = new THREE.Group(); const b = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.42, 0.26, 22), M(0xF7D9E4)); const t = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.3, 0.2, 22), M(0xFBEFF4)); t.position.y = 0.22; const ch = new THREE.Mesh(new THREE.SphereGeometry(0.1, 12, 10), M(0xD82E4E, { roughness: 0.3 })); ch.position.y = 0.4; g.add(b, t, ch); g.traverse(o => (o as THREE.Mesh).castShadow = true); return g; }
 
 function refresh() {
   try {
@@ -136,20 +135,23 @@ function resize() {
   const w = innerWidth, h = innerHeight;
   renderer.setSize(w, h, false);
   camera.aspect = w / h;
-  // portrait: pull back + shrink the hero so the mascot never fills the screen
+  // portrait: mascot centered under the logo; landscape: hero stands to the
+  // left so he never fights the level chips and PLAY button for space
   const portrait = h > w;
-  camera.position.z = portrait ? 10.5 : 6.6;
-  camera.position.y = portrait ? 2.4 : 1.7;
-  const s = portrait ? 0.85 : 1;
+  camera.position.z = portrait ? 10.5 : 8.4;
+  camera.position.y = portrait ? 2.4 : 1.9;
+  const s = portrait ? 0.85 : 0.92;
   podium.scale.setScalar(s);
-  camera.lookAt(0, portrait ? -0.2 : 0.3, 0);
+  podium.position.x = portrait ? 0 : -3.6;
+  camera.lookAt(0, portrait ? -0.2 : 0.1, 0);
   camera.updateProjectionMatrix();
 }
 function animate() {
   if (!visible) return;
   raf = requestAnimationFrame(animate);
   const t = performance.now() / 1000;
-  // mascot: friendly idle — sway, bob, and a big wave every few seconds
+  // mascot: friendly idle — sway, bob, blinks, and a big wave every few seconds
+  tickBlink(mascot, t * 1000);
   podium.rotation.y = Math.sin(t * 0.45) * 0.28;
   mascot.g.position.y = -1.1 + Math.abs(Math.sin(t * 2.2)) * 0.05;
   const wavePhase = (t % 4) / 4;
@@ -160,11 +162,15 @@ function animate() {
   }
   mascot.armL.rotation.set(0, 0, -0.35 - Math.sin(t * 2.2) * 0.06);
   mascot.head.rotation.z = Math.sin(t * 0.9) * 0.06;
-  const ps = podium.scale.x; // orbiters shrink with the hero in portrait
+  const ps = podium.scale.x; // orbiters shrink and recenter with the hero
   orbiters.forEach(o => {
     const a = t * o.sp + o.ph;
     // orbit plane sits well behind the mascot so nothing crosses his body
-    o.m.position.set(Math.cos(a) * o.r * ps, (o.y + Math.sin(t * 1.6 + o.ph) * 0.18) * ps, (Math.sin(a) * o.r * 0.25 - 1.7) * ps);
+    o.m.position.set(
+      podium.position.x + Math.cos(a) * o.r * ps,
+      (o.y + Math.sin(t * 1.6 + o.ph) * 0.18) * ps,
+      (Math.sin(a) * o.r * 0.25 - 1.7) * ps,
+    );
     o.m.rotation.set(t * 0.8 + o.ph, t * 1.1, 0);
     const d = (o.m.position.z + 2.2) / 4;
     o.m.scale.setScalar((0.6 + d * 0.5) * ps);

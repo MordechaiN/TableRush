@@ -1,5 +1,30 @@
 # CHANGELOG
 
+## V1.2.1 — Game-feel micro-polish (2026-07-11)
+
+The Game-Director pass: play, watch, critique, fix, repeat.
+
+- **Everyone blinks** — guests, waiter, chef, dish washer, and the title
+  mascot all have natural, randomized blinks.
+- **Birds** glide past the island with a wing-beat bob; steam **curls**
+  sideways as it rises instead of climbing a straight rail.
+- The waiter **leans into his run** and settles upright when he stops.
+- **Food gloss**: every dish got its own glossy material — cheese, sauces,
+  broth and icing now catch the light.
+- **"PHEW!"** — rescuing a guest below a quarter-heart plays a relieved
+  near-miss sting with a floating callout.
+- **First-shop dopamine**: Swift Shoes tier 1 now costs $600, under a
+  typical first-level score, so the first shop visit always affords
+  something.
+- Overlay cards **spring in**; the MENU button became a cream ghost button
+  (the last muddy element in the UI).
+- **Landscape title composition fixed**: the mascot stood behind the level
+  chips and PLAY button — he now presents from the left on his podium.
+  The floating mid-air shadow plane is gone; the cardboard-looking pizza
+  orbiter became a layer cake.
+- Dead code deleted: unused `punch` camera anim, `MAX_TABLES`,
+  `rushHour`/`timerWarning` sounds.
+
 ## V1.2 — The Candy Diner redesign (2026-07-11)
 
 A complete art-direction reboot. The gameplay simulation carried over

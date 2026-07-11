@@ -1,7 +1,6 @@
 // ── Table Rush · balance & content configuration ─────────────────────────────
 // Every tunable number in the game lives here.
 
-export const MAX_TABLES = 5;
 export const QUEUE_SLOTS = 4;     // guests waiting at the door
 export const HANDS_CAPACITY = 2;  // plates the waiter can carry at once
 
@@ -107,7 +106,9 @@ export interface UpgradeTrack {
   costs: number[];       // cost of tier 1..N
 }
 export const UPGRADE_TRACKS: UpgradeTrack[] = [
-  { id: 'shoes', name: 'Swift Shoes',   emoji: '👟', desc: '+8% waiter speed per tier',   effectPerTier: 0.08, costs: [800, 2000, 4500, 8500, 14000] },
+  // Tier 1 is priced under a typical first-level score — the first shop visit
+  // should always let the player buy something.
+  { id: 'shoes', name: 'Swift Shoes',   emoji: '👟', desc: '+8% waiter speed per tier',   effectPerTier: 0.08, costs: [600, 2000, 4500, 8500, 14000] },
   { id: 'stove', name: 'Pro Stove',     emoji: '🔥', desc: '−8% cooking time per tier',   effectPerTier: 0.08, costs: [1000, 2400, 5000, 9000, 15000] },
   { id: 'decor', name: 'Cozy Décor',    emoji: '🪴', desc: '+8% guest patience per tier', effectPerTier: 0.08, costs: [900, 2200, 4800, 8800, 14500] },
   { id: 'charm', name: 'Warm Welcome',  emoji: '😊', desc: '+6% tips per tier',           effectPerTier: 0.06, costs: [1200, 2800, 5500, 9500, 16000] },

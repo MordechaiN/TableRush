@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { MENU_ITEMS, BURNERS, SHELF_SLOTS } from '../config/GameConfig';
-import { M, G, chibi, Chibi, plate, buildDish, makeBubble, Bubble, shadows, poseCarry, poseStand, menuBoardTexture, signTexture, numberSprite, DISH_EMOJI } from './builders';
+import { M, G, chibi, Chibi, tickBlink, plate, buildDish, makeBubble, Bubble, shadows, poseCarry, poseStand, menuBoardTexture, signTexture, numberSprite, DISH_EMOJI } from './builders';
 import { Effects } from './effects';
 import { P } from '../config/Palette';
 
@@ -297,6 +297,7 @@ export class Kitchen {
   // ── chef brain ──────────────────────────────────────────────────────────────
   private updateChef(dt: number, now: number) {
     const c = this.chef;
+    tickBlink(c, now);
     if (this.chefState === 'idle' || this.chefState === 'stir') {
       // is a finished plate waiting and a slot free?
       const doneBurner = this.burners.find(b => b.done && b.ticket && !b.ticket.dead);

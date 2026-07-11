@@ -467,17 +467,6 @@ export const SoundManager = {
     tone(ac, master, 'sine', 800, 0.15, t + 0.10, 0.35, 400);
   },
 
-  rushHour() {
-    if (!this.isEnabled()) return;
-    const ac = getCtx(); if (!ac) return;
-    const t = ac.currentTime;
-    const master = gain(ac, 0.25);
-    master.connect(ac.destination);
-    tone(ac, master, 'sawtooth', 440, 0.7, t, 0.25, 880);
-    tone(ac, master, 'sawtooth', 880, 0.7, t + 0.28, 0.25, 440);
-    tone(ac, master, 'sawtooth', 440, 0.5, t + 0.56, 0.20, 660);
-  },
-
   roundEnd() {
     if (!this.isEnabled()) return;
     const ac = getCtx(); if (!ac) return;
@@ -492,16 +481,6 @@ export const SoundManager = {
     tone(ac, master, 'sine', 131, 0.5, t, 1.2);
   },
 
-  timerWarning() {
-    if (!this.isEnabled()) return;
-    const ac = getCtx(); if (!ac) return;
-    const t = ac.currentTime;
-    const master = gain(ac, 0.22);
-    master.connect(ac.destination);
-    tone(ac, master, 'square', 880, 0.6, t, 0.08);
-    tone(ac, master, 'square', 660, 0.5, t + 0.15, 0.08);
-  },
-
   customerArrival() {
     if (!this.isEnabled()) return;
     const ac = getCtx(); if (!ac) return;
@@ -512,6 +491,7 @@ export const SoundManager = {
     tone(ac, master, 'sine', 880, 0.65, t + 0.24, 0.32);
   },
 
+  /** A relieved "phew" — collecting the bill from a nearly-furious guest. */
   nearMiss() {
     if (!this.isEnabled()) return;
     const ac = getCtx(); if (!ac) return;

@@ -9,12 +9,14 @@ import {
 import {
   M, G, shadows, DISH_EMOJI, chibi, Chibi,
   poseSit, poseStand, poseCarry, makeBubble, Bubble, numberSprite,
-  woodFloorTexture, signTexture, ginghamTexture, rugTexture, wallArtTexture,
+  woodFloorTexture, signTexture, ginghamTexture,
+  checkerTexture, pathTexture, awningTexture, skyTexture, cloudTexture,
 } from './builders';
 import { Effects } from './effects';
 import { Kitchen, Ticket } from './kitchen';
 import { SoundManager } from '../systems/SoundManager';
 import { Prefs } from '../systems/Prefs';
+import { P } from '../config/Palette';
 
 // ── Types shared with the UI layer ────────────────────────────────────────────
 export type AnnounceKind = 'chain' | 'tut' | 'vip' | 'level';
@@ -84,7 +86,11 @@ const QUEUE_Z = 6.0;
 const WAITER_HOME = new THREE.Vector3(2.4, 0, 4.6);
 const BIN = new THREE.Vector3(-3.4, 0, -4.7);
 const LOOK = new THREE.Vector3(0, 0.8, -0.2);
-// Gameplay-critical points the camera must keep on screen at any aspect ratio
+const CAM_DIST = 46; // fixed orbit radius; the ortho frustum does the framing
+// Gameplay-critical points the camera must keep on screen at any aspect ratio.
+// The diorama platform is allowed to bleed off-screen horizontally in
+// portrait — but its front lip and the back wall crown stay in frame so the
+// floating-island silhouette always reads.
 const FIT_POINTS: [number, number, number][] = [
   [-2.9, 3.5, -2.55], [2.9, 3.5, -2.55],
   [-2.9, 3.5, 0.7], [2.9, 3.5, 0.7],
@@ -92,17 +98,20 @@ const FIT_POINTS: [number, number, number][] = [
   [-3.9, 2.9, -5.85], [4.4, 1.3, -5.85],
   [-2.5, 3.1, -8.05], [0.3, 3.1, -8.05],
   [-2.3, 3.0, 6.0], [3.1, 3.0, 6.0],   // the waiting line + its bubbles
+  [0.4, 4.5, 9.9],                      // the entrance awning
+  [0.4, -1.2, 11.3],                    // the platform's front lip
+  [0, 6.4, -9.5],                       // the back wall crown
 ];
 
-const SKINS = [0xFAD2B0, 0xE9B891, 0xF3C19E, 0xEFCBA8, 0xF5C9A0, 0xF3C19E, 0xFAD2B0];
+const SKINS = P.skinTones;
 
 export class RestaurantGame {
   private renderer: THREE.WebGLRenderer;
   private scene = new THREE.Scene();
-  private camera: THREE.PerspectiveCamera;
-  private fitCam: THREE.PerspectiveCamera;
+  private camera: THREE.OrthographicCamera;
+  private fitCam: THREE.OrthographicCamera;
   private camDir = new THREE.Vector3();
-  private camDist = 20;
+  private camHalfH = 10; // ortho frustum half-height chosen by the fit search
   private introT = 0;
 
   private fx: Effects;
@@ -160,6 +169,7 @@ export class RestaurantGame {
   private doorL!: THREE.Mesh;
   private doorR!: THREE.Mesh;
   private doorOpen = 0;       // 0 closed … 1 swung open
+  private clouds: { spr: THREE.Sprite; speed: number }[] = [];
   private hudAcc = 0;         // HUD refresh throttle
   private dustAcc = 0;        // distance since the waiter's last footstep puff
   private hintAcc = 0;        // tutorial hand refresh throttle
@@ -180,10 +190,10 @@ export class RestaurantGame {
     this.renderer.domElement.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;display:block;z-index:1;';
     container.appendChild(this.renderer.domElement);
 
-    this.scene.background = new THREE.Color(0xFBEACB);
-    this.scene.fog = new THREE.Fog(0xFBEACB, 30, 62);
-    this.camera = new THREE.PerspectiveCamera(50, 1, 0.1, 200);
-    this.fitCam = new THREE.PerspectiveCamera(50, 1, 0.1, 200);
+    // A floating diorama on a soft sky — no fog, no infinite floor.
+    this.scene.background = skyTexture();
+    this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 200);
+    this.fitCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 200);
 
     this.fx = new Effects(this.scene);
     this.buildRoom();
@@ -216,112 +226,163 @@ export class RestaurantGame {
     this.resize();
   }
 
-  // ── world ────────────────────────────────────────────────────────────────
+  // ── world: the Candy Diner diorama ─────────────────────────────────────────
   private buildRoom() {
-    this.scene.add(new THREE.AmbientLight(0xfff1da, 0.66));
-    this.scene.add(new THREE.HemisphereLight(0xfff6e6, 0xE8B36A, 0.62));
-    const key = new THREE.DirectionalLight(0xffffff, 1.15);
-    key.position.set(6, 14, 8); key.castShadow = true;
-    key.shadow.mapSize.set(1024, 1024); key.shadow.bias = -0.0005;
-    Object.assign(key.shadow.camera, { near: 1, far: 55, left: -16, right: 16, top: 18, bottom: -18 });
+    // high-key lighting — flatness is banished by color, not by contrast
+    this.scene.add(new THREE.AmbientLight(0xFFF4E2, 0.92));
+    this.scene.add(new THREE.HemisphereLight(0xFFFDF2, 0xFFC98A, 0.5));
+    const key = new THREE.DirectionalLight(0xFFF2DC, 0.72);
+    key.position.set(7, 16, 9); key.castShadow = true;
+    key.shadow.mapSize.set(2048, 2048); key.shadow.bias = -0.0004;
+    Object.assign(key.shadow.camera, { near: 1, far: 60, left: -14, right: 14, top: 16, bottom: -16 });
     key.shadow.camera.updateProjectionMatrix();
     this.scene.add(key);
-    const dine = new THREE.PointLight(0xFFD27A, 0.5, 26); dine.position.set(0, 7.5, 1); this.scene.add(dine);
-    const pass = new THREE.PointLight(0xFFB347, 0.5, 16); pass.position.set(0, 4.5, -6.5); this.scene.add(pass);
+    const dine = new THREE.PointLight(0xFFD27A, 0.35, 26); dine.position.set(0, 7.5, 1); this.scene.add(dine);
+    const kitchenL = new THREE.PointLight(0xFFB35C, 0.5, 18); kitchenL.position.set(-1, 5, -6.5); this.scene.add(kitchenL);
     // stove glow — brightens with every pan that's actively cooking
     this.stoveLight = new THREE.PointLight(0xFF8A3D, 0, 10);
     this.stoveLight.position.set(-1.1, 2.6, -7.6); this.scene.add(this.stoveLight);
 
-    const floor = new THREE.Mesh(G('floor', () => new THREE.PlaneGeometry(46, 46)), new THREE.MeshStandardMaterial({ map: woodFloorTexture(), roughness: 0.85 }));
-    floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; this.scene.add(floor);
-    const rug = new THREE.Mesh(G('rug', () => new THREE.CircleGeometry(6.4, 40)), new THREE.MeshStandardMaterial({ map: rugTexture(), roughness: 0.95 }));
-    rug.rotation.x = -Math.PI / 2; rug.position.set(0, 0.012, 0.6); rug.receiveShadow = true; this.scene.add(rug);
+    // the floating island: a rounded slab with a soft caramel edge
+    const platGeo = G('platform', () => {
+      const w = 8.4, zNear = 11.4, zFar = -9.8, r = 2.2;
+      const s = new THREE.Shape();
+      s.moveTo(-w + r, zFar);
+      s.lineTo(w - r, zFar); s.quadraticCurveTo(w, zFar, w, zFar + r);
+      s.lineTo(w, zNear - r); s.quadraticCurveTo(w, zNear, w - r, zNear);
+      s.lineTo(-w + r, zNear); s.quadraticCurveTo(-w, zNear, -w, zNear - r);
+      s.lineTo(-w, zFar + r); s.quadraticCurveTo(-w, zFar, -w + r, zFar);
+      const g = new THREE.ExtrudeGeometry(s, { depth: 1.5, bevelEnabled: true, bevelThickness: 0.3, bevelSize: 0.3, bevelSegments: 3 });
+      g.rotateX(Math.PI / 2);
+      g.translate(0, -0.3, 0); // bevel crest sits at y = 0
+      return g;
+    });
+    const platform = new THREE.Mesh(platGeo, [M(P.platformRim, { roughness: 0.8 }), M(P.platformSide, { roughness: 0.7 })]);
+    platform.receiveShadow = true;
+    this.scene.add(platform);
+    // soft "cloud shadow" far beneath the island sells the float
+    const under = new THREE.Mesh(G('underShadow', () => new THREE.CircleGeometry(9.5, 36)),
+      new THREE.MeshBasicMaterial({ color: P.ink, transparent: true, opacity: 0.12 }));
+    under.rotation.x = -Math.PI / 2; under.position.set(0.4, -4.2, 0.8); under.scale.set(1, 0.9, 1);
+    this.scene.add(under);
 
-    const wall = new THREE.Mesh(G('wallB', () => new THREE.PlaneGeometry(46, 20)), M(0xF7E3C4, { roughness: 1 }));
-    wall.position.set(0, 10, -9); wall.receiveShadow = true; this.scene.add(wall);
-    const wains = new THREE.Mesh(G('wains', () => new THREE.BoxGeometry(46, 2.6, 0.25)), M(0xD09A5C));
-    wains.position.set(0, 1.3, -8.9); this.scene.add(wains);
+    // color-blocked floor zones: tile = kitchen, wood = dining, pavers = entry
+    const woodF = new THREE.Mesh(G('floorWood', () => new THREE.PlaneGeometry(16.8, 11.2)),
+      new THREE.MeshStandardMaterial({ map: woodFloorTexture(), roughness: 0.85 }));
+    woodF.rotation.x = -Math.PI / 2; woodF.position.set(0, 0.02, 1.3); woodF.receiveShadow = true; this.scene.add(woodF);
+    const tileF = new THREE.Mesh(G('floorTile', () => new THREE.PlaneGeometry(16.8, 5.6)),
+      new THREE.MeshStandardMaterial({ map: checkerTexture(), roughness: 0.9 }));
+    (tileF.material as THREE.MeshStandardMaterial).map!.repeat.set(6, 2);
+    tileF.rotation.x = -Math.PI / 2; tileF.position.set(0, 0.025, -7.1); tileF.receiveShadow = true; this.scene.add(tileF);
+    const pathF = new THREE.Mesh(G('floorPath', () => new THREE.PlaneGeometry(5.2, 4.6)),
+      new THREE.MeshStandardMaterial({ map: pathTexture(), roughness: 0.9 }));
+    pathF.rotation.x = -Math.PI / 2; pathF.position.set(0.4, 0.025, 9.1); pathF.receiveShadow = true; this.scene.add(pathF);
+
+    // back wall with coral crown + base, two sky windows, the wall clock
+    const wall = new THREE.Mesh(G('wallB', () => new THREE.BoxGeometry(16.8, 6.4, 0.5)), M(P.wallCream, { roughness: 1 }));
+    wall.position.set(0, 3.2, -9.55); wall.receiveShadow = true; this.scene.add(wall);
+    const crown = new THREE.Mesh(G('wallCrown', () => new THREE.BoxGeometry(17.2, 0.4, 0.7)), M(P.wallCoral, { roughness: 0.9 }));
+    crown.position.set(0, 6.4, -9.55); this.scene.add(crown);
+    const baseBand = new THREE.Mesh(G('wallBase', () => new THREE.BoxGeometry(16.8, 1.1, 0.55)), M(P.wallCoral, { roughness: 0.9 }));
+    baseBand.position.set(0, 0.55, -9.53); this.scene.add(baseBand);
+    for (const wx of [-6.9, 6.6]) {
+      const frame = new THREE.Mesh(G('winFrame', () => new THREE.BoxGeometry(2.5, 2.5, 0.2)), M(0xFFFFFF, { roughness: 0.7 }));
+      frame.position.set(wx, 3.7, -9.34); this.scene.add(frame);
+      const glass = new THREE.Mesh(G('winSky', () => new THREE.PlaneGeometry(2.05, 2.05)),
+        new THREE.MeshBasicMaterial({ color: P.skyTop }));
+      glass.position.set(wx, 3.7, -9.22); this.scene.add(glass);
+      const bar = new THREE.Mesh(G('winBar', () => new THREE.BoxGeometry(2.3, 0.1, 0.05)), M(0xFFFFFF, { roughness: 0.7 }));
+      bar.position.set(wx, 3.7, -9.2); this.scene.add(bar);
+    }
+    const clockG = new THREE.Group();
+    const clockFace = new THREE.Mesh(G('clockF', () => new THREE.CylinderGeometry(0.6, 0.6, 0.08, 28)), M(0xFFFFFF, { roughness: 0.5 }));
+    clockFace.rotation.x = Math.PI / 2; clockG.add(clockFace);
+    const clockRim = new THREE.Mesh(G('clockR', () => new THREE.TorusGeometry(0.6, 0.08, 10, 28)), M(P.wallCoral));
+    clockG.add(clockRim);
+    this.clockHand = new THREE.Mesh(G('clockH', () => {
+      const g = new THREE.BoxGeometry(0.05, 0.46, 0.04);
+      g.translate(0, 0.2, 0); // rotate about the base of the hand
+      return g;
+    }), M(P.danger));
+    this.clockHand.position.z = 0.07; clockG.add(this.clockHand);
+    const clockHr = new THREE.Mesh(G('clockH2', () => new THREE.BoxGeometry(0.06, 0.3, 0.04)), M(P.ink));
+    clockHr.position.z = 0.06; clockHr.rotation.z = -2.1; clockG.add(clockHr);
+    clockG.position.set(1.6, 5.3, -9.28);
+    this.scene.add(clockG);
+
+    // low side rails with planters — the diorama stays open and readable
+    const railGeo = G('rail', () => new THREE.BoxGeometry(0.5, 1.0, 16.2));
+    const lipGeo = G('railLip', () => new THREE.BoxGeometry(0.66, 0.2, 16.4));
     for (const sx of [-1, 1]) {
-      const sw = new THREE.Mesh(G('wallS', () => new THREE.PlaneGeometry(40, 20)), M(0xF3D8B0, { roughness: 1 }));
-      sw.position.set(sx * 11, 10, 3); sw.rotation.y = -sx * Math.PI / 2; this.scene.add(sw);
-      for (const wz of [-3, 3.5]) {
-        const fr = new THREE.Mesh(G('winF', () => new THREE.BoxGeometry(0.25, 3.4, 4.2)), M(0x9A6534));
-        fr.position.set(sx * 10.9, 4.2, wz); this.scene.add(fr);
-        const gl = new THREE.Mesh(G('winG', () => new THREE.PlaneGeometry(3.6, 2.9)), M(0xCBEAF6, { emissive: 0xaddcf0, emissiveIntensity: 0.6, roughness: 0.3 }));
-        gl.position.set(sx * 10.75, 4.2, wz); gl.rotation.y = -sx * Math.PI / 2; this.scene.add(gl);
+      const rail = new THREE.Mesh(railGeo, M(P.wallCream, { roughness: 0.95 }));
+      rail.position.set(sx * 8.15, 0.5, -1.7); this.scene.add(shadows(rail));
+      const lip = new THREE.Mesh(lipGeo, M(P.wallCoral, { roughness: 0.9 }));
+      lip.position.set(sx * 8.15, 1.06, -1.7); this.scene.add(lip);
+      for (const pz of [-7.2, -1.7, 3.8]) {
+        const pot = new THREE.Mesh(G('railPot', () => new THREE.BoxGeometry(0.85, 0.62, 0.85)), M(P.wallCoral, { roughness: 0.8 }));
+        pot.position.set(sx * 8.15, 1.45, pz); this.scene.add(shadows(pot));
+        const bush = new THREE.Mesh(G('railBush', () => new THREE.IcosahedronGeometry(0.55, 1)), M(0x58C96B, { roughness: 0.9 }));
+        bush.position.set(sx * 8.15, 2.1, pz); this.scene.add(shadows(bush));
       }
     }
 
-    // framed café art + a ticking wall clock on the side walls
-    const arts: { e: string; f: string; x: number; z: number; s: number }[] = [
-      { e: '🍕', f: '#C0552F', x: -1, z: 0.4, s: 1 },
-      { e: '🥗', f: '#5B8C3E', x: -1, z: 5.6, s: 1 },
-      { e: '☕', f: '#8A5A2A', x: 1, z: 1.6, s: 1 },
-    ];
-    for (const a of arts) {
-      const art = new THREE.Mesh(G('art', () => new THREE.PlaneGeometry(1.7, 2.0)), new THREE.MeshBasicMaterial({ map: wallArtTexture(a.e, a.f) }));
-      art.position.set(a.x * 10.85, 4.6, a.z); art.rotation.y = -a.x * Math.PI / 2; this.scene.add(art);
+    // string lights strung between poles on the rails, high above the tables
+    const poleGeo = G('lightPole', () => new THREE.CylinderGeometry(0.07, 0.09, 6.4, 8));
+    const strands: [number, number][] = [[-4.6, 6.15], [5.3, 6.15]];
+    for (const [pz] of strands) {
+      for (const sx of [-1, 1]) {
+        const pole = new THREE.Mesh(poleGeo, M(P.woodDark, { roughness: 0.8 }));
+        pole.position.set(sx * 8.15, 4.2, pz); this.scene.add(pole);
+      }
     }
-    const clockG = new THREE.Group();
-    const clockFace = new THREE.Mesh(G('clockF', () => new THREE.CylinderGeometry(0.62, 0.62, 0.08, 28)), M(0xFDF6E8, { roughness: 0.5 }));
-    clockFace.rotation.z = Math.PI / 2; clockG.add(clockFace);
-    const clockRim = new THREE.Mesh(G('clockR', () => new THREE.TorusGeometry(0.62, 0.07, 10, 28)), M(0x8A5A2A));
-    clockRim.rotation.y = Math.PI / 2; clockG.add(clockRim);
-    this.clockHand = new THREE.Mesh(G('clockH', () => new THREE.BoxGeometry(0.02, 0.05, 0.46)), M(0xE8442C));
-    this.clockHand.position.x = 0.06; clockG.add(this.clockHand);
-    const clockHr = new THREE.Mesh(G('clockH2', () => new THREE.BoxGeometry(0.03, 0.06, 0.3)), M(0x4A3524));
-    clockHr.position.set(0.055, 0, -0.08); clockHr.rotation.x = 2.2; clockG.add(clockHr);
-    clockG.position.set(10.85, 5.2, 4.9); clockG.rotation.y = -Math.PI / 2;
-    this.scene.add(clockG);
-
-    const beam = new THREE.Mesh(G('beam', () => new THREE.BoxGeometry(22, 0.55, 0.8)), M(0x9A6534));
-    beam.position.set(0, 6.2, -5.85); this.scene.add(beam);
-
-    // string lights: catenary cords with warm bulbs
-    const strands: [number, number][] = [[-1.2, 5.4], [2.6, 5.6]];
-    const bulbGeo = G('bulb', () => new THREE.SphereGeometry(0.1, 8, 6));
+    const bulbGeo = G('bulb', () => new THREE.SphereGeometry(0.11, 8, 6));
     const bulbMat = new THREE.MeshStandardMaterial({ color: 0xFFE9A8, emissive: 0xFFC96B, emissiveIntensity: 1.35, roughness: 0.4 });
-    const bulbs = new THREE.InstancedMesh(bulbGeo, bulbMat, strands.length * 15);
+    const bulbs = new THREE.InstancedMesh(bulbGeo, bulbMat, strands.length * 13);
     let bi = 0; const im = new THREE.Matrix4();
     for (const [sz, sy] of strands) {
       const pts: THREE.Vector3[] = [];
       for (let k = 0; k <= 28; k++) {
         const f = k / 28;
-        pts.push(new THREE.Vector3(-9 + f * 18, sy + 1.25 - Math.sin(f * Math.PI) * 1.1, sz));
+        pts.push(new THREE.Vector3(-8.15 + f * 16.3, sy + 1.25 - Math.sin(f * Math.PI) * 1.15, sz));
       }
       const cord = new THREE.Mesh(
         new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 30, 0.022, 5),
-        M(0x6E4A28, { roughness: 0.9 }),
+        M(P.ink, { roughness: 0.9 }),
       );
       this.scene.add(cord);
-      for (let k = 0; k < 15; k++) {
-        const f = (k + 0.5) / 15;
-        im.setPosition(-9 + f * 18, sy + 1.17 - Math.sin(f * Math.PI) * 1.1, sz);
+      for (let k = 0; k < 13; k++) {
+        const f = (k + 0.5) / 13;
+        im.setPosition(-8.15 + f * 16.3, sy + 1.17 - Math.sin(f * Math.PI) * 1.15, sz);
         bulbs.setMatrixAt(bi++, im);
       }
     }
     this.scene.add(bulbs);
 
-    // entrance: swinging doors, doormat, velvet-rope waiting line
+    // entrance façade: awning, swing doors, welcome sign, waiting-line rope
     this.buildDoor();
-    const mat = new THREE.Mesh(G('mat', () => new THREE.BoxGeometry(4.6, 0.05, 1.9)), M(0xB33A22, { roughness: 0.95 }));
-    mat.position.set(MAT.x, 0.025, MAT.z); this.scene.add(mat);
     for (const rx of [-2.6, 3.4]) {
       const post = new THREE.Mesh(G('post', () => new THREE.CylinderGeometry(0.06, 0.09, 1.1, 10)), M(0xC9A227, { metalness: 0.6, roughness: 0.3 }));
       post.position.set(MAT.x + rx, 0.55, QUEUE_Z + 0.9); this.scene.add(shadows(post));
       const knob = new THREE.Mesh(G('knob', () => new THREE.SphereGeometry(0.11, 10, 8)), M(0xC9A227, { metalness: 0.6, roughness: 0.3 }));
       knob.position.set(MAT.x + rx, 1.15, QUEUE_Z + 0.9); this.scene.add(knob);
     }
-    const wait = new THREE.Mesh(G('waitSign', () => new THREE.PlaneGeometry(2.2, 0.8)), new THREE.MeshBasicMaterial({ map: signTexture('WELCOME', { bg: '#5A3318' }), transparent: true }));
+    // queue spots: four friendly wait-here rings instead of a doormat
+    const spotGeo = G('queueSpot', () => new THREE.RingGeometry(0.34, 0.46, 22));
+    for (const qx of QUEUE_X) {
+      const spot = new THREE.Mesh(spotGeo, new THREE.MeshBasicMaterial({ color: 0xFFFFFF, transparent: true, opacity: 0.8 }));
+      spot.rotation.x = -Math.PI / 2; spot.position.set(qx, 0.04, QUEUE_Z);
+      this.scene.add(spot);
+    }
+    const wait = new THREE.Mesh(G('waitSign', () => new THREE.PlaneGeometry(2.2, 0.8)), new THREE.MeshBasicMaterial({ map: signTexture('WELCOME', { bg: P.inkCss }), transparent: true }));
     wait.position.set(MAT.x + 0.4, 2.4, QUEUE_Z + 1.2); this.scene.add(wait);
 
-    for (const [px, pz] of [[-8.5, -7.5], [8.5, -7.5], [-8.5, 6], [8.5, 6]]) {
-      const pot = new THREE.Mesh(G('pot', () => new THREE.CylinderGeometry(0.62, 0.5, 1, 16)), M(0xCC6B3A)); pot.position.set(px, 0.5, pz);
-      const fol = new THREE.Mesh(G('fol', () => new THREE.IcosahedronGeometry(1.05, 1)), M(0x4FA63A)); fol.position.set(px, 1.7, pz);
+    for (const [px, pz] of [[-7.3, -7.4], [7.3, -7.4], [-7.3, 5.9], [7.3, 5.9]]) {
+      const pot = new THREE.Mesh(G('pot', () => new THREE.CylinderGeometry(0.62, 0.5, 1, 16)), M(P.wallCoral, { roughness: 0.8 })); pot.position.set(px, 0.5, pz);
+      const fol = new THREE.Mesh(G('fol', () => new THREE.IcosahedronGeometry(1.05, 1)), M(0x58C96B, { roughness: 0.9 })); fol.position.set(px, 1.7, pz);
       this.scene.add(shadows(pot), shadows(fol));
     }
 
-    const tub = new THREE.Mesh(G('tub', () => new THREE.BoxGeometry(1.2, 0.5, 0.9)), M(0x76808E, { roughness: 0.6 }));
+    const tub = new THREE.Mesh(G('tub', () => new THREE.BoxGeometry(1.2, 0.5, 0.9)), M(0x9FD8CC, { roughness: 0.6 }));
     tub.position.set(BIN.x, 0.9, -5.4); this.scene.add(shadows(tub));
     const tubSign = new THREE.Mesh(G('tubSign', () => new THREE.PlaneGeometry(1.5, 0.55)), new THREE.MeshBasicMaterial({ map: signTexture('DISHES', { bg: '#4A5560' }), transparent: true }));
     tubSign.position.set(BIN.x, 1.85, -5.2); this.scene.add(tubSign);
@@ -332,19 +393,42 @@ export class RestaurantGame {
     this.washer.g.rotation.y = Math.PI / 2.4;
     this.washer.g.scale.setScalar(0.94);
     this.scene.add(this.washer.g);
+
+    // drifting clouds around the island — the world breathes
+    const cloudMat = new THREE.SpriteMaterial({ map: cloudTexture(), transparent: true, opacity: 0.9, depthWrite: false });
+    const cloudDefs: [number, number, number, number, number][] = [
+      // x, y, z, scale, speed
+      [-15, 6.0, -13, 6.0, 0.24],
+      [13, 7.5, -14, 7.5, -0.18],
+      [-13, 1.6, 5, 5.2, 0.2],
+      [15, 2.6, 8, 6.4, -0.26],
+      [0, -3.0, 14, 7.0, 0.15],
+    ];
+    for (const [cx, cy, cz, cs, sp] of cloudDefs) {
+      const spr = new THREE.Sprite(cloudMat);
+      spr.position.set(cx, cy, cz);
+      spr.scale.set(cs, cs * 0.5, 1);
+      this.scene.add(spr);
+      this.clouds.push({ spr, speed: sp });
+    }
   }
 
-  /** Saloon-style double doors that swing whenever a guest walks through. */
+  /** Entrance façade: striped awning over swinging doors. */
   private buildDoor() {
-    const frameMat = M(0x9A6534, { roughness: 0.7 });
+    const frameMat = M(P.woodDark, { roughness: 0.7 });
     for (const sx of [-1.35, 1.35]) {
-      const post = new THREE.Mesh(G('doorPost', () => new THREE.BoxGeometry(0.22, 3.4, 0.22)), frameMat);
+      const post = new THREE.Mesh(G('doorPost', () => new THREE.BoxGeometry(0.24, 3.4, 0.24)), frameMat);
       post.position.set(DOOR.x + sx, 1.7, DOOR.z); this.scene.add(shadows(post));
     }
-    const lintel = new THREE.Mesh(G('doorTop', () => new THREE.BoxGeometry(2.95, 0.3, 0.3)), frameMat);
+    const lintel = new THREE.Mesh(G('doorTop', () => new THREE.BoxGeometry(3.0, 0.3, 0.3)), frameMat);
     lintel.position.set(DOOR.x, 3.35, DOOR.z); this.scene.add(shadows(lintel));
-    const sign = new THREE.Mesh(G('openSign', () => new THREE.PlaneGeometry(1.7, 0.62)), new THREE.MeshBasicMaterial({ map: signTexture('OPEN', { bg: '#B33A22' }), transparent: true }));
-    sign.position.set(DOOR.x, 3.95, DOOR.z); this.scene.add(sign);
+    // scalloped awning sloping toward the guests
+    const awning = new THREE.Mesh(G('awning', () => new THREE.PlaneGeometry(4.4, 1.7)),
+      new THREE.MeshStandardMaterial({ map: awningTexture(), roughness: 0.9, side: THREE.DoubleSide }));
+    awning.position.set(DOOR.x, 4.0, DOOR.z + 0.55); awning.rotation.x = -0.5;
+    this.scene.add(awning);
+    const sign = new THREE.Mesh(G('openSign', () => new THREE.PlaneGeometry(1.5, 0.55)), new THREE.MeshBasicMaterial({ map: signTexture('OPEN', { bg: P.dangerCss }), transparent: true, depthWrite: false }));
+    sign.position.set(DOOR.x, 2.7, DOOR.z + 0.75); sign.renderOrder = 5; this.scene.add(sign);
     const panelGeo = G('doorPanel', () => {
       const g = new THREE.BoxGeometry(1.16, 2.0, 0.09);
       g.translate(0.58, 0, 0); // hinge on the left edge
@@ -356,6 +440,13 @@ export class RestaurantGame {
     this.doorR = new THREE.Mesh(panelGeo, panelMat);
     this.doorR.position.set(DOOR.x + 1.22, 1.35, DOOR.z);
     this.doorR.rotation.y = Math.PI; // mirrored: hinge on the right
+    // porthole windows on the swing doors
+    const holeGeo = G('doorHole', () => new THREE.CylinderGeometry(0.2, 0.2, 0.12, 16));
+    for (const panel of [this.doorL, this.doorR]) {
+      const hole = new THREE.Mesh(holeGeo, M(P.awningCream, { roughness: 0.5 }));
+      hole.rotation.x = Math.PI / 2; hole.position.set(0.58, 0.45, 0);
+      panel.add(hole);
+    }
     this.scene.add(shadows(this.doorL), shadows(this.doorR));
   }
 
@@ -406,33 +497,40 @@ export class RestaurantGame {
     this.arrow.visible = false; this.scene.add(this.arrow);
   }
 
-  // ── camera: fit the play area at any aspect ratio ──────────────────────────
+  // ── camera: orthographic diorama framing at any aspect ratio ───────────────
+  // A fixed-orbit ortho camera reads like a board game: no perspective wonk at
+  // the edges, rows never overlap, and the island silhouette stays crisp. A
+  // small yaw gives the furniture two visible faces without hurting picking.
   private frameCamera() {
     const w = innerWidth, h = innerHeight;
     const aspect = w / h;
-    this.camera.aspect = aspect; this.camera.updateProjectionMatrix();
-    this.fitCam.aspect = aspect; this.fitCam.fov = this.camera.fov; this.fitCam.updateProjectionMatrix();
     const t = THREE.MathUtils.clamp((aspect - 0.65) / (1.35 - 0.65), 0, 1);
-    const elev = THREE.MathUtils.lerp(0.76, 0.58, t);
+    const elev = THREE.MathUtils.lerp(0.92, 0.68, t);
+    // straight-on framing: the symmetric island reads intentional and calm
     this.camDir.set(0, Math.sin(elev), Math.cos(elev));
-    let lo = 8, hi = 46;
-    for (let i = 0; i < 22; i++) {
+    let lo = 5, hi = 24;
+    for (let i = 0; i < 20; i++) {
       const mid = (lo + hi) / 2;
-      if (this.fitsAt(mid)) hi = mid; else lo = mid;
+      if (this.fitsAt(mid, aspect)) hi = mid; else lo = mid;
     }
-    this.camDist = hi;
-    const fog = this.scene.fog as THREE.Fog;
-    fog.near = this.camDist + 8;
-    fog.far = this.camDist + 34;
+    this.camHalfH = hi;
+    this.setFrustum(this.camera, this.camHalfH, aspect);
   }
 
-  private fitsAt(dist: number): boolean {
-    this.fitCam.position.copy(LOOK).addScaledVector(this.camDir, dist);
+  private setFrustum(cam: THREE.OrthographicCamera, halfH: number, aspect: number) {
+    cam.left = -halfH * aspect; cam.right = halfH * aspect;
+    cam.top = halfH; cam.bottom = -halfH;
+    cam.updateProjectionMatrix();
+  }
+
+  private fitsAt(halfH: number, aspect: number): boolean {
+    this.setFrustum(this.fitCam, halfH, aspect);
+    this.fitCam.position.copy(LOOK).addScaledVector(this.camDir, CAM_DIST);
     this.fitCam.lookAt(LOOK);
     this.fitCam.updateMatrixWorld(true);
     for (const [x, y, z] of FIT_POINTS) {
       this.tmp.set(x, y, z).project(this.fitCam);
-      if (Math.abs(this.tmp.x) > 0.93 || this.tmp.y > 0.84 || this.tmp.y < -0.97) return false;
+      if (Math.abs(this.tmp.x) > 0.96 || this.tmp.y > 0.9 || this.tmp.y < -0.94) return false;
     }
     return true;
   }
@@ -471,12 +569,15 @@ export class RestaurantGame {
     const critic = this.criticPlanned && !this.criticArrived && this.spawned >= Math.floor(this.level.customers / 2);
     if (critic) this.criticArrived = true;
 
+    const skin = SKINS[vi % SKINS.length];
     const ch = critic
-      ? chibi({ skin: SKINS[vi], outfit: 0x2A2A33, hair: 0xB8B8B8, accessory: 'sunglasses' })
-      : chibi({ skin: SKINS[vi], outfit: variant.outfit, hair: variant.hair, accessory: variant.accessory });
+      ? chibi({ skin, outfit: 0x2A2A33, hair: 0xB8B8B8, accessory: 'sunglasses' })
+      : chibi({ skin, outfit: variant.outfit, hair: variant.hair, accessory: variant.accessory });
+    if (!critic) ch.g.scale.setScalar(variant.scaleMul);
+    if (variant.name === 'Elder' && !critic) ch.head.rotation.x = 0.14; // a gentle stoop
     if (vip) {
-      const crown = new THREE.Mesh(G('crown', () => new THREE.CylinderGeometry(0.22, 0.26, 0.16, 5)), M(0xFFC21E, { metalness: 0.6, roughness: 0.3 }));
-      crown.position.y = 0.48; ch.head.add(crown);
+      const crown = new THREE.Mesh(G('crown', () => new THREE.CylinderGeometry(0.24, 0.28, 0.18, 5)), M(0xFFC21E, { metalness: 0.6, roughness: 0.3 }));
+      crown.position.y = 0.52; ch.head.add(crown);
     }
     if (critic) {
       const pad = new THREE.Mesh(G('notepad', () => new THREE.BoxGeometry(0.2, 0.26, 0.04)), M(0xFDFDF5, { roughness: 0.9 }));
@@ -1016,15 +1117,16 @@ export class RestaurantGame {
 
     const ease = 1 - Math.pow(1 - this.introT, 3);
     const punch = this.anims.find(a => a.k === 'punch');
-    const pk = punch ? Math.sin(punch.t * 60) * 0.12 * Math.max(0, 1 - punch.t * 5) : 0;
-    const extra = this.camDist * 0.35 * (1 - ease);
-    this.camera.position.copy(LOOK).addScaledVector(this.camDir, this.camDist + extra);
+    const pk = punch ? Math.sin(punch.t * 60) * 0.1 * Math.max(0, 1 - punch.t * 5) : 0;
+    this.camera.position.copy(LOOK).addScaledVector(this.camDir, CAM_DIST);
     if (!this.reduceMotion) {
-      this.camera.position.x += Math.sin(now / 3200) * 0.4;
-      this.camera.position.y += Math.sin(now / 2600) * 0.18 + pk;
+      this.camera.position.x += Math.sin(now / 3400) * 0.22;
+      this.camera.position.y += Math.sin(now / 2700) * 0.1 + pk;
     }
-    this.camera.position.y += (1 - ease) * 1.2;
     this.camera.lookAt(LOOK);
+    // intro: a gentle ortho zoom-in as the shift starts
+    const zoom = 1 / (1 + 0.3 * (1 - ease));
+    if (this.camera.zoom !== zoom) { this.camera.zoom = zoom; this.camera.updateProjectionMatrix(); }
 
     this.renderer.render(this.scene, this.camera);
   }
@@ -1201,7 +1303,10 @@ export class RestaurantGame {
           o.position.y = 0.42 + Math.abs(Math.sin(g.t * 6)) * 0.04;
           g.c.head.rotation.x = Math.abs(Math.sin(g.t * 6)) * 0.18;
           g.c.armR.rotation.x = -1.4 + Math.sin(g.t * 6) * 0.3;
-          if (g.table?.food) g.table.food.scale.setScalar(Math.max(0.25, g.eatT / this.level.eatTime));
+          if (g.table?.food) {
+            g.table.food.scale.setScalar(Math.max(0.25, g.eatT / this.level.eatTime));
+            if (Math.random() < dt * 1.2) this.fx.steam(this.tmp.set(g.table.pos.x, 1.4, g.table.pos.z));
+          }
           if (g.eatT <= 0) {
             g.phase = 'check';
             g.c.head.rotation.x = 0;
@@ -1304,7 +1409,14 @@ export class RestaurantGame {
       this.washer.armR.rotation.x = Math.sin(now / 900) * 0.12 - 0.2;
     }
 
-    this.clockHand.rotation.x = -(now / 60000) * Math.PI * 2;
+    this.clockHand.rotation.z = -(now / 60000) * Math.PI * 2;
+
+    // clouds drift past the island and wrap around
+    for (const c of this.clouds) {
+      c.spr.position.x += c.speed * dt;
+      if (c.spr.position.x > 20) c.spr.position.x = -20;
+      if (c.spr.position.x < -20) c.spr.position.x = 20;
+    }
 
     const active = this.kitchen.activeBurners();
     const glowTarget = active > 0 ? 0.35 + active * 0.18 + Math.sin(now / 70) * 0.08 : 0;

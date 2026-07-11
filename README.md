@@ -4,8 +4,10 @@
 
 **Seat them. Serve them. Keep every heart full.**
 
-A classic time-management restaurant game (think *Diner Dash*) in warm,
-low-poly 3D. Built with **Three.js**, mobile-first, installable, offline-ready.
+A classic time-management restaurant game (think *Diner Dash*) staged as a
+floating **Candy Diner** diorama — orthographic camera, color-blocked zones,
+big-headed chibis. Built with **Three.js**, mobile-first, installable,
+offline-ready.
 
 [![Play](https://img.shields.io/badge/%E2%96%B6%20Play-Live-brightgreen)](https://MordechaiN.github.io/TableRush/)
 ![Engine](https://img.shields.io/badge/engine-Three.js-blue)
@@ -57,10 +59,10 @@ so you can chase all the stars:
 | 2 | Pasta Night | 12 | Pasta |
 | 3 | Pizza Party | 16 | Pizza · VIPs 👑 |
 | 4 | Sushi Rush | 20 | Sushi |
-| 5 | Sweet & Sour | 24 | Cake · the Critic 🖋 |
-| 6 | Noodle Fever | 27 | Ramen |
-| 7 | Prime Time | 30 | Steak · the Critic returns |
-| 8 | Full House | 34 | the whole menu, all at once |
+| 5 | Sweet & Sour | 22 | Cake · the Critic 🖋 |
+| 6 | Noodle Fever | 24 | Ramen |
+| 7 | Prime Time | 26 | Steak · the Critic returns |
+| 8 | Full House | 28 | the whole menu, all at once |
 
 Clear the ⭐ goal to unlock the next level; stars persist. The goal bar lives
 at the bottom of the HUD, Diner-Dash style.
@@ -89,13 +91,13 @@ hovers over the next suggested tap.
 
 | Part | Tech |
 |------|------|
-| Rendering | **Three.js** — real-time 3D, soft shadows, sRGB |
+| Rendering | **Three.js** — orthographic diorama, soft shadows, sRGB |
 | Language | TypeScript (strict) |
 | Build | Vite 5 |
 | UI / HUD / menus | DOM + CSS, one design system, safe-area aware |
 | Type | Baloo 2 (variable, self-hosted, OFL) |
 | Audio | Web Audio API synthesis — music, room-tone ambience, SFX; zero audio files |
-| Art | 100% procedural: cached low-poly geometry + canvas textures |
+| Art | 100% procedural: cached geometry + canvas textures, one documented palette (`src/config/Palette.ts`) |
 | Persistence | localStorage |
 | Install | PWA — manifest, icons, offline via service worker |
 | QA | Playwright harnesses — bot, real-input (mouse + touch), balance |
@@ -112,6 +114,7 @@ index.html → src/main.ts                     orchestrator: title → level →
    │    └─ src/three/builders.ts             art library (chibis, dishes, textures)
    ├─ src/three/ui.ts                        HUD, goal bar, ripples, overlays
    ├─ src/config/GameConfig.ts               levels, hearts, points, menu — every number
+   ├─ src/config/Palette.ts                  the Candy Diner color system
    └─ src/systems/
         ├─ ProgressionSystem.ts              level unlocks, stars, wallet, upgrades
         ├─ SoundManager.ts                   SFX, music loop, ambience, sizzle bed
@@ -128,8 +131,10 @@ Design decisions worth knowing:
 - **Screen-space input picking** — the nearest actionable hotspot to the tap
   wins within a forgiving radius. No raycasting; works at any camera angle,
   fat-finger-proof.
-- **Aspect-adaptive camera** — binary-search framing keeps queue, tables and
-  kitchen on screen at any aspect ratio (portrait phones get the steep view).
+- **Orthographic diorama camera** — board-game clarity with zero edge
+  distortion; binary-search framing keeps queue, tables and kitchen on screen
+  at any aspect ratio (portrait phones get the steeper view and the island
+  bleeds off-screen horizontally while its silhouette stays in frame).
 - **The restaurant is alive** — swinging entrance doors, a chef who stirs and
   carries plates, a dish washer who scrubs what you bus, burner flames, a
   ticking wall clock, footstep dust, steam everywhere. Nothing teleports.

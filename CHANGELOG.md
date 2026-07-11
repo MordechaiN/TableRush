@@ -1,5 +1,45 @@
 # CHANGELOG
 
+## V1.2 — The Candy Diner redesign (2026-07-11)
+
+A complete art-direction reboot. The gameplay simulation carried over
+untouched; almost everything the player *sees* was rebuilt around one
+committed visual identity: **a floating "Candy Diner" diorama** on a
+mint-to-cream sky. The engine disappears; the toy shines.
+
+### New art direction
+- **Documented color system** (`src/config/Palette.ts`): sky, floor-zone,
+  architecture, brand, feedback and character tokens shared by the 3D
+  materials, the canvas textures and the UI CSS.
+- **Floating island diorama**: rounded caramel platform with a soft under-
+  shadow, drifting clouds, no fog, no infinite floor.
+- **Color-blocked zones read instantly**: mint checkerboard = kitchen,
+  blond wood = dining room, cream pavers = entrance path.
+- **Entrance façade**: scalloped red-striped awning, OPEN sign, porthole
+  swing doors, wait-here rings.
+
+### Camera
+- Replaced the perspective camera with an **orthographic diorama camera** —
+  board-game clarity, zero edge distortion, rows never overlap. Aspect-aware
+  elevation with binary-search framing; gentle ortho zoom intro; QA-verified
+  100% effective taps through the same screen-space picker.
+
+### Characters v2
+- Bigger heads, egg-shaped two-tone bodies, **real eyes** (sclera, pupil,
+  sparkle highlight, brows), blush and smiles on every face.
+- Distinct silhouettes: hunched Elder, tall Business, small **Kid** (new
+  archetype), plus the coral-aproned chef who now pops from every angle.
+
+### Kitchen & food
+- Cream-enamel stove with coral knobs, slim hood, retro mint fridge,
+  chrome duct; bigger food portions and steam rising off hot plates.
+
+### UI
+- Cream cards with white outlines and chocolate ink replace the dark pills;
+  goal bar got **star nodes that pop** when the ⭐ goal and ⭐⭐⭐ line are hit;
+  combo pill wears the celebration purple; overlays sit on a sky gradient.
+- Title screen: animated sun rays, drifting CSS clouds, candy logo.
+
 ## V1.1 — The Premium Polish update (2026-07-10)
 
 A full studio pass over presentation, feel, content and accessibility —

@@ -31,15 +31,17 @@ export interface Archetype {
   name: string; outfit: number; hair: number; accessory: Accessory;
   speed: number;        // walk-speed multiplier
   patienceMul: number;  // hearts drain slower (>1) or faster (<1)
+  scaleMul: number;     // silhouette size (kids are small, elders hunch)
 }
 export const CUSTOMER_VARIANTS: Archetype[] = [
-  { name: 'Elegant',  outfit: 0xCC2244, hair: 0x2C1810, accessory: 'flower',     speed: 0.95, patienceMul: 1.10 },
-  { name: 'Business', outfit: 0x1A3A6B, hair: 0x6B3A1F, accessory: 'glasses',    speed: 1.15, patienceMul: 0.85 },
-  { name: 'Casual',   outfit: 0x2D7A2D, hair: 0xF5C842, accessory: 'none',       speed: 1.00, patienceMul: 1.00 },
-  { name: 'Trendy',   outfit: 0xE06520, hair: 0x1A1A1A, accessory: 'sunglasses', speed: 1.10, patienceMul: 0.90 },
-  { name: 'Romantic', outfit: 0x7B3FA0, hair: 0x3A2415, accessory: 'bow',        speed: 0.90, patienceMul: 1.15 },
-  { name: 'Elder',    outfit: 0x1A7A7A, hair: 0xDDDDDD, accessory: 'glasses',    speed: 0.70, patienceMul: 1.35 },
-  { name: 'Teen',     outfit: 0xC8B400, hair: 0xCC3322, accessory: 'cap',        speed: 1.30, patienceMul: 0.78 },
+  { name: 'Elegant',  outfit: 0xCC2244, hair: 0x2C1810, accessory: 'flower',     speed: 0.95, patienceMul: 1.10, scaleMul: 1.00 },
+  { name: 'Business', outfit: 0x1A3A6B, hair: 0x6B3A1F, accessory: 'glasses',    speed: 1.15, patienceMul: 0.85, scaleMul: 1.04 },
+  { name: 'Casual',   outfit: 0x2D7A2D, hair: 0xF5C842, accessory: 'none',       speed: 1.00, patienceMul: 1.00, scaleMul: 1.00 },
+  { name: 'Trendy',   outfit: 0xE06520, hair: 0x1A1A1A, accessory: 'sunglasses', speed: 1.10, patienceMul: 0.90, scaleMul: 0.98 },
+  { name: 'Romantic', outfit: 0x7B3FA0, hair: 0x3A2415, accessory: 'bow',        speed: 0.90, patienceMul: 1.15, scaleMul: 0.96 },
+  { name: 'Elder',    outfit: 0x1A7A7A, hair: 0xDDDDDD, accessory: 'glasses',    speed: 0.70, patienceMul: 1.35, scaleMul: 0.92 },
+  { name: 'Teen',     outfit: 0xC8B400, hair: 0xCC3322, accessory: 'cap',        speed: 1.30, patienceMul: 0.78, scaleMul: 0.95 },
+  { name: 'Kid',      outfit: 0x4EB8D5, hair: 0xE8933A, accessory: 'cap',        speed: 1.20, patienceMul: 0.85, scaleMul: 0.78 },
 ];
 
 // ── Levels — Diner-Dash structure: a level is a fixed guest list and a score

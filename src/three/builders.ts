@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { Accessory, MENU_ITEMS } from '../config/GameConfig';
+import { P } from '../config/Palette';
 
 // ── Shared low-poly art library ───────────────────────────────────────────────
 // All geometry and single-color materials are cached and shared between
@@ -39,30 +40,113 @@ export function woodFloorTexture(): THREE.CanvasTexture {
   return cachedTex('floor', () => {
     const cv = document.createElement('canvas'); cv.width = cv.height = 512;
     const c = cv.getContext('2d')!;
-    c.fillStyle = '#F0CE96'; c.fillRect(0, 0, 512, 512);
+    c.fillStyle = P.woodLightCss; c.fillRect(0, 0, 512, 512);
     const plankH = 64;
     for (let row = 0; row < 8; row++) {
       const y = row * plankH;
-      const tone = 0.94 + ((row * 37) % 5) * 0.028;
-      c.fillStyle = `rgb(${(242 * tone) | 0},${(208 * tone) | 0},${(150 * tone) | 0})`;
+      const tone = 0.955 + ((row * 37) % 5) * 0.022;
+      c.fillStyle = `rgb(${(249 * tone) | 0},${(215 * tone) | 0},${(154 * tone) | 0})`;
       c.fillRect(0, y, 512, plankH - 3);
-      c.fillStyle = 'rgba(165,115,60,0.45)'; c.fillRect(0, y + plankH - 3, 512, 3);
+      c.fillStyle = 'rgba(217,161,94,0.5)'; c.fillRect(0, y + plankH - 3, 512, 3);
       // butt joints, offset per row
       const off = (row % 2) * 128 + 64;
       for (let x = off; x < 512; x += 256) c.fillRect(x, y, 3, plankH - 3);
-      // grain
-      c.strokeStyle = 'rgba(175,125,65,0.16)'; c.lineWidth = 1.5;
-      for (let i = 0; i < 5; i++) {
-        c.beginPath();
-        const gy = y + 10 + i * 11 + ((row * 13 + i * 7) % 6);
-        c.moveTo(0, gy); c.bezierCurveTo(140, gy + 3, 340, gy - 3, 512, gy + 2); c.stroke();
-      }
     }
     const tex = new THREE.CanvasTexture(cv);
     tex.colorSpace = THREE.SRGBColorSpace;
     tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-    tex.repeat.set(5, 5);
+    tex.repeat.set(4, 4);
     tex.anisotropy = 4;
+    return tex;
+  });
+}
+
+/** Mint-and-white checkerboard for the kitchen zone. */
+export function checkerTexture(): THREE.CanvasTexture {
+  return cachedTex('checker', () => {
+    const cv = document.createElement('canvas'); cv.width = cv.height = 256;
+    const c = cv.getContext('2d')!;
+    const s = 64;
+    for (let y = 0; y < 4; y++) for (let x = 0; x < 4; x++) {
+      c.fillStyle = (x + y) % 2 ? P.tileACss : P.tileBCss;
+      c.fillRect(x * s, y * s, s, s);
+    }
+    c.strokeStyle = 'rgba(90,58,46,0.06)'; c.lineWidth = 2;
+    for (let i = 0; i <= 4; i++) {
+      c.beginPath(); c.moveTo(i * s, 0); c.lineTo(i * s, 256); c.stroke();
+      c.beginPath(); c.moveTo(0, i * s); c.lineTo(256, i * s); c.stroke();
+    }
+    const tex = new THREE.CanvasTexture(cv);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    tex.anisotropy = 4;
+    return tex;
+  });
+}
+
+/** Round cream pavers for the entrance walkway. */
+export function pathTexture(): THREE.CanvasTexture {
+  return cachedTex('path', () => {
+    const cv = document.createElement('canvas'); cv.width = 256; cv.height = 512;
+    const c = cv.getContext('2d')!;
+    c.fillStyle = P.pathStoneCss; c.fillRect(0, 0, 256, 512);
+    c.fillStyle = 'rgba(255,255,255,0.85)';
+    c.strokeStyle = 'rgba(217,161,94,0.35)'; c.lineWidth = 4;
+    for (let i = 0; i < 5; i++) {
+      const y = 52 + i * 100, x = 128 + ((i % 2) ? 28 : -28);
+      c.beginPath(); c.ellipse(x, y, 62, 40, 0, 0, 7); c.fill(); c.stroke();
+    }
+    const tex = new THREE.CanvasTexture(cv);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.anisotropy = 4;
+    return tex;
+  });
+}
+
+/** Scalloped red-and-cream awning stripes. */
+export function awningTexture(): THREE.CanvasTexture {
+  return cachedTex('awning', () => {
+    const cv = document.createElement('canvas'); cv.width = 512; cv.height = 128;
+    const c = cv.getContext('2d')!;
+    const w = 64;
+    for (let i = 0; i < 8; i++) {
+      c.fillStyle = i % 2 ? P.awningCreamCss : P.awningRedCss;
+      c.fillRect(i * w, 0, w, 96);
+      c.beginPath(); c.arc(i * w + w / 2, 96, w / 2, 0, Math.PI); c.fill();
+    }
+    const tex = new THREE.CanvasTexture(cv);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    return tex;
+  });
+}
+
+/** Vertical sky gradient used as the diorama backdrop. */
+export function skyTexture(): THREE.CanvasTexture {
+  return cachedTex('sky', () => {
+    const cv = document.createElement('canvas'); cv.width = 32; cv.height = 512;
+    const c = cv.getContext('2d')!;
+    const g = c.createLinearGradient(0, 0, 0, 512);
+    g.addColorStop(0, P.skyTopCss);
+    g.addColorStop(0.62, '#C9EBD9');
+    g.addColorStop(1, P.skyBottomCss);
+    c.fillStyle = g; c.fillRect(0, 0, 32, 512);
+    const tex = new THREE.CanvasTexture(cv);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    return tex;
+  });
+}
+
+/** Soft puffy cloud sprite. */
+export function cloudTexture(): THREE.CanvasTexture {
+  return cachedTex('cloud', () => {
+    const cv = document.createElement('canvas'); cv.width = 256; cv.height = 128;
+    const c = cv.getContext('2d')!;
+    c.fillStyle = 'rgba(255,255,255,0.95)';
+    for (const [x, y, r] of [[70, 84, 34], [120, 66, 44], [175, 80, 36], [105, 92, 38], [150, 94, 32]]) {
+      c.beginPath(); c.arc(x, y, r, 0, 7); c.fill();
+    }
+    const tex = new THREE.CanvasTexture(cv);
+    tex.colorSpace = THREE.SRGBColorSpace;
     return tex;
   });
 }
@@ -74,42 +158,13 @@ export function ginghamTexture(): THREE.CanvasTexture {
     const c = cv.getContext('2d')!;
     c.fillStyle = '#FDF6E8'; c.fillRect(0, 0, 256, 256);
     const s = 32;
-    c.fillStyle = 'rgba(226,90,74,0.55)';
+    c.fillStyle = 'rgba(226,90,74,0.68)';
     for (let x = 0; x < 256; x += s * 2) c.fillRect(x, 0, s, 256);
     for (let y = 0; y < 256; y += s * 2) c.fillRect(0, y, 256, s);
     const tex = new THREE.CanvasTexture(cv);
     tex.colorSpace = THREE.SRGBColorSpace;
     tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
     tex.repeat.set(2, 2);
-    tex.anisotropy = 4;
-    return tex;
-  });
-}
-
-/** Cozy dining-room rug: cream field, terracotta border, stitched dots. */
-export function rugTexture(): THREE.CanvasTexture {
-  return cachedTex('rug', () => {
-    const cv = document.createElement('canvas'); cv.width = cv.height = 512;
-    const c = cv.getContext('2d')!;
-    const cx = 256, cy = 256;
-    c.fillStyle = '#E2725B'; c.beginPath(); c.arc(cx, cy, 254, 0, 7); c.fill();
-    c.fillStyle = '#F6E3C2'; c.beginPath(); c.arc(cx, cy, 224, 0, 7); c.fill();
-    c.strokeStyle = 'rgba(226,114,91,0.7)'; c.lineWidth = 5;
-    c.setLineDash([14, 12]);
-    c.beginPath(); c.arc(cx, cy, 208, 0, 7); c.stroke();
-    c.setLineDash([]);
-    c.fillStyle = 'rgba(226,114,91,0.35)';
-    for (let i = 0; i < 24; i++) {
-      const a = (i / 24) * Math.PI * 2;
-      c.beginPath(); c.arc(cx + Math.cos(a) * 165, cy + Math.sin(a) * 165, 7, 0, 7); c.fill();
-    }
-    c.fillStyle = 'rgba(226,114,91,0.22)';
-    for (let i = 0; i < 12; i++) {
-      const a = (i / 12) * Math.PI * 2 + 0.26;
-      c.beginPath(); c.arc(cx + Math.cos(a) * 95, cy + Math.sin(a) * 95, 9, 0, 7); c.fill();
-    }
-    const tex = new THREE.CanvasTexture(cv);
-    tex.colorSpace = THREE.SRGBColorSpace;
     tex.anisotropy = 4;
     return tex;
   });
@@ -129,24 +184,6 @@ export function signTexture(text: string, opts: { bg?: string; fg?: string; sub?
   const tex = new THREE.CanvasTexture(cv);
   tex.colorSpace = THREE.SRGBColorSpace;
   return tex;
-}
-
-/** Framed café wall art: an emoji doodle on a cream mat. */
-export function wallArtTexture(emoji: string, frame: string): THREE.CanvasTexture {
-  return cachedTex('art' + emoji, () => {
-    const cv = document.createElement('canvas'); cv.width = 256; cv.height = 300;
-    const c = cv.getContext('2d')!;
-    c.fillStyle = frame; c.beginPath(); c.roundRect(0, 0, 256, 300, 14); c.fill();
-    c.fillStyle = '#FBF3E2'; c.beginPath(); c.roundRect(20, 20, 216, 260, 6); c.fill();
-    c.font = '110px serif'; c.textAlign = 'center'; c.textBaseline = 'middle';
-    c.fillText(emoji, 128, 138);
-    c.strokeStyle = 'rgba(150,100,50,0.4)'; c.lineWidth = 3;
-    c.beginPath(); c.moveTo(64, 226); c.lineTo(192, 226); c.stroke();
-    c.beginPath(); c.moveTo(88, 244); c.lineTo(168, 244); c.stroke();
-    const tex = new THREE.CanvasTexture(cv);
-    tex.colorSpace = THREE.SRGBColorSpace;
-    return tex;
-  });
 }
 
 export function menuBoardTexture(): THREE.CanvasTexture {
@@ -262,16 +299,19 @@ export interface ChibiOpts {
 export function chibi(o: ChibiOpts): Chibi {
   const g = new THREE.Group();
   const bodyColor = o.chef ? 0xF5F2EA : o.outfit;
-  // Taller, wider body so characters read even from the steep portrait camera.
-  const body = new THREE.Mesh(G('body', () => new THREE.CapsuleGeometry(0.34, 0.4, 6, 16)), M(bodyColor));
-  body.position.y = 0.66; g.add(body);
+  const darker = new THREE.Color(bodyColor).multiplyScalar(0.78).getHex();
+  // rounded egg body — friendlier than a capsule, reads from any angle
+  const body = new THREE.Mesh(G('bodyEgg', () => new THREE.SphereGeometry(0.42, 20, 16)), M(bodyColor));
+  body.position.y = 0.64; body.scale.set(1, 1.06, 0.92); g.add(body);
+  const skirt = new THREE.Mesh(G('bodySkirt', () => new THREE.SphereGeometry(0.42, 20, 10, 0, 6.3, Math.PI * 0.62, Math.PI * 0.38)), M(darker));
+  skirt.position.y = 0.645; skirt.scale.set(1.01, 1.06, 0.93); g.add(skirt);
 
   // arms — pivot groups at the shoulders so they can swing / carry / stir
   const mkArm = (side: number) => {
-    const pivot = new THREE.Group(); pivot.position.set(side * 0.32, 0.9, 0);
+    const pivot = new THREE.Group(); pivot.position.set(side * 0.36, 0.88, 0);
     const arm = new THREE.Mesh(G('arm', () => new THREE.CapsuleGeometry(0.085, 0.26, 4, 10)), M(bodyColor));
     arm.position.y = -0.18; pivot.add(arm);
-    const hand = new THREE.Mesh(G('hand', () => new THREE.SphereGeometry(0.09, 10, 8)), M(o.skin, { roughness: 0.55 }));
+    const hand = new THREE.Mesh(G('hand', () => new THREE.SphereGeometry(0.095, 10, 8)), M(o.skin, { roughness: 0.55 }));
     hand.position.y = -0.36; pivot.add(hand);
     pivot.rotation.z = side * -0.35;
     g.add(pivot); return pivot;
@@ -279,56 +319,73 @@ export function chibi(o: ChibiOpts): Chibi {
   const armL = mkArm(-1), armR = mkArm(1);
 
   if (o.waiter) {
-    const shirt = new THREE.Mesh(G('shirt', () => new THREE.BoxGeometry(0.2, 0.42, 0.1)), M(0xFDFDFD)); shirt.position.set(0, 0.74, 0.31); g.add(shirt);
-    const bow = new THREE.Mesh(G('bow', () => new THREE.BoxGeometry(0.18, 0.08, 0.06)), M(0xE23B3B)); bow.position.set(0, 0.94, 0.34); g.add(bow);
-    const apron = new THREE.Mesh(G('apron', () => new THREE.BoxGeometry(0.42, 0.3, 0.05)), M(0xF3E5CC, { roughness: 0.9 })); apron.position.set(0, 0.4, 0.33); g.add(apron);
+    const shirt = new THREE.Mesh(G('shirt', () => new THREE.BoxGeometry(0.2, 0.4, 0.1)), M(0xFDFDFD)); shirt.position.set(0, 0.72, 0.33); g.add(shirt);
+    const bow = new THREE.Mesh(G('bow', () => new THREE.BoxGeometry(0.18, 0.08, 0.06)), M(0xE23B3B)); bow.position.set(0, 0.9, 0.35); g.add(bow);
+    const apron = new THREE.Mesh(G('apron', () => new THREE.CylinderGeometry(0.24, 0.21, 0.05, 18)), M(0xF3E5CC, { roughness: 0.9 }));
+    apron.rotation.x = Math.PI / 2; apron.position.set(0, 0.36, 0.34); apron.scale.y = 0.9; g.add(apron);
     for (const bx of [-0.08, 0.08]) {
       const btn = new THREE.Mesh(G('btn', () => new THREE.SphereGeometry(0.025, 8, 6)), M(0xC9A227, { metalness: 0.5, roughness: 0.35 }));
-      btn.position.set(bx, 0.6, 0.36); g.add(btn);
+      btn.position.set(bx, 0.58, 0.38); g.add(btn);
     }
   }
+  if (o.chef) {
+    // coral apron, waist tie and neckerchief — the chef pops from every angle
+    const apron = new THREE.Mesh(G('chefApron', () => new THREE.BoxGeometry(0.46, 0.4, 0.05)), M(P.wallCoral, { roughness: 0.85 }));
+    apron.position.set(0, 0.5, 0.36); g.add(apron);
+    const tie = new THREE.Mesh(G('chefTie', () => new THREE.TorusGeometry(0.4, 0.05, 8, 20)), M(P.wallCoral, { roughness: 0.85 }));
+    tie.rotation.x = Math.PI / 2; tie.position.y = 0.62; tie.scale.set(1, 0.92, 1); g.add(tie);
+    const scarf = new THREE.Mesh(G('chefScarf', () => new THREE.BoxGeometry(0.24, 0.1, 0.08)), M(P.danger, { roughness: 0.7 }));
+    scarf.position.set(0, 0.88, 0.34); g.add(scarf);
+  }
 
-  // head group (so emotions can tilt it) — slightly smaller than before so
-  // bodies stay visible from above
-  const head = new THREE.Group(); head.position.y = 1.32; g.add(head);
-  const skull = new THREE.Mesh(G('skull', () => new THREE.SphereGeometry(0.41, 26, 18)), M(o.skin, { roughness: 0.55 })); head.add(skull);
+  // the head is the character: big, round, expressive
+  const head = new THREE.Group(); head.position.y = 1.34; g.add(head);
+  const skull = new THREE.Mesh(G('skull', () => new THREE.SphereGeometry(0.46, 26, 18)), M(o.skin, { roughness: 0.55 })); head.add(skull);
 
   if (o.chef) {
-    const toque = new THREE.Mesh(G('toque', () => new THREE.CylinderGeometry(0.29, 0.33, 0.4, 18)), M(0xFDFDFD, { roughness: 0.85 })); toque.position.y = 0.46; head.add(toque);
-    for (const [px, py] of [[-0.12, 0.68], [0.12, 0.68], [0, 0.74]] as const) {
-      const puff = new THREE.Mesh(G('puff', () => new THREE.SphereGeometry(0.16, 12, 10)), M(0xFDFDFD, { roughness: 0.85 })); puff.position.set(px, py, 0); head.add(puff);
+    const toque = new THREE.Mesh(G('toque', () => new THREE.CylinderGeometry(0.32, 0.36, 0.42, 18)), M(0xFDFDFD, { roughness: 0.85 })); toque.position.y = 0.52; head.add(toque);
+    for (const [px, py] of [[-0.13, 0.75], [0.13, 0.75], [0, 0.81]] as const) {
+      const puff = new THREE.Mesh(G('puff', () => new THREE.SphereGeometry(0.17, 12, 10)), M(0xFDFDFD, { roughness: 0.85 })); puff.position.set(px, py, 0); head.add(puff);
     }
   } else if (o.accessory === 'cap') {
-    const cap = new THREE.Mesh(G('cap', () => new THREE.SphereGeometry(0.43, 20, 12, 0, 6.3, 0, Math.PI * 0.5)), M(0xD84438)); cap.position.y = 0.05; head.add(cap);
-    const brim = new THREE.Mesh(G('brim', () => new THREE.CylinderGeometry(0.28, 0.3, 0.05, 16, 1, false, 0, Math.PI)), M(0xD84438)); brim.position.set(0, 0.1, 0.3); head.add(brim);
+    const cap = new THREE.Mesh(G('cap', () => new THREE.SphereGeometry(0.48, 20, 12, 0, 6.3, 0, Math.PI * 0.5)), M(0xD84438)); cap.position.y = 0.05; head.add(cap);
+    const brim = new THREE.Mesh(G('brim', () => new THREE.CylinderGeometry(0.32, 0.34, 0.05, 16, 1, false, 0, Math.PI)), M(0xD84438)); brim.position.set(0, 0.11, 0.34); head.add(brim);
   } else {
-    const hair = new THREE.Mesh(G('hair', () => new THREE.SphereGeometry(0.43, 24, 16, 0, 6.3, 0, Math.PI * 0.6)), M(o.hair)); hair.position.y = 0.03; head.add(hair);
+    const hair = new THREE.Mesh(G('hair', () => new THREE.SphereGeometry(0.48, 24, 16, 0, 6.3, 0, Math.PI * 0.58)), M(o.hair)); hair.position.y = 0.03; head.add(hair);
   }
 
   // the face sits proud of the hair shell so it reads at any camera angle
-  const face = new THREE.Mesh(G('face', () => new THREE.SphereGeometry(0.36, 22, 16)), M(o.skin, { roughness: 0.55 }));
-  face.position.set(0, -0.03, 0.12); head.add(face);
+  const face = new THREE.Mesh(G('face', () => new THREE.SphereGeometry(0.4, 22, 16)), M(o.skin, { roughness: 0.55 }));
+  face.position.set(0, -0.04, 0.13); head.add(face);
+  // real eyes: white sclera, dark pupil, sparkle highlight, a brow
   for (const sx of [-1, 1]) {
-    const eye = new THREE.Mesh(G('eye', () => new THREE.SphereGeometry(0.07, 12, 10)), M(0x241a12)); eye.position.set(sx * 0.15, 0.03, 0.4); head.add(eye);
-    const w = new THREE.Mesh(G('eyeW', () => new THREE.SphereGeometry(0.026, 8, 6)), M(0xffffff, { roughness: 0.3 })); w.position.set(sx * 0.15 + 0.03, 0.06, 0.45); head.add(w);
-    const cheek = new THREE.Mesh(G('cheek', () => new THREE.SphereGeometry(0.065, 10, 8)), M(0xFF8A8A, { transparent: true, opacity: 0.5 })); cheek.position.set(sx * 0.22, -0.09, 0.36); head.add(cheek);
+    const sclera = new THREE.Mesh(G('sclera', () => new THREE.SphereGeometry(0.105, 14, 12)), M(0xFFFFFF, { roughness: 0.25 }));
+    sclera.position.set(sx * 0.16, 0.05, 0.42); sclera.scale.set(1, 1.3, 0.55); head.add(sclera);
+    const pupil = new THREE.Mesh(G('pupil', () => new THREE.SphereGeometry(0.052, 12, 10)), M(0x33221A, { roughness: 0.25 }));
+    pupil.position.set(sx * 0.16, 0.04, 0.49); pupil.scale.set(1, 1.25, 0.5); head.add(pupil);
+    const spark = new THREE.Mesh(G('spark', () => new THREE.SphereGeometry(0.02, 8, 6)), M(0xFFFFFF, { roughness: 0.2 }));
+    spark.position.set(sx * 0.16 + 0.028, 0.085, 0.52); head.add(spark);
+    const brow = new THREE.Mesh(G('brow', () => new THREE.BoxGeometry(0.13, 0.032, 0.03)), M(o.chef ? 0x8A6A52 : o.hair));
+    brow.position.set(sx * 0.16, 0.235, 0.415); brow.rotation.z = sx * -0.12; brow.rotation.x = -0.3; head.add(brow);
+    const cheek = new THREE.Mesh(G('cheek', () => new THREE.SphereGeometry(0.07, 10, 8)), M(0xFF9E9E, { transparent: true, opacity: 0.55 }));
+    cheek.position.set(sx * 0.26, -0.11, 0.36); head.add(cheek);
   }
   // a little smile — half-torus hugging the face
-  const smile = new THREE.Mesh(G('smile', () => new THREE.TorusGeometry(0.1, 0.018, 6, 12, Math.PI)), M(0x8A4A32, { roughness: 0.6 }));
-  smile.position.set(0, -0.12, 0.4); smile.rotation.z = Math.PI; smile.rotation.x = -0.25; smile.scale.y = 0.65;
+  const smile = new THREE.Mesh(G('smile', () => new THREE.TorusGeometry(0.11, 0.02, 6, 12, Math.PI)), M(0x8A4A32, { roughness: 0.6 }));
+  smile.position.set(0, -0.13, 0.44); smile.rotation.z = Math.PI; smile.rotation.x = -0.28; smile.scale.y = 0.7;
   head.add(smile);
 
   // accessories
   if (o.accessory === 'glasses') {
     for (const sx of [-1, 1]) {
-      const lens = new THREE.Mesh(G('lens', () => new THREE.TorusGeometry(0.09, 0.018, 8, 16)), M(0x333333, { metalness: 0.3 }));
-      lens.position.set(sx * 0.15, 0.03, 0.45); head.add(lens);
+      const lens = new THREE.Mesh(G('lens', () => new THREE.TorusGeometry(0.105, 0.018, 8, 16)), M(0x333333, { metalness: 0.3 }));
+      lens.position.set(sx * 0.16, 0.05, 0.5); head.add(lens);
     }
-    const bridge = new THREE.Mesh(G('bridge', () => new THREE.BoxGeometry(0.12, 0.02, 0.02)), M(0x333333)); bridge.position.set(0, 0.03, 0.46); head.add(bridge);
+    const bridge = new THREE.Mesh(G('bridge', () => new THREE.BoxGeometry(0.12, 0.02, 0.02)), M(0x333333)); bridge.position.set(0, 0.05, 0.51); head.add(bridge);
   } else if (o.accessory === 'sunglasses') {
-    const shade = new THREE.Mesh(G('shade', () => new THREE.BoxGeometry(0.42, 0.11, 0.05)), M(0x14161C, { roughness: 0.25 })); shade.position.set(0, 0.04, 0.44); head.add(shade);
+    const shade = new THREE.Mesh(G('shade', () => new THREE.BoxGeometry(0.46, 0.12, 0.05)), M(0x14161C, { roughness: 0.25 })); shade.position.set(0, 0.06, 0.49); head.add(shade);
   } else if (o.accessory === 'flower') {
-    const fl = new THREE.Group(); fl.position.set(0.28, 0.26, 0.17);
+    const fl = new THREE.Group(); fl.position.set(0.31, 0.29, 0.19);
     for (let p = 0; p < 5; p++) {
       const a = (p / 5) * Math.PI * 2;
       const petal = new THREE.Mesh(G('petal', () => new THREE.SphereGeometry(0.055, 8, 6)), M(0xF7A8C4));
@@ -337,7 +394,7 @@ export function chibi(o: ChibiOpts): Chibi {
     const core = new THREE.Mesh(G('flcore', () => new THREE.SphereGeometry(0.045, 8, 6)), M(0xFFC94A)); fl.add(core);
     head.add(fl);
   } else if (o.accessory === 'bow') {
-    const bw = new THREE.Group(); bw.position.set(-0.26, 0.28, 0.11); bw.rotation.z = 0.5;
+    const bw = new THREE.Group(); bw.position.set(-0.29, 0.31, 0.12); bw.rotation.z = 0.5;
     const l = new THREE.Mesh(G('bowL', () => new THREE.ConeGeometry(0.07, 0.14, 8)), M(0xE86A8A)); l.rotation.z = Math.PI / 2; l.position.x = -0.08;
     const r = new THREE.Mesh(G('bowL', () => new THREE.ConeGeometry(0.07, 0.14, 8)), M(0xE86A8A)); r.rotation.z = -Math.PI / 2; r.position.x = 0.08;
     const knot = new THREE.Mesh(G('bowK', () => new THREE.SphereGeometry(0.045, 8, 6)), M(0xD84468)); bw.add(l, r, knot);
@@ -346,8 +403,8 @@ export function chibi(o: ChibiOpts): Chibi {
 
   const feet: THREE.Mesh[] = [];
   for (const sx of [-1, 1]) {
-    const foot = new THREE.Mesh(G('foot', () => new THREE.SphereGeometry(0.13, 10, 8)), M(0x3a3f4a));
-    foot.position.set(sx * 0.14, 0.12, 0.05); foot.scale.set(1, 0.7, 1.3); g.add(foot); feet.push(foot);
+    const foot = new THREE.Mesh(G('foot', () => new THREE.SphereGeometry(0.135, 10, 8)), M(0x3a3f4a));
+    foot.position.set(sx * 0.15, 0.12, 0.05); foot.scale.set(1, 0.7, 1.3); g.add(foot); feet.push(foot);
   }
   shadows(g);
   return { g, armL, armR, head, feet };
@@ -441,7 +498,7 @@ export function numberSprite(n: number, bg = '#B33A22'): THREE.Sprite {
   return spr;
 }
 
-export function floatSprite(txt: string, color = '#FFE27A', stroke = '#7a3a0a'): THREE.Sprite {
+export function floatSprite(txt: string, color = '#FFE27A', stroke = '#5A3A2E'): THREE.Sprite {
   const cv = document.createElement('canvas'); cv.width = 320; cv.height = 90; const ctx = cv.getContext('2d')!;
   ctx.font = `800 54px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.lineWidth = 9; ctx.strokeStyle = stroke; ctx.strokeText(txt, 160, 46);

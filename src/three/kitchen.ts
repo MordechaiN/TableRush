@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { MENU_ITEMS, BURNERS, SHELF_SLOTS } from '../config/GameConfig';
 import { M, G, chibi, Chibi, plate, buildDish, makeBubble, Bubble, shadows, poseCarry, poseStand, menuBoardTexture, signTexture, numberSprite, DISH_EMOJI } from './builders';
 import { Effects } from './effects';
+import { P } from '../config/Palette';
 
 // ── The visible kitchen ───────────────────────────────────────────────────────
 // Orders arrive as tickets, land on a burner, cook with steam + a progress
@@ -91,35 +92,37 @@ export class Kitchen {
   // Static kitchen furniture: pass counter, stove, hood, fridge, signage
   private buildSet() {
     const s = this.scene;
-    // pass counter the waiter picks up from
-    const counter = new THREE.Mesh(G('kCounter', () => new THREE.BoxGeometry(8.6, 1.12, 1.5)), M(0xC9763A));
+    // pass counter the waiter picks up from — cream body, coral kick, wood top
+    const counter = new THREE.Mesh(G('kCounter', () => new THREE.BoxGeometry(8.6, 1.12, 1.5)), M(P.wallCream, { roughness: 0.8 }));
     counter.position.set(0, 0.56, -5.85); s.add(shadows(counter));
-    const top = new THREE.Mesh(G('kTop', () => new THREE.BoxGeometry(8.9, 0.14, 1.7)), M(0xF3E5CC, { roughness: 0.5 }));
+    const top = new THREE.Mesh(G('kTop', () => new THREE.BoxGeometry(8.9, 0.14, 1.7)), M(P.woodDark, { roughness: 0.5 }));
     top.position.set(0, 1.16, -5.85); s.add(shadows(top));
-    const kick = new THREE.Mesh(G('kKick', () => new THREE.BoxGeometry(8.6, 0.18, 0.06)), M(0x9A5528));
-    kick.position.set(0, 0.65, -5.06); s.add(kick);
+    const kick = new THREE.Mesh(G('kKick', () => new THREE.BoxGeometry(8.6, 0.22, 0.08)), M(P.wallCoral, { roughness: 0.85 }));
+    kick.position.set(0, 0.11, -5.06); s.add(kick);
 
-    // stove block against the back wall — warm cream enamel with steel top
-    const stove = new THREE.Mesh(G('kStove', () => new THREE.BoxGeometry(4.6, 1.5, 1.4)), M(0xEDE2CC, { roughness: 0.45, metalness: 0.15 }));
+    // friendly cream-enamel stove with coral knobs and a slate top
+    const stove = new THREE.Mesh(G('kStove', () => new THREE.BoxGeometry(4.6, 1.5, 1.4)), M(0xFFF4E0, { roughness: 0.5, metalness: 0.08 }));
     stove.position.set(-1.1, 0.75, -8.1); s.add(shadows(stove));
     const cooktop = new THREE.Mesh(G('kCooktop', () => new THREE.BoxGeometry(4.7, 0.08, 1.5)), M(0x5A616E, { roughness: 0.3, metalness: 0.4 }));
     cooktop.position.set(-1.1, 1.53, -8.1); s.add(cooktop);
     for (const bx of [-2.5, -1.1, 0.3]) {
       const burnerRing = new THREE.Mesh(G('kBurner', () => new THREE.CylinderGeometry(0.46, 0.46, 0.03, 20)), M(0x2A2E36, { roughness: 0.5 }));
       burnerRing.position.set(bx, 1.58, -8.05); s.add(burnerRing);
+      const knob = new THREE.Mesh(G('kKnob', () => new THREE.CylinderGeometry(0.09, 0.09, 0.1, 10)), M(P.wallCoral, { roughness: 0.5 }));
+      knob.rotation.x = Math.PI / 2; knob.position.set(bx, 1.28, -7.36); s.add(knob);
     }
-    // copper hood + duct
-    const hood = new THREE.Mesh(G('kHood', () => new THREE.BoxGeometry(4.9, 0.8, 1.6)), M(0xC97B42, { roughness: 0.35, metalness: 0.55 }));
-    hood.position.set(-1.1, 3.55, -8.2); s.add(shadows(hood));
-    const hoodTrim = new THREE.Mesh(G('kHoodT', () => new THREE.BoxGeometry(4.95, 0.14, 1.65)), M(0xE8A05C, { roughness: 0.3, metalness: 0.6 }));
-    hoodTrim.position.set(-1.1, 3.2, -8.2); s.add(hoodTrim);
-    const duct = new THREE.Mesh(G('kDuct', () => new THREE.BoxGeometry(1.2, 2.2, 1.0)), M(0xC97B42, { roughness: 0.4, metalness: 0.55 }));
-    duct.position.set(-1.1, 5.0, -8.3); s.add(duct);
+    // slim cream hood with a coral stripe — no more brown monolith
+    const hood = new THREE.Mesh(G('kHood', () => new THREE.BoxGeometry(4.8, 0.7, 1.5)), M(0xFFF4E0, { roughness: 0.5, metalness: 0.08 }));
+    hood.position.set(-1.1, 3.6, -8.25); s.add(shadows(hood));
+    const hoodTrim = new THREE.Mesh(G('kHoodT', () => new THREE.BoxGeometry(4.9, 0.16, 1.56)), M(P.wallCoral, { roughness: 0.6 }));
+    hoodTrim.position.set(-1.1, 3.28, -8.25); s.add(hoodTrim);
+    const duct = new THREE.Mesh(G('kDuct', () => new THREE.CylinderGeometry(0.4, 0.48, 1.6, 14)), M(0xC9CFD8, { roughness: 0.35, metalness: 0.45 }));
+    duct.position.set(-1.1, 4.6, -8.45); s.add(duct);
 
-    // fridge in the right-back corner
-    const fridge = new THREE.Mesh(G('kFridge', () => new THREE.BoxGeometry(1.5, 3.0, 1.3)), M(0xD8DDE4, { roughness: 0.3, metalness: 0.5 }));
+    // retro mint fridge with a chrome handle
+    const fridge = new THREE.Mesh(G('kFridge', () => new THREE.BoxGeometry(1.5, 3.0, 1.3)), M(0xB8E6DC, { roughness: 0.35, metalness: 0.2 }));
     fridge.position.set(3.3, 1.5, -8.15); s.add(shadows(fridge));
-    const fHandle = new THREE.Mesh(G('kFH', () => new THREE.CylinderGeometry(0.04, 0.04, 1.0, 8)), M(0x6E7480));
+    const fHandle = new THREE.Mesh(G('kFH', () => new THREE.CylinderGeometry(0.04, 0.04, 1.0, 8)), M(0xE8EDF2, { metalness: 0.6, roughness: 0.3 }));
     fHandle.position.set(2.75, 1.7, -7.45); s.add(fHandle);
 
     // plate stack décor on the left end of the pass
@@ -157,7 +160,7 @@ export class Kitchen {
     b.ticket = ticket; b.t = 0; b.done = false; b.steamAcc = 0;
     b.dur = MENU_ITEMS[ticket.dish].cookTime * this.cookMul;
     b.content = buildDish(ticket.dish);
-    b.content.scale.setScalar(0.55);
+    b.content.scale.setScalar(0.62);
     b.content.position.set(b.pos.x, b.pos.y + 0.06, b.pos.z);
     this.scene.add(b.content);
     b.bubble.spr.visible = true;
@@ -247,7 +250,7 @@ export class Kitchen {
         if (frac >= 1) {
           b.done = true;
           b.bubble.spr.visible = false;
-          if (b.content) b.content.scale.setScalar(0.62);
+          if (b.content) b.content.scale.setScalar(0.72);
         }
       } else if (b.ticket.dead) {
         // cooked for a guest who stormed out — bin it
@@ -328,7 +331,7 @@ export class Kitchen {
               const pl = plate();
               const food = b.content ?? buildDish(b.ticket.dish);
               if (b.content) { this.scene.remove(b.content); b.content = null; }
-              food.scale.setScalar(0.62); food.position.y = 0.06;
+              food.scale.setScalar(0.78); food.position.y = 0.06;
               pl.add(food);
               this.chefCarry = pl;
               pl.position.set(0, 1.02, 0.42);

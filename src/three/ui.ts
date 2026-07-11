@@ -13,35 +13,40 @@ function css() {
   if (cssDone) return; cssDone = true;
   const s = document.createElement('style'); s.textContent = `
   :root{
-    --ui-brown:#4A2A14; --ui-cream:#FFF7EC; --ui-gold:#F4C25A; --ui-orange:#FF8A3D;
-    --ui-red:#E8442C; --ui-green:#5BBF4A; --ui-text:#7a4516;
+    --ui-ink:#5A3A2E; --ui-cream:#FFF8EC; --ui-gold:#FFC838; --ui-orange:#FF8A3D;
+    --ui-red:#F2505A; --ui-green:#58C96B; --ui-combo:#9B6FE8;
   }
-  .ui-pill{position:absolute;display:flex;align-items:center;gap:8px;background:rgba(74,42,20,.92);
-    border:2px solid rgba(244,194,90,.6);border-radius:18px;padding:8px 15px;color:#fff;
-    font-family:var(--font-display);font-weight:800;box-shadow:0 6px 14px rgba(120,60,10,.35),inset 0 2px 0 rgba(255,255,255,.12)}
+  .ui-pill{position:absolute;display:flex;align-items:center;gap:8px;background:var(--ui-cream);
+    border:3px solid #fff;border-radius:20px;padding:8px 15px;color:var(--ui-ink);
+    font-family:var(--font-display);font-weight:800;box-shadow:0 5px 0 rgba(90,58,46,.14),0 10px 20px rgba(90,58,46,.16)}
   #hud{position:fixed;inset:0;z-index:5;pointer-events:none}
   #hud .pointerable{pointer-events:auto}
   #h-score{top:calc(14px + var(--safe-top));left:calc(14px + var(--safe-left));font-size:22px}
-  #h-score .ic{width:26px;height:26px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#FFE680,#FFC21E 60%,#C98A0E);box-shadow:inset 0 0 0 2px #C98A0E;display:grid;place-items:center;color:#9A6500;font-size:13px}
-  #h-score .v{color:#FFE27A}
-  #h-guests{top:calc(14px + var(--safe-top));right:calc(66px + var(--safe-right));font-size:19px}
-  #h-chain{top:calc(64px + var(--safe-top));left:50%;transform:translateX(-50%);font-size:17px;color:#fff;background:rgba(94,175,74,.95);transition:transform .12s}
-  #h-pause{top:calc(14px + var(--safe-top));right:calc(14px + var(--safe-right));width:44px;height:44px;padding:0;justify-content:center;font-size:17px;cursor:pointer}
-  #h-goal{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(12px + var(--safe-bottom));width:min(78vw,420px);z-index:5;pointer-events:none}
-  #h-goal .bar{height:16px;background:rgba(74,42,20,.85);border:2px solid rgba(244,194,90,.6);border-radius:10px;overflow:hidden;position:relative}
-  #h-goal .fill{height:100%;width:0;background:linear-gradient(90deg,#FF8A3D,#FFC21E);transition:width .3s}
-  #h-goal .mark{position:absolute;top:-3px;bottom:-3px;width:3px;background:#FFF3D8;border-radius:2px}
-  #h-goal .lbl{display:flex;justify-content:space-between;font-family:var(--font-display);font-weight:700;font-size:12px;color:#7a4516;margin-top:3px;
-    text-shadow:0 1px 0 rgba(255,255,255,.6)}
+  #h-score .ic{width:26px;height:26px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#FFE680,#FFC838 60%,#D89A12);box-shadow:inset 0 0 0 2px #D89A12;display:grid;place-items:center;color:#9A6500;font-size:13px}
+  #h-score .v{color:#E8632A}
+  #h-guests{top:calc(14px + var(--safe-top));right:calc(70px + var(--safe-right));font-size:19px}
+  #h-chain{top:calc(66px + var(--safe-top));left:50%;transform:translateX(-50%);font-size:17px;color:#fff;background:var(--ui-combo);border-color:#E2D4FF;transition:transform .12s}
+  #h-pause{top:calc(14px + var(--safe-top));right:calc(14px + var(--safe-right));width:46px;height:46px;padding:0;justify-content:center;font-size:17px;cursor:pointer}
+  #h-goal{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(14px + var(--safe-bottom));width:min(78vw,420px);z-index:5;pointer-events:none}
+  #h-goal .bar{height:18px;background:var(--ui-cream);border:3px solid #fff;border-radius:12px;position:relative;
+    box-shadow:0 4px 0 rgba(90,58,46,.12),0 8px 16px rgba(90,58,46,.14)}
+  #h-goal .fill{height:100%;width:0;border-radius:9px;background:linear-gradient(90deg,#FF8A3D,#FFC838);transition:width .3s}
+  #h-goal .node{position:absolute;top:50%;transform:translate(-50%,-50%);width:30px;height:30px;border-radius:50%;
+    background:#fff;border:3px solid #EADFCE;display:grid;place-items:center;font-size:14px;filter:grayscale(1) opacity(.75);transition:filter .3s,transform .2s}
+  #h-goal .node.hit{filter:none;border-color:var(--ui-gold);animation:nodePop .45s cubic-bezier(.3,1.6,.6,1)}
+  @keyframes nodePop{0%{transform:translate(-50%,-50%) scale(1)}55%{transform:translate(-50%,-50%) scale(1.5)}100%{transform:translate(-50%,-50%) scale(1)}}
+  #h-goal .lbl{display:flex;justify-content:space-between;font-family:var(--font-display);font-weight:700;font-size:12px;color:var(--ui-ink);margin-top:5px;
+    text-shadow:0 1px 0 rgba(255,255,255,.8)}
   #h-vignette{position:fixed;inset:0;z-index:4;pointer-events:none;opacity:0;transition:opacity .4s;
-    box-shadow:inset 0 0 90px 30px rgba(232,68,44,.55)}
+    box-shadow:inset 0 0 90px 30px rgba(242,80,90,.5)}
   #h-flash{position:fixed;inset:0;z-index:4;pointer-events:none;opacity:0;
     background:radial-gradient(120% 80% at 50% 45%,rgba(255,215,90,.0),rgba(255,200,60,.55));transition:opacity .4s ease}
   #h-announce{position:fixed;top:30%;left:50%;transform:translate(-50%,-50%) scale(0);z-index:6;
-    font-family:var(--font-display);font-weight:800;font-size:38px;color:#FFE27A;text-align:center;max-width:92vw;
-    -webkit-text-stroke:6px #7a3a0a;paint-order:stroke fill;pointer-events:none;text-shadow:0 6px 16px rgba(0,0,0,.3)}
-  #h-tut{position:fixed;bottom:calc(44px + var(--safe-bottom));left:50%;transform:translateX(-50%);z-index:6;max-width:88vw;text-align:center;
-    background:rgba(40,22,8,.92);color:#FFE9C6;font-family:var(--font-display);font-weight:700;font-size:16px;padding:13px 22px;border-radius:16px;border:2px solid rgba(244,194,90,.5)}
+    font-family:var(--font-display);font-weight:800;font-size:38px;color:#FFC838;text-align:center;max-width:92vw;
+    -webkit-text-stroke:6px #5A3A2E;paint-order:stroke fill;pointer-events:none;text-shadow:0 6px 16px rgba(90,58,46,.35)}
+  #h-tut{position:fixed;bottom:calc(52px + var(--safe-bottom));left:50%;transform:translateX(-50%);z-index:6;max-width:88vw;text-align:center;
+    background:var(--ui-cream);color:var(--ui-ink);font-family:var(--font-display);font-weight:700;font-size:16px;padding:13px 22px;border-radius:18px;border:3px solid #fff;
+    box-shadow:0 5px 0 rgba(90,58,46,.14),0 10px 20px rgba(90,58,46,.18)}
   #h-hint{position:fixed;z-index:6;pointer-events:none;font-size:38px;transform:translate(-14px,6px);opacity:0;transition:opacity .25s,left .45s cubic-bezier(.35,1.2,.5,1),top .45s cubic-bezier(.35,1.2,.5,1);
     filter:drop-shadow(0 4px 6px rgba(0,0,0,.35));animation:hintBob 1s ease-in-out infinite}
   @keyframes hintBob{0%,100%{margin-top:0}50%{margin-top:10px}}
@@ -55,12 +60,12 @@ function css() {
 
   .ov{position:fixed;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);
     padding:calc(10px + var(--safe-top)) 10px calc(10px + var(--safe-bottom));
-    background:radial-gradient(120% 90% at 50% 18%,rgba(255,243,221,.96),rgba(239,168,94,.96));transition:opacity .3s;}
+    background:linear-gradient(180deg,rgba(143,220,200,.96),rgba(255,243,216,.97));transition:opacity .3s;}
   .ov.hide{opacity:0;pointer-events:none}
-  .card{width:min(86vw,380px);max-height:100%;overflow-y:auto;background:#FFF7EC;border:3px solid #FF8A3D;border-radius:26px;padding:26px 22px;text-align:center;
-    box-shadow:0 18px 40px rgba(150,80,20,.35);position:relative}
-  .card h1{color:#E8442C;font-size:30px;font-weight:800;-webkit-text-stroke:1px #fff;margin-bottom:4px}
-  .stars{font-size:46px;letter-spacing:6px;margin:6px 0 2px;color:#F08A1E}
+  .card{width:min(86vw,380px);max-height:100%;overflow-y:auto;background:var(--ui-cream);border:4px solid #fff;border-radius:30px;padding:26px 22px;text-align:center;
+    box-shadow:0 10px 0 rgba(90,58,46,.12),0 26px 48px rgba(90,58,46,.28);position:relative}
+  .card h1{color:#F2505A;font-size:30px;font-weight:800;-webkit-text-stroke:1px #fff;margin-bottom:4px}
+  .stars{font-size:46px;letter-spacing:6px;margin:6px 0 2px;color:#FFC838}
   .stars span{display:inline-block;transform:scale(0)}
   .stars span.pop{animation:starPop .4s cubic-bezier(.3,1.6,.6,1) forwards}
   @keyframes starPop{0%{transform:scale(0) rotate(-40deg)}100%{transform:scale(1) rotate(0)}}
@@ -122,7 +127,7 @@ export function createHud(onPause: () => void): Hud {
     <div class="ui-pill" id="h-chain" style="display:none"></div>
     <div class="ui-pill" id="h-guests">👥 0</div>
     <div class="ui-pill pointerable" id="h-pause">⏸</div>
-    <div id="h-goal"><div class="bar"><div class="fill" id="hg-fill"></div><div class="mark" id="hg-goal"></div><div class="mark" id="hg-expert" style="opacity:.6"></div></div>
+    <div id="h-goal"><div class="bar"><div class="fill" id="hg-fill"></div><div class="node" id="hg-goal">⭐</div><div class="node" id="hg-expert">🌟</div></div>
       <div class="lbl"><span id="hg-l1">⭐ GOAL</span><span id="hg-l3">⭐⭐⭐</span></div></div>
     <div id="h-announce"></div>
     <div id="h-tut" style="display:none"></div>
@@ -144,7 +149,7 @@ export function createHud(onPause: () => void): Hud {
   const pauseBtn = el.querySelector('#h-pause') as HTMLElement;
   pauseBtn.onclick = () => { try { SoundManager.uiClick(); } catch { /* */ } onPause(); };
 
-  let lastScore = -1, lastChain = -1, lastGuests = -1, lastUrgent = false, tutTimer = 0, goalHit = false;
+  let lastScore = -1, lastChain = -1, lastGuests = -1, lastUrgent = false, tutTimer = 0, goalHit = false, expertHit = false;
   const motion = () => Prefs.motion;
   return {
     update: (h) => {
@@ -156,12 +161,17 @@ export function createHud(onPause: () => void): Hud {
         // goal progress (scaled to the expert score)
         const span = Math.max(1, h.expert);
         fill.style.width = Math.min(100, (h.score / span) * 100) + '%';
-        markGoal.style.left = Math.min(99, (h.goal / span) * 100) + '%';
-        markExpert.style.left = '99%';
+        markGoal.style.left = Math.min(96, (h.goal / span) * 100) + '%';
+        markExpert.style.left = '97%';
         lblGoal.textContent = `⭐ $${fmtScore(h.goal)}`;
         if (!goalHit && h.score >= h.goal) {
           goalHit = true;
-          fill.style.background = 'linear-gradient(90deg,#5BBF4A,#8AE07A)';
+          markGoal.classList.add('hit');
+          fill.style.background = 'linear-gradient(90deg,#58C96B,#9BE39B)';
+        }
+        if (!expertHit && h.score >= h.expert) {
+          expertHit = true;
+          markExpert.classList.add('hit');
         }
       }
       if (h.guestsLeft !== lastGuests) { guests.textContent = `👥 ${h.guestsLeft}`; lastGuests = h.guestsLeft; }

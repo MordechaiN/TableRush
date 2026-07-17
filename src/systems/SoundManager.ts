@@ -239,6 +239,28 @@ export const SoundManager = {
     }
   },
 
+  /** Tiny tick for the level-end money count-up. */
+  countTick(pitch = 1) {
+    if (!this.isEnabled()) return;
+    const ac = getCtx(); if (!ac) return;
+    const t = ac.currentTime;
+    const master = gain(ac, 0.09);
+    master.connect(ac.destination);
+    tone(ac, master, 'sine', 1250 * pitch, 0.8, t, 0.05);
+  },
+
+  /** Warm service bell — the shift is open. */
+  shiftBell() {
+    if (!this.isEnabled()) return;
+    const ac = getCtx(); if (!ac) return;
+    const t = ac.currentTime;
+    const master = gain(ac, 0.2);
+    master.connect(ac.destination);
+    tone(ac, master, 'sine', 1568, 0.9, t, 0.5);
+    tone(ac, master, 'sine', 2093, 0.5, t + 0.02, 0.42);
+    tone(ac, master, 'sine', 3136, 0.18, t + 0.02, 0.3);
+  },
+
   /** Two warm notes when a guest pushes through the door. */
   doorChime() {
     if (!this.isEnabled()) return;

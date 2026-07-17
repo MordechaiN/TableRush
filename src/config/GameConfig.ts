@@ -63,8 +63,8 @@ export interface LevelDef {
 // Goals are calibrated against qa/balance.mjs bot runs: ⭐ ≈ 60% of the bot's
 // score with no upgrades, ⭐⭐⭐ ≈ the bot's score plus chains and upgrades.
 export const LEVELS: LevelDef[] = [
-  { id: 1, name: 'First Shift',    customers: 8,  spawnMin: 6.0, spawnMax: 8.5, heartsSeconds: 60, eatTime: 3.2, goal: 500,  expert: 1000, dishes: [0, 1],                   vip: false, critic: false },
-  { id: 2, name: 'Pasta Night',    customers: 12, spawnMin: 5.0, spawnMax: 7.5, heartsSeconds: 52, eatTime: 3.0, goal: 700,  expert: 1400, dishes: [0, 1, 2],                vip: false, critic: false },
+  { id: 1, name: 'First Shift',    customers: 8,  spawnMin: 5.0, spawnMax: 6.5, heartsSeconds: 60, eatTime: 3.2, goal: 500,  expert: 1000, dishes: [0, 1],                   vip: false, critic: false },
+  { id: 2, name: 'Pasta Night',    customers: 12, spawnMin: 4.5, spawnMax: 6.5, heartsSeconds: 52, eatTime: 3.0, goal: 700,  expert: 1400, dishes: [0, 1, 2],                vip: false, critic: false },
   { id: 3, name: 'Pizza Party',    customers: 16, spawnMin: 4.2, spawnMax: 6.5, heartsSeconds: 46, eatTime: 2.8, goal: 900,  expert: 1850, dishes: [0, 1, 2, 4],             vip: true,  critic: false },
   { id: 4, name: 'Sushi Rush',     customers: 20, spawnMin: 3.6, spawnMax: 5.6, heartsSeconds: 40, eatTime: 2.6, goal: 1150, expert: 2350, dishes: [0, 1, 2, 3, 4],          vip: true,  critic: false },
   { id: 5, name: 'Sweet & Sour',   customers: 22, spawnMin: 3.6, spawnMax: 5.4, heartsSeconds: 36, eatTime: 2.4, goal: 1250, expert: 2500, dishes: [0, 1, 2, 3, 4, 5],       vip: true,  critic: true  },

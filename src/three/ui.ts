@@ -295,7 +295,7 @@ export function showLevelEnd(r: LevelResult, cbs: { onNext: () => void; onRetry:
   const d = overlay(`<div class="card">
     <h1>${r.won ? (r.stars >= 3 ? 'PERFECT SERVICE!' : `LEVEL ${r.levelId} CLEAR!`) : 'SHIFT FAILED'}</h1>
     <div class="stars">${starsHtml}</div>
-    <div class="big">$${fmtScore(r.score)}</div>
+    <div class="big" id="le-score">$0</div>
     <div class="sub">${r.won ? '' : `Goal was $${fmtScore(r.goal)}${r.score >= r.goal * 0.6 ? ' — so close!' : ''}`}</div>
     ${outcome.isNewHighScore ? '<div class="sub" style="color:#E8442C">★ NEW BEST SCORE!</div>' : ''}
     <div class="sub">💰 +$${fmtScore(outcome.coinsEarned)} banked · wallet $${fmtScore(outcome.coinsAfter)}</div>
@@ -311,11 +311,33 @@ export function showLevelEnd(r: LevelResult, cbs: { onNext: () => void; onRetry:
     <button class="btn btn-g" id="le-menu">MENU</button>
   </div>`);
   if (r.won) confetti(d.querySelector('.card') as HTMLElement);
+  // the money counts up with ticks — anticipation, then the stars land
+  const scoreEl = d.querySelector('#le-score') as HTMLElement;
+  const countMs = Prefs.motion && r.score > 0 ? 850 : 0;
+  let lastTick = 0;
+  const t0 = performance.now();
+  const count = () => {
+    const f = countMs === 0 ? 1 : Math.min(1, (performance.now() - t0) / countMs);
+    const eased = 1 - Math.pow(1 - f, 2.2);
+    scoreEl.textContent = '$' + fmtScore(Math.round(r.score * eased));
+    if (f < 1) {
+      if (performance.now() - lastTick > 70) {
+        lastTick = performance.now();
+        try { SoundManager.countTick(1 + f * 0.5); } catch { /* */ }
+      }
+      requestAnimationFrame(count);
+    } else {
+      scoreEl.style.transform = 'scale(1.18)';
+      scoreEl.style.transition = 'transform .16s cubic-bezier(.3,1.6,.6,1)';
+      setTimeout(() => scoreEl.style.transform = 'scale(1)', 170);
+    }
+  };
+  count();
   d.querySelectorAll('.stars span').forEach((el2, i) => {
     setTimeout(() => {
       el2.classList.add('pop');
       if (i < r.stars) { try { SoundManager.starReveal(i + 1); } catch { /* */ } }
-    }, 250 + i * 320);
+    }, countMs + 280 + i * 320);
   });
   click(d, '#le-next', () => { close(d); cbs.onNext(); });
   click(d, '#le-retry', () => { close(d); cbs.onRetry(); });

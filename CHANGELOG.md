@@ -1,5 +1,24 @@
 # CHANGELOG
 
+## V1.2.2 — The rival-studio teardown (2026-07-11)
+
+Played five minutes as the competition's creative director and fixed every
+uninstall trigger found, each mapped to a pillar:
+
+- **Dead first ten seconds** → the first guest is at the door as the shift
+  opens, the second follows fast, and a service bell rings the level in
+  (anticipation).
+- **Anticlimactic ending** → the last resolve triggers a celebration beat in
+  the world (waiter hop, coin burst) before the card; on the card the money
+  **counts up with rising ticks**, lands with a pop, then the stars drop
+  (anticipation → satisfaction).
+- **Perfection went unrewarded** → flawless 5-heart service now flashes
+  "PERFECT! ⭐" with a chime (satisfaction).
+- **Illegible failure** → walkouts float the money you just lost in red
+  (clarity; loss aversion).
+- **Mid-level dead air** → levels 1–2 spawn gaps tightened to 5.0–6.5s /
+  4.5–6.5s (dopamine pacing; goals unchanged, verified winnable).
+
 ## V1.2.1 — Game-feel micro-polish (2026-07-11)
 
 The Game-Director pass: play, watch, critique, fix, repeat.

@@ -141,7 +141,7 @@ export class RestaurantGame {
   private served = 0;
   private walkouts = 0;
   private spawned = 0;
-  private nextSpawn = 1.5;
+  private nextSpawn = 0.5; // the first guest is at the door as the shift opens
   private nextVariant = 0;
   private chainKind: TaskKind | '' = '';
   private chainN = 0;
@@ -150,6 +150,7 @@ export class RestaurantGame {
 
   private running = false;
   private over = false;
+  private endT = -1;  // ≥0 while the end-of-shift beat plays before the card
   private raf = 0;
   private last = 0;
 
@@ -555,7 +556,7 @@ export class RestaurantGame {
     this.cbs.onAnnounce(`LEVEL ${this.level.id} — GOAL $${this.level.goal}`, 'level');
     cancelAnimationFrame(this.raf);
     this.loop(this.last);
-    try { SoundManager.startMusic(); SoundManager.startAmbience(); } catch { /* audio optional */ }
+    try { SoundManager.startMusic(); SoundManager.startAmbience(); SoundManager.shiftBell(); } catch { /* audio optional */ }
   }
 
   pause() { if (!this.running || this.over) return; this.running = false; cancelAnimationFrame(this.raf); }
@@ -657,6 +658,8 @@ export class RestaurantGame {
     g.c.g.position.y = 0;
     g.path = g.table ? [new THREE.Vector3(0.4, 0, g.table.chair.z), DOOR.clone()] : [DOOR.clone()];
     g.table = null;
+    // the loss is legible: show the money that just walked out the door
+    this.fx.float(`-$${MENU_ITEMS[g.dish].price * 5}`, g.c.g.position.x, g.c.g.position.z, '#FF8A8A', 2.6);
     this.fx.sparkle(g.c.g.position.clone().setY(1.8), 0xE8442C, 8);
     try { SoundManager.customerAngry(); } catch { /* */ }
     this.cbs.onFlash('red');
@@ -758,7 +761,7 @@ export class RestaurantGame {
   }
 
   pointerTap(px: number, py: number) {
-    if (!this.running) return;
+    if (!this.running || this.endT >= 0) return;
     const spots = this.hotspots();
     let best: Hotspot | null = null, bestD = Infinity;
     for (const s of spots) {
@@ -1024,7 +1027,11 @@ export class RestaurantGame {
     this.hop(g.c.g); this.hop(this.waiter.g);
     this.cbs.onFlash('gold');
     this.chain('collect', t.pos.x, t.pos.z);
-    if (heartsFrac < 0.25) { // rescued at the last moment
+    if (heartsFrac >= 0.98) { // flawless service deserves a flourish
+      this.fx.float('PERFECT! ⭐', t.pos.x, t.pos.z + 0.6, '#FFE27A', 2.8);
+      this.fx.sparkle(new THREE.Vector3(t.pos.x, 1.9, t.pos.z), 0xFFE27A, 12);
+      try { SoundManager.starReveal(1); } catch { /* */ }
+    } else if (heartsFrac < 0.25) { // rescued at the last moment
       this.fx.float('PHEW!', t.pos.x, t.pos.z + 0.6, '#9BE3FF', 2.8);
       try { SoundManager.nearMiss(); } catch { /* */ }
     }
@@ -1148,12 +1155,14 @@ export class RestaurantGame {
     this.hudAcc += dt;
     if (this.hudAcc >= 0.2) { this.hudAcc = 0; this.emitHud(); }
 
-    // spawning into the waiting line
+    // spawning into the waiting line — the second guest follows quickly so the
+    // opening minute never goes quiet
     if (this.spawned < this.level.customers) {
       this.nextSpawn -= dt;
       if (this.nextSpawn <= 0) {
         this.spawn();
         this.nextSpawn = this.level.spawnMin + Math.random() * (this.level.spawnMax - this.level.spawnMin);
+        if (this.spawned === 1) this.nextSpawn *= 0.55;
       }
     }
 
@@ -1183,9 +1192,19 @@ export class RestaurantGame {
     this.fx.update(dt);
     this.introT = Math.min(1, this.introT + dt / 1.4);
 
-    // level end: every guest of the level has been resolved
-    if (this.spawned >= this.level.customers && this.guests.length === 0 && !this.current && this.tasks.length === 0) {
-      this.end();
+    // level end: every guest resolved → a short celebration beat, then the card
+    if (this.endT >= 0) {
+      this.endT += dt;
+      if (this.endT > 0.85) this.end();
+    } else if (this.spawned >= this.level.customers && this.guests.length === 0 && !this.current && this.tasks.length === 0) {
+      this.endT = 0;
+      const won = this.score >= this.level.goal;
+      this.hop(this.waiter.g);
+      if (won) {
+        this.fx.coinBurst(this.waiter.g.position.clone().setY(1.6), 14);
+        this.fx.sparkle(this.waiter.g.position.clone().setY(2), 0xFFE27A, 14);
+      }
+      try { if (won) SoundManager.roundEnd(); else SoundManager.comboLost(); } catch { /* */ }
     }
   }
 
@@ -1470,7 +1489,6 @@ export class RestaurantGame {
     try { SoundManager.setSizzle(0); SoundManager.stopAmbience(); } catch { /* */ }
     const mid = Math.round((this.level.goal + this.level.expert) / 2);
     const stars = this.score >= this.level.expert ? 3 : this.score >= mid ? 2 : this.score >= this.level.goal ? 1 : 0;
-    try { if (stars >= 1) SoundManager.roundEnd(); else SoundManager.comboLost(); } catch { /* */ }
     this.cbs.onOver({
       levelId: this.level.id, score: this.score, stars, won: stars >= 1,
       served: this.served, walkouts: this.walkouts,
